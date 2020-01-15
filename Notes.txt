@@ -13,6 +13,9 @@ git checkout master
 
 [make edits to file]
 
+git diff = show all the changes since last stage
+	If the software is 'less', can turn off linewrap with -S to avoid long binaries
 git stage *
 git commit -m "message"
 git push --all
+
