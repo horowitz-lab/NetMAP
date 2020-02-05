@@ -19,3 +19,22 @@ git stage *
 git commit -m "message"
 git push --all
 
+
+===============
+More sophisticated:
+
+
+
+After Viva made a new local branch, she synced it to the server using:
+git push --set-upstream origin VivasBranch
+
+
+==============
+
+Brittany wanted to make some changes to the files in VivasBranch then merge it into BrittanysBranch
+
+git checkout -b to_merge
+git stage *
+git commit -m "message"
+git checkout BrittanysBranch
+git merge to_merge
