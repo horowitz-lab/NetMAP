@@ -23,6 +23,9 @@ git push --all
 ===============
 More sophisticated:
 
+Want to just get one and only one file? name the branch and the filename:
+ git checkout BrittanysBranch Response\ Curve\ Fit.ipynb
+
 
 
 After Viva made a new local branch, she synced it to the server using:
