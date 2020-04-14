@@ -2,3 +2,7 @@ myheatmap.py~
 *.pyc
 .ipynb_checkpoints/
 .ipynb_checkpoints/*
+*.log
+*.gz
+*.pdf
+*.aux
