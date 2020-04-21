@@ -1,7 +1,9 @@
 \documentclass{article}
-\usepackage[paperwidth=8.5cm, paperheight=2.1cm, margin=0in]{geometry}
+\usepackage[paperwidth=8.5cm, paperheight=5cm, margin=0in]{geometry}
 \usepackage{tikz}
 \usetikzlibrary{calc,patterns,decorations.pathmorphing,decorations.markings}
+\usetikzlibrary{arrows}
+
 
 \newcommand{\masswidth}{.8cm}
 \newcommand{\massheight}{0.6cm}
@@ -20,8 +22,11 @@
 \newcommand{\konetwopos}{\massonepos+\halfspringlength+\masswidth/2}
 \newcommand{\ktwothreepos}{\masstwopos+\masswidth/2+\halfspringlength}
 \newcommand{\kthreepos}{\massthreepos+\halfspringlength+\masswidth/2}
-\newcommand{\lowerlevel}{-.8cm}
+\newcommand{\midlowlevel}{-.8cm}
+\newcommand{\lowerlevel}{-1.6cm}
 \newcommand{\ktwopos}{\springlength+2*\masswidth/3}
+\newcommand{\konethreex}{\massonepos+\springlength+2*\masswidth}
+\newcommand{\wally}{-.8cm}
 
 \begin{document}
 
@@ -29,11 +34,11 @@
 
 \begin{tikzpicture}[]
 \tikzstyle{spring}=[thick,decorate,decoration={zigzag,pre length=0.2cm,post length=0.2cm,segment length=6}]
-\tikzstyle{weakspring}=[thick,decorate,decoration={zigzag,pre length=0.2cm,post length=0.2cm,segment length=10}]
-\tikzstyle{wall}=[fill,pattern=north east lines,draw=none,minimum width=\wallthickness,minimum height=1.5cm]
+\tikzstyle{weakspring}=[decorate,decoration={zigzag,pre length=0.2cm,post length=0.2cm,segment length=10}]
+\tikzstyle{wall}=[fill,pattern=north east lines,draw=none,minimum width=\wallthickness,minimum height=2.8cm]
 
 
-\node (leftwall)  [wall, xshift=\leftwalleastpos, yshift=-.4cm,anchor=east] {};
+\node (leftwall)  [wall, xshift=\leftwalleastpos, yshift=\wally,anchor=east] {};
 \draw (leftwall.north east) -- (leftwall.south east);
 
 \node(M1)  [minimum width=\masswidth,minimum height=\massheight, xshift=\massonepos, style={draw,outer sep=0pt,thick}] {$m_1$};
@@ -42,7 +47,7 @@
 
 \node(M3)  [minimum width=\masswidth,minimum height=\massheight, xshift =\massthreepos,style={draw,outer sep=0pt,thick}] {$m_3$};
 
-\node(rightwall)[wall, xshift =\rightwallpos,yshift=-.4cm,anchor=west]{};
+\node(rightwall)[wall, xshift =\rightwallpos,yshift=\wally,anchor=west]{};
 \draw (rightwall.north west) -- (rightwall.south west);
 
 \draw [spring] (M1.west)  -- (\leftwalleastpos,0);
@@ -55,10 +60,24 @@
 \node [above] at (\kthreepos,.1cm) {$k_{3}$};
 
 \draw [fill] circle [radius=.05cm, xshift=\masstwopos, yshift=\lowerlevel] {};  % xshift to match m2
-
 \draw (M2.south)--(\masstwopos,\lowerlevel);
 \draw[spring] (\leftwalleastpos, \lowerlevel) -- (\masstwopos, \lowerlevel);
 \node[below] at (\ktwopos,\lowerlevel-.1cm) {$k_2$};
+
+\draw [fill] circle [radius=.05cm, xshift=\massonepos, yshift=\midlowlevel] {};  % xshift to match m1
+\draw(M1.south)--(\massonepos,\midlowlevel);
+\draw [fill] circle [radius=.05cm, xshift=\massthreepos, yshift=\midlowlevel] {};  % xshift to match m3
+\draw(M3.south)--(\massthreepos,\midlowlevel);
+\draw[weakspring] (\massonepos,\midlowlevel) -- (\massthreepos,\midlowlevel);
+\node[below] at (\konethreex,\midlowlevel-.1cm) {$k_{13}$};
+
+
+\newcommand{\arrowheight}{.76cm}
+\node[ anchor=west] at (\massonepos - .05 cm, 1.03 cm) {$F \cos \omega_d t$};
+\draw[very thick,->](\massonepos,\arrowheight) --(1.5cm+\massonepos,\arrowheight);
+%\draw (M1.north)--(\massonepos, 1 cm); % option 1
+\draw (\massonepos, \arrowheight - .1cm)--(\massonepos, \arrowheight+.1cm); % option 2
+
 
 %\draw [spring] (leftwall.east) -- (leftwall.east+1cm){k1};
 
