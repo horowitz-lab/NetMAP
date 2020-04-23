@@ -29,8 +29,7 @@
 \newcommand{\ktwopos}{\springlength+2*\masswidth/3}
 \newcommand{\konethreex}{\massonepos+\onepointfivespr+1.5*\masswidth}
 \newcommand{\wally}{-.8cm}
-\newcommand{\arrowheight}{-.9cm} %+.76cm
-\newcommand{\Fcosheight}{\arrowheight + .27 cm}
+\newcommand{\labelheight}{-.9cm} %+.76cm
 \newcommand{\wallheight}{2.8cm}
 
 \begin{document}
@@ -57,7 +56,7 @@
 \node(dottedbox) [minimum width=\masstwopos-\leftwalleastpos+\masswidth*1.1, 
 			   minimum height=\wallheight, 
 			   xshift=\massonepos+\masswidth/3, 
-			   yshift=\arrowheight+.1cm,
+			   yshift=\labelheight+.1cm,
 			   style={draw, outer sep=0pt, dashed, thick}]{};
 
 %% four main springs
@@ -85,6 +84,8 @@
 \node [above] at (\ktwothreepos,\spronethreey+.1cm) {$k_{13}$};
 
 %% force label
+\newcommand{\arrowheight}{\labelheight+.3cm}
+\newcommand{\Fcosheight}{\labelheight} % + .27 cm
 \node[ anchor=west] at (\massonepos - .05 cm,\Fcosheight) {$F \cos \omega_d t$};
 \draw[very thick,->](\massonepos,\arrowheight) --(1.5cm+\massonepos,\arrowheight);
 %\draw (M1.north)--(\massonepos, 1 cm); % option 1
