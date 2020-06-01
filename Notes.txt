@@ -26,7 +26,7 @@ More sophisticated:
 Want to just get one and only one file? name the branch and the filename:
  git checkout BrittanysBranch Response\ Curve\ Fit.ipynb
 
-git commit -m 'New file for plotting model results' --author=='Brittany Carter <brittanycarter@Brittanys-MacBook-Pro.local>'
+git commit -m 'New file for plotting model results' --author='Brittany Carter <brittanycarter@Brittanys-MacBook-Pro.local>'
 
 After Viva made a new local branch, she synced it to the server using:
 git push --set-upstream origin VivasBranch
