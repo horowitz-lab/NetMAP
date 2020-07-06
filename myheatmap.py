@@ -25,17 +25,24 @@ def listwrap(currentlist):
 # df is a pandas dataframe
 # myheatmap is supposed to work almost exactly like seaborn heatmap.
 # the 'rocket' cmap is the same as the default seaborn heatmap.
-def myheatmap(df, colorbarlabel=None, cmap = 'magma', return_cbar = False, **kwargs):
+def myheatmap(df, colorbarlabel=None, cmap = 'magma', 
+              return_cbar = False,
+              draw_cbar = True,
+              cbarargs={'drawedges':False},
+              **kwargs):
     plt.pcolormesh( listwrap(df.columns),listwrap(df.index), df, cmap=cmap, **kwargs)
     plt.xlabel(df.columns.name)
     plt.ylabel(df.index.name)
     ax = plt.gca()
     ax.set_frame_on(False)
-    cbar = plt.colorbar(drawedges=False)
-    cbar.outline.set_visible(False)
-    if colorbarlabel:
-        cbar.set_label(colorbarlabel)
-    if return_cbar:
-        return ax, cbar
+    if draw_cbar:
+        cbar = plt.colorbar(**cbarargs)
+        cbar.outline.set_visible(False)
+        if colorbarlabel:
+            cbar.set_label(colorbarlabel)
+        if return_cbar:
+            return ax, cbar
+        else:
+            return ax
     else:
-        return ax
+        return ax # cannot return colorbar if it's not drawn
