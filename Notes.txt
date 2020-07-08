@@ -19,6 +19,9 @@ git stage *
 git commit -m "message"
 git push --all
 
+===============
+
+git commit --author="Brittany Carter <brittanycarter@Brittanys-MacBook-Pro.local>" -m "commit message"
 
 ===============
 More sophisticated:
