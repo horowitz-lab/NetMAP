@@ -1,17 +1,25 @@
+\RequirePackage{fix-cm} % https://dtrx.de/od/tex/sfmath.html
 \documentclass{article}
-\usepackage[paperwidth=7.5in, paperheight=3cm, margin=0in]{geometry}
+\usepackage[paperwidth=5.2in, paperheight=3cm, margin=0in]{geometry}
 \usepackage{tikz}
 \usetikzlibrary{calc,patterns,decorations.pathmorphing,decorations.markings, positioning}
 \usetikzlibrary{arrows}
+
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[]{sfmath}
+
+%\usepackage{cmbright} %% a sans-serif font for math
+
+
 
 
 \newcommand{\dotswidth}{0cm}
 \newcommand{\masswidth}{1cm}
 \newcommand{\massheight}{0.6cm}
 \newcommand{\wallthickness}{0.25cm}
-\newcommand{\figwidth}{4*4.1cm}
+\newcommand{\figwidth}{2.7*4.1cm}
 \newcommand{\springlength}{\figwidth/6-5*\masswidth/6}
-\newcommand\wallspringlength{1.6cm}
+\newcommand\wallspringlength{1.2cm}
 
 \newcommand{\massonepos}{\springlength+\masswidth/2}
 \newcommand{\masstwopos}{\massonepos+\masswidth+\springlength}
@@ -92,8 +100,8 @@
 
 
 %% draw five walls (hash lines and vertical line)
-\node (wallone)  [wall, xshift=\wallonepos, yshift=\levelone,anchor=east] {};
-\draw (wallone.north east) -- (wallone.south east);
+\node (wallone)  [wall, xshift=\wallonepos, yshift=\levelone,anchor=east] {}; % hashline
+\draw (wallone.north east) -- (wallone.south east); % vertical line
 \node (walltwo)  [wall, xshift=\walltwopos, yshift=\levelone,anchor=east] {};
 \draw (walltwo.north east) -- (walltwo.south east);
 \node (wallthree)  [wall, xshift=\wallthreepos, yshift=\levelone,anchor=east] {};
@@ -104,12 +112,12 @@
 \draw (wallfive.north east) -- (wallfive.south east);
 
 %% six coupling springs  %% try using position command    at ($(M1)!.5!(M2)$)    to be halfway between
-\draw[spring] (M1.west)--(\dotswidth,0)  node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-3,i-2}$};
-\draw[spring](M2.west)--(M1.east)   node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-2,i-1}$};
-\draw[spring](M3.west)--(M2.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-1,i}$};
-\draw[spring](M4.west)--(M3.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i,i+1}$};
-\draw[spring](M5.west)--(M4.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i+1,i+2}$};
-\draw[spring](\rightdotspos,0)--(M5.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i+2,i+3}$};
+\draw[spring] (M1.west)--(\dotswidth,0)  node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-3}$};
+\draw[spring](M2.west)--(M1.east)   node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-2}$};
+\draw[spring](M3.west)--(M2.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i-1}$};
+\draw[spring](M4.west)--(M3.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i}$};
+\draw[spring](M5.west)--(M4.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i+1}$};
+\draw[spring](\rightdotspos,0)--(M5.east) node[draw=none,fill=none,font=\normalsize,midway,above] {$c_{i+2}$};
 
 %% draw right elipses
 \node (rightdots) [minimum width=\dotswidth,xshift = \rightdotspos, anchor=west] {$\ldots$};
