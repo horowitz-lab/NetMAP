@@ -2,10 +2,15 @@ Git server location:
 \\cas-fs1.uoregon.edu\Material-Science-Institute\Aleman-Lab\Group\Git Repositories\bc\CouplingDataAnalysis
 
 Git commands:
+git log --graph --all --decorate --oneline	
+	to see past commits
+
 git branch -r | grep -v '\->' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done 
-= learn about someone else's branches on the server
-git fetch --all = take a look at the files from the server (won't change local files)
-git pull --all = get the files from the server (will change your local files!)
+	= learn about someone else's branches on the server
+git fetch --all 
+	= take a look at the files from the server (won't change local files)
+git pull --all 
+	= get the files from the server (will change your local files!)
 
 git checkout get_peaks
 or
@@ -13,7 +18,8 @@ git checkout master
 
 [make edits to file]
 
-git diff = show all the changes since last stage
+git diff 
+	= show all the changes since last stage
 	If the software is 'less', can turn off linewrap with -S to avoid long binaries
 git stage *
 git commit -m "message"
