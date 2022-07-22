@@ -6,3 +6,4 @@ myheatmap.py~
 *.gz
 *.pdf
 *.aux
+*.ini
