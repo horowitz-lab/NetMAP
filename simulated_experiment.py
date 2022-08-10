@@ -8,10 +8,24 @@ Simulated spectra + SVD recovery
 """
 
 import numpy as np
-from helperfunctions import read_params
-from resonatorphysics import approx_Q, approx_width, res_freq_weak_coupling
+import pandas as pd
+import matplotlib.pyplot as plt
+from helperfunctions import \
+    read_params, store_params, make_real_iff_real, flatten
+from resonatorSVDanalysis import Zmat, \
+    normalize_parameters_1d_by_force, normalize_parameters_assuming_3d, \
+    normalize_parameters_to_m1_F_set_assuming_2d
+from resonatorstats import syserr, combinedsyserr
+from resonatorphysics import \
+    approx_Q, approx_width, res_freq_weak_coupling, complexamp
+from resonatorfrequencypicker import freqpoints
+from resonatorsimulator import calculate_spectra, SNRs, SNRknown
+from resonator_plotting import plot_SVD_results
 
 
+use_complexnoise = True # this just works best. Don't use the other.
+# also this is now defined multiple places so it will be some effort to allow it to vary again.
+# But I don't think I will want it to vary.
 
 def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
@@ -47,6 +61,94 @@ def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
         print('noiselevel:', noiselevel)
         print('stdev sigma:', complexamplitudenoisefactor*noiselevel)
 
+
+def measurementdfcalc(drive, p, 
+                      R1_amp,R2_amp,R1_phase, R2_phase, 
+                     R1_amp_noiseless,R2_amp_noiseless,
+                      R1_phase_noiseless, R2_phase_noiseless,
+                      vals_set, noiselevel):
+    table = []
+    for i in range(len(p)):
+        if False:
+            print('p: ' + str(p))
+            print('freq: ' + str(p[i]))
+            print('Measured amplitude: ' + str(R1_amp[p[i]]))
+            print('correct amplitude: ' + str(R1_amp_noiseless[p[i]]))
+            print('Syserr: ', syserr(R1_amp[p[i]], R1_amp_noiseless[p[i]]), ' %')
+        
+        SNR_R1, SNR_R2 = SNRknown(drive[p[i]],vals_set=vals_set, noiselevel=noiselevel, MONOMER=MONOMER, forceboth=forceboth)
+        table.append([drive[p[i]], R1_amp[p[i]], R1_phase[p[i]], R2_amp[p[i]], R2_phase[p[i]], 
+                      complexamp(R1_amp[p[i]],R1_phase[p[i]] ),
+                      complexamp(R2_amp[p[i]], R2_phase[p[i]]),
+                      SNR_R1, SNR_R2,
+                     syserr(R1_amp[p[i]], R1_amp_noiseless[p[i]]),
+                     (R1_phase[p[i]] - R1_phase_noiseless[p[i]]),
+                     syserr(R2_amp[p[i]],R2_amp_noiseless[p[i]]),
+                     (R2_phase[p[i]]-R2_phase_noiseless[p[i]]),
+                     ])
+
+    df = pd.DataFrame(data = table, 
+                      columns = ['drive', 'R1Amp', 'R1Phase', 'R2Amp', 'R2Phase',
+                                 'R1AmpCom', 'R2AmpCom',
+                                 'SNR_R1','SNR_R2', # less privileged
+                                 'R1Amp_syserr%', 'R1Phase_diff', 'R2Amp_syserr%', 'R2Phase_diff']) # more privileged
+    return df
+
+def compile_rsqrd(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
+              drive, K1, K2, K12, B1, B2, FD, M1, M2, MONOMER, forceboth, label = '', 
+                  oneminus = True, takelog = True): 
+        
+        theseresults = []
+        theseresults_cols = []
+        
+        # Polar coordinates and cartesian coordinates
+        rsqrdl = rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
+              drive, K1, K2, K12, B1, B2, FD, M1, M2, MONOMER = MONOMER, forceboth = forceboth)
+        expt_A1_rsqrd,expt_phase1_rsqrd,expt_A2_rsqrd,expt_phase2_rsqrd, expt_realZ1_rsqrd,expt_imZ1_rsqrd, expt_realZ2_rsqrd, expt_imZ2_rsqrd = rsqrdl
+      
+        # polar
+        theseresults.append([expt_A1_rsqrd,  expt_phase1_rsqrd])
+        theseresults_cols.append(['expt_A1_rsqrd', 'expt_phase1_rsqrd'])
+        
+        if MONOMER:
+            avg_expt_polar_rsqrd = (expt_A1_rsqrd + expt_phase1_rsqrd) / 2
+        else: 
+            expt_ampavg_rsqrd = (expt_A1_rsqrd + expt_A2_rsqrd)/2
+            theseresults.append([expt_A2_rsqrd,  expt_phase2_rsqrd, expt_ampavg_rsqrd])
+            theseresults_cols.append(['expt_A2_rsqrd', 'expt_phase2_rsqrd', 'expt_ampavg_rsqrd'])
+            avg_expt_polar_rsqrd = (expt_A1_rsqrd + expt_A2_rsqrd + expt_phase1_rsqrd + expt_phase2_rsqrd) / 4
+            
+        theseresults.append([avg_expt_polar_rsqrd])
+        theseresults_cols.append(['avg_expt_polar_rsqrd']) 
+        
+        # cartesian
+        theseresults.append([expt_realZ1_rsqrd,  expt_imZ1_rsqrd])
+        theseresults_cols.append(['expt_realZ1_rsqrd', 'expt_imZ1_rsqrd'])
+        
+        if MONOMER:
+            avg_expt_cartes_rsqrd = (expt_realZ1_rsqrd+expt_imZ1_rsqrd)/2
+        else:
+            theseresults.append([expt_realZ2_rsqrd,  expt_imZ2_rsqrd])
+            theseresults_cols.append(['expt_realZ2_rsqrd', 'expt_imZ2_rsqrd'])
+            avg_expt_cartes_rsqrd = (expt_realZ1_rsqrd + expt_imZ1_rsqrd + expt_realZ2_rsqrd + expt_imZ2_rsqrd)/4
+        theseresults.append(avg_expt_cartes_rsqrd)
+        theseresults_cols.append('avg_expt_cartes_rsqrd')
+        
+        theseresults = flatten(theseresults)
+        theseresults_cols = flatten(theseresults_cols)
+        
+        if oneminus:
+            theseresults = [1-rsqrd for rsqrd in theseresults]
+            theseresults_cols = ['1-' + name for name in theseresults_cols]
+            
+        if takelog:
+            theseresults = theseresults + [np.log10(element) for element in theseresults] # may warn if rsqrd = 1.
+            theseresults_cols = theseresults_cols + ['log ' + name for name in theseresults_cols]
+        
+        if label != '':
+            theseresults_cols = [name + '_' + label for name in theseresults_cols]
+        
+        return theseresults, theseresults_cols
 
 def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
                          drive=None,#np.linspace(minfreq,maxfreq,n), 

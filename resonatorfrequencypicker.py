@@ -7,17 +7,15 @@ Created on Tue Aug  9 16:07:55 2022
 
 import numpy as np
 import resonatorphysics
-from resonatorphysics import res_freq_weak_coupling
+from resonatorphysics import res_freq_weak_coupling, calcnarrowerW
 from helperfunctions import read_params
-#from resonatorsimulator import *
 import matplotlib.pyplot as plt
 from resonatorsimulator import \
-    curve1, theta1, curve2, theta2, realamp1, imamp1, realamp2, imamp2
+    curve1, theta1, curve2, theta2#, realamp1, imamp1, realamp2, imamp2
 from scipy.signal import find_peaks
 
-global verbose
+# default settings
 verbose = False
-global n
 n=100
 
 """ Given a limited set of available frequencies called "drive", 
@@ -147,16 +145,21 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
         morefrequencies = np.sort(np.unique(np.append(morefrequencies, evenmore)))
        
     Q1 = resonatorphysics.approx_Q(k1_set, m1_set, b1_set)
+
+    # set the fraction of points that are spread evenly in frequency (versus evenly in phase)
     if MONOMER:
         if Q1 >= 30:
             fracevenfreq = .2
         elif Q1 >=10:
             fracevenfreq = .4   
         else:
-            fracevenfreq = .5
+            fracevenfreq = .5 # such a broad peak that we might as well spread evenly in frequency
     else:
         Q2 = resonatorphysics.approx_Q(k2_set, m2_set, b2_set)
-        fracevenfreq = .2
+        if Q1 >=30 and Q2 >= 30:
+            fracevenfreq = .2
+        else:
+            fracevenfreq = .4
     if MONOMER:
         # choose length of anglelist
         m = n-3-int(fracevenfreq*n) # 3 are special angles; 20% are evenly spaced freqs
@@ -653,3 +656,53 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         if returnoptions:
             return list(freqlist),11
         return list(freqlist)
+    
+    
+# create list of all measured frequencies, centered around res (the resonance frequency), and spaced out by freqdiff
+def allmeasfreq_one_res(res, max_num_p, freqdiff):
+    newfreqplus = res
+    newfreqminus = res
+    freqlist = [res]
+    while len(freqlist) < max_num_p:
+        newfreqplus = newfreqplus + freqdiff
+        newfreqminus = newfreqminus - freqdiff
+        freqlist.append(newfreqplus)
+        freqlist.append(newfreqminus)
+    if min(freqlist) < 0:
+        print('Value less than zero!')
+        print('min(freqlist):', min(freqlist))
+    return freqlist
+
+# create list of all measured frequencies, centered around res1 and res2, respectively, and spaced out by freqdiff
+def allmeasfreq_two_res(res1, res2, max_num_p, freqdiff):
+    newfreq1plus = res1
+    newfreq1minus = res1
+    newfreq2plus = res2
+    newfreq2minus = res2
+    freqlist = [res1, res2]
+    while len(freqlist) < max_num_p:
+        newfreq1plus = newfreq1plus + freqdiff
+        newfreq1minus = newfreq1minus - freqdiff
+        newfreq2plus = newfreq2plus + freqdiff
+        newfreq2minus = newfreq2minus - freqdiff
+        freqlist.append(newfreq1plus)  ## this order might matter
+        freqlist.append(newfreq2plus)
+        freqlist.append(newfreq1minus)
+        freqlist.append(newfreq2minus)
+    if min(freqlist) < 0:
+        print('Value less than zero!')
+        print('min(freqlist):', min(freqlist))
+    return freqlist
+    
+
+
+def best_choice_freq_set(vals_set, MONOMER, forceboth, reslist, num_p = 10):
+    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+    narrowerW = calcnarrowerW(k1_set, m1_set, b1_set, MONOMER)
+    freqdiff = round(narrowerW/6,4)
+    if MONOMER:
+        measurementfreqs = allmeasfreq_one_res(reslist[0], num_p, freqdiff)
+    else:
+        measurementfreqs = allmeasfreq_two_res(reslist[0], reslist[1], num_p, freqdiff)
+        
+    return measurementfreqs[:num_p]

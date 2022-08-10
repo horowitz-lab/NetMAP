@@ -42,9 +42,6 @@ def approx_Q(k, m, b):
 def approx_width(k, m, b):
     return res_freq_weak_coupling(k, m, b) / approx_Q(k, m, b)
 
-def quadratic_formula(a, b, c):
-    return (-b + math.sqrt(b*b - 4*a*c))/(2*a), (-b - math.sqrt(b*b - 4*a*c))/(2*a)
-
 def calcnarrowerW(vals_set, MONOMER):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
     W1=approx_width(k1_set, m1_set, b1_set)

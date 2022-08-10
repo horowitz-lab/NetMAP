@@ -7,13 +7,14 @@ Created on Tue Aug  9 16:42:36 2022
 
 import numpy as np
 import sympy as sp
-from resonatorstats import rsqrdlist
 from helperfunctions import read_params, listlength
 from resonatorphysics import amp, complexamp
+import matplotlib.pyplot as plt
+from resonatorstats import rsqrd
+from resonatorphysics import A_from_Z
 
-global usenoise
+# defaults
 usenoise = True
-global use_complexnoise
 use_complexnoise = True
 
 #Define all variables for sympy
@@ -233,6 +234,79 @@ def imampmono(w, k_1, b1_, F_, m_1, e):
          return im_mono(np.array(w), k_1, b1_, F_, m_1) + e
      
      
+""" calculate rsqrd in polar and cartesian
+    using either the vals_set (privileged rsqrd) or the parameters from SVD (experimental rsqrd) """
+def rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
+              drive, k1, k2, k12, b1, b2, F, m1, m2, MONOMER, forceboth):
+    R1_amp_rsqrd = rsqrd(model = curve1(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , MONOMER, forceboth = forceboth), 
+                       data = R1_amp)
+    R1_phase_rsqrd = rsqrd(model = theta1(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , MONOMER, forceboth = forceboth), 
+                       data = R1_phase)
+    if MONOMER:
+        R2_amp_rsqrd = np.nan
+        R2_phase_rsqrd = np.nan
+    else:
+        R2_amp_rsqrd = rsqrd(model = curve2(drive, k1, k2, k12, b1, b2, F, m1, m2,0, forceboth = forceboth ), 
+                           data = R2_amp)
+        R2_phase_rsqrd = rsqrd(model = theta2(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , forceboth = forceboth), 
+                           data = R2_phase)
+    R1_real_amp_rsqrd = rsqrd(model = realamp1(drive, k1, k2, k12, b1, b2, F, m1, m2,0, MONOMER,forceboth = forceboth ), 
+                       data = R1_real_amp)
+    R1_im_amp_rsqrd = rsqrd(model = imamp1(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , MONOMER,forceboth = forceboth), 
+                       data = R1_im_amp)
+    if MONOMER:
+        R2_real_amp_rsqrd = np.nan
+        R2_im_amp_rsqrd = np.nan
+    else:
+        R2_real_amp_rsqrd = rsqrd(model = realamp2(drive, k1, k2, k12, b1, b2, F, m1, m2,0,forceboth = forceboth ), 
+                           data = R2_real_amp)
+        R2_im_amp_rsqrd = rsqrd(model = imamp2(drive, k1, k2, k12, b1, b2, F, m1, m2,0,forceboth = forceboth ), 
+                           data = R2_im_amp)
+    rsqrdlist = [R1_amp_rsqrd,R1_phase_rsqrd,R2_amp_rsqrd,R2_phase_rsqrd,R1_real_amp_rsqrd,R1_im_amp_rsqrd, R2_real_amp_rsqrd, R2_im_amp_rsqrd]
+    return rsqrdlist
+
+"""
+maxamp is the maximum amplitude, probably the amplitude at the resonance peak.
+Returns arclength in same units as amplitude.
+"""
+def arclength_between_pair(maxamp, Z1, Z2):
+    radius = maxamp/2 # radius of twirl, approximating it as a circle 
+    x1 = Z1.real
+    y1 = Z1.imag
+    x2 = Z2.real
+    y2 = Z2.imag
+    
+    ## If one is above the origin and the other is below the origin, then this code won't work at all.
+    if y1*y2 < 0:
+        return np.nan,np.nan,np.nan
+    
+    ## Convert to prime coordinates with origin at the center of the twirl
+    if y1<0:
+        # twirl is below the origin.
+        y1p = y1 + radius
+        y2p = y2 + radius
+    else:
+        # twirl is above the origin
+        y1p = y1 - radius
+        y2p = y2 - radius
+    Z1p = complex(x1, y1p)
+    Z2p = complex(x2, y2p)
+    
+    ## Calculate prime coords amplitude and phase
+    angle1p = np.angle(Z1p)
+    angle2p = np.angle(Z2p)
+    A1p = A_from_Z(Z1p) # hopefully these two amplitudes A1p and A2p are the same as each other and as radius
+    A2p = A_from_Z(Z2p)
+    
+    r = (A1p + A2p)/2 # update radius estimate to average
+    #print('Radius: ' + str(radius) + ', radius2: ' + str(A1p) + ', radius3: ' + str(A2p) )
+    theta = (angle2p-angle1p) # if I don't calculate abs() then I get signed arclength
+    theta = (theta + np.pi) % (2 * np.pi) - np.pi ## Force angle to be between -pi and pi.
+    
+    # calculate signed arclength
+    s = r*theta
+    return s, theta, r     
+     
 #define noise (randn(n,) gives a array of normally-distributed random numbers of size n)
 # legacy values from before I implemented use_complexnoise. Hold on to them; Brittany was thoughtful about choosing these.
 def amp1_noise(n, noiselevel): 
@@ -381,3 +455,101 @@ else:
         a = curve2(drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, noiselevel* amplitudenoisefactor2 * np.random.randn(n,), forceboth=forceboth)
         p = theta2(drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, noiselevel* phasenoisefactor2 * np.random.randn(n,), forceboth=forceboth)
         return a,p, complexamp(a,p)
+    
+    
+""" Simulator privilege to determine SNR. 
+    Only one (first) frequency will be used.
+"""
+def SNRknown(freq,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise, 
+             detailed = False):
+    A1,_,_= noisyR1ampphase(freq, vals_set=vals_set,noiselevel = 0,MONOMER=MONOMER,forceboth=forceboth) # privilege! no noise!
+    A2,_,_= noisyR2ampphase(freq, vals_set=vals_set,noiselevel = 0,MONOMER=MONOMER,forceboth=forceboth)
+    if use_complexnoise:
+        STD1 = noiselevel* complexamplitudenoisefactor
+        STD2 = STD1
+    else:
+        STD1 = noiselevel* amplitudenoisefactor1
+        STD2 = noiselevel* amplitudenoisefactor2
+        
+    SNR_R1 = A1 / STD1
+    SNR_R2 = A2 / STD2
+    
+    if detailed:
+        # SNR, SNR, signal, noise, signal, noise
+        return SNR_R1[0],SNR_R2[0], A1, STD1, A2, STD2 # R1 and R2 for each quantity
+    else:
+        return SNR_R1[0],SNR_R2[0]
+
+def SNRs(freqs,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise,
+         privilege=True, detailed = False):
+    SNR_R1_list = []
+    SNR_R2_list = []
+    A1list = []
+    STD1list = []
+    A2list= []
+    STD2list = []
+    
+    for freq in freqs:
+        if detailed:
+            if privilege:
+                SNR_R1,SNR_R2, A1, STD1, A2, STD2 = SNRknown(
+                    freq,vals_set, noiselevel=noiselevel,MONOMER=MONOMER, forceboth=forceboth,
+                    use_complexnoise=use_complexnoise, detailed = detailed)
+            else:
+                SNR_R1,SNR_R2, A1, STD1, A2, STD2 = SNRcalc(
+                    freq,vals_set=vals_set, noiselevel = noiselevel, MONOMER=MONOMER, forceboth=forceboth,
+                    detailed = detailed)
+            A1list.append(A1)
+            STD1list.append(STD1)
+            A2list.append(A2)
+            STD2list.append(STD2)
+        else:    
+            if privilege:
+                SNR_R1,SNR_R2 = SNRknown(freq,vals_set, noiselevel=noiselevel, forceboth=forceboth,
+                                         use_complexnoise=use_complexnoise,MONOMER=MONOMER, detailed = detailed)
+            else:
+                SNR_R1,SNR_R2 = SNRcalc(freq,vals_set=vals_set, noiselevel = noiselevel, MONOMER=MONOMER, detailed = detailed)
+        SNR_R1_list.append(SNR_R1) # list is in same order as frequencies
+        SNR_R2_list.append(SNR_R2)
+    
+    if detailed:
+        return max(SNR_R1_list),max(SNR_R2_list),min(SNR_R1_list),min(SNR_R2_list), \
+            np.mean(SNR_R1_list),np.mean(SNR_R2_list), SNR_R1_list, SNR_R2_list, \
+            np.mean(A1list), np.mean(STD1list), np.mean(A2list), np.mean(STD2list)
+            
+    else:
+        return max(SNR_R1_list),max(SNR_R2_list),min(SNR_R1_list),min(SNR_R2_list), \
+            np.mean(SNR_R1_list),np.mean(SNR_R2_list), SNR_R1_list, SNR_R2_list 
+
+""" Experimentalist style to determine SNR """
+def SNRcalc(freq,vals_set, noiselevel, MONOMER, forceboth, plot = False, ax = None, detailed = False):
+    n = 50 # number of randomized values to calculate
+    amps1 = np.zeros(n)
+    zs1 = np.zeros(n ,dtype=complex)
+    amps2 = np.zeros(n)
+    zs2 = np.zeros(n ,dtype=complex)
+    for j in range(n):
+        thisamp1, _, thisz1 = noisyR1ampphase(freq, vals_set, noiselevel, MONOMER)
+        amps1[j] = thisamp1
+        zs1[j] = thisz1[0] # multiple simulated measurements of complex amplitude Z1 (of R1)
+        thisamp2, _, thisz2 = noisyR2ampphase(freq, vals_set, noiselevel, MONOMER)
+        amps2[j] = thisamp2
+        zs2[j] = thisz2[0] # multiple simulated measurements of complex amplitude Z2 (of R2)
+    SNR_R1 = np.mean(amps1) / np.std(amps1)
+    SNR_R2 = np.mean(amps2) / np.std(amps2)
+
+    if plot:
+        if ax is not None:
+            plt.sca(ax)
+        plt.plot(np.real(zs1), np.imag(zs1), '.', alpha = .2) 
+        plt.plot(np.real(zs2), np.imag(zs2), '.', alpha = .2) 
+        plt.plot(0,0, 'o')
+        plt.gca().axis('equal');
+        plt.title('Freq: ' + str(freq) +   
+                  ', SNR R1: ' ,SNR_R1, 
+                  ', SNR R2: ' ,SNR_R2)
+    if detailed:
+        # SNR, SNR, signal, noise, signal, noise
+        return SNR_R1,SNR_R2, np.mean(amps1), np.std(amps1),  np.mean(amps2), np.std(amps2)
+    else:
+        return SNR_R1,SNR_R2
