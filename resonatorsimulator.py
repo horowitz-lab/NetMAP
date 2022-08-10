@@ -409,7 +409,9 @@ def calculate_spectra(drive, vals_set, noiselevel, MONOMER, forceboth):
         
     ## calculate privileged rsqrd
     privilegedrsqrd = rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,\
-             drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set)
+             drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set,\
+             MONOMER=MONOMER, forceboth=forceboth
+             )
         
     return R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp, privilegedrsqrd
 

@@ -88,7 +88,7 @@ def makemorefrequencies(vals_set, minfreq, maxfreq,MONOMER,forceboth,
     
     try:
         W1 = resonatorphysics.approx_width(k = k1_set, m = m1_set, b=b1_set)
-    except ZeroDivisionError as e:
+    except ZeroDivisionError:
         print('k1_set:', k1_set)
         print('m1_set:', m1_set)
         print('b1_set:', b1_set)
@@ -478,7 +478,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         if verbose:
             print('indexlist:', indexlist)
         
-        narrowerW = resonatorphysics.calcnarrowerW(k1_set, m1_set, b1_set, MONOMER)
+        narrowerW = resonatorphysics.calcnarrowerW(vals_set, MONOMER)
         
         """ a and b are indices of morefrequencies """
         def veryclose(a,b):

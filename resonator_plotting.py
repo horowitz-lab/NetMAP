@@ -11,8 +11,8 @@ import pandas as pd
 from resonatorsimulator import \
     curve1, theta1, curve2, theta2, realamp1, imamp1, realamp2, imamp2
 from resonatorphysics import complexamp, res_freq_weak_coupling
-# read_params
-# makemorefrequencies
+from helperfunctions import read_params
+from resonatorfrequencypicker import makemorefrequencies
 
 global co1
 global co2
@@ -139,11 +139,13 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         R2_amp_noiseless = curve2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
         R2_phase_noiseless = theta2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
 
+    """
     R1_real_amp_noiseless = realamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, MONOMER, forceboth=forceboth)
     R1_im_amp_noiseless = imamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, MONOMER, forceboth=forceboth)
     if not MONOMER:
         R2_real_amp_noiseless = realamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
         R2_im_amp_noiseless = imamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
+    """
     
     if labelfreqs is None:
         if len(measurementdf) <= 4:
@@ -233,17 +235,19 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
     ax5.scatter(np.real(measurementdf.R1AmpCom), np.imag(measurementdf.R1AmpCom), 
                 s=150, facecolors='none', edgecolors='k', label="points for analysis")
     if labelcounts:
-        for i in range(len(df)):
+        for i in range(len(measurementdf)):
             plt.annotate(text=str(i+1), 
-                         xy=(np.real(df.R1AmpCom), np.imag(df.R1AmpCom)) )
+                         xy=(np.real(measurementdf.R1AmpCom), 
+                             np.imag(measurementdf.R1AmpCom)) )
     if not MONOMER:
         plotcomplex(Z2, drive, 'Complex Amplitude $Z_2$', ax=ax6, label_markers=labelfreqs)
         ax6.scatter(np.real(measurementdf.R2AmpCom), np.imag(measurementdf.R2AmpCom), 
                     s=150, facecolors='none', edgecolors='k', label="points for analysis") 
         if labelcounts:
-            for i in range(len(df)):
+            for i in range(len(measurementdf)):
                 plt.annotate(text=str(i+1), 
-                             xy=(np.real(df.R2AmpCom), np.imag(df.R2AmpCom)) )
+                             xy=(np.real(measurementdf.R2AmpCom), 
+                                 np.imag(measurementdf.R2AmpCom)) )
         
     # true curves
     #morefrequencies = np.linspace(minfreq, maxfreq, num = n*10)

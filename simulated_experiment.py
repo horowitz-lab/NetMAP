@@ -19,9 +19,11 @@ from resonatorstats import syserr, combinedsyserr
 from resonatorphysics import \
     approx_Q, approx_width, res_freq_weak_coupling, complexamp
 from resonatorfrequencypicker import freqpoints
-from resonatorsimulator import calculate_spectra, SNRs, SNRknown
+from resonatorsimulator import calculate_spectra, SNRs, SNRknown, rsqrdlist
 from resonator_plotting import plot_SVD_results
 
+global complexamplitudenoisefactor
+complexamplitudenoisefactor = 0.0005
 
 use_complexnoise = True # this just works best. Don't use the other.
 # also this is now defined multiple places so it will be some effort to allow it to vary again.
@@ -66,7 +68,7 @@ def measurementdfcalc(drive, p,
                       R1_amp,R2_amp,R1_phase, R2_phase, 
                      R1_amp_noiseless,R2_amp_noiseless,
                       R1_phase_noiseless, R2_phase_noiseless,
-                      vals_set, noiselevel):
+                      vals_set, noiselevel, MONOMER, forceboth):
     table = []
     for i in range(len(p)):
         if False:
@@ -256,7 +258,9 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         df = measurementdfcalc(drive, p, 
                      R1_amp=R1_amp,R2_amp=R2_amp,R1_phase=R1_phase, R2_phase=R2_phase, 
                      R1_amp_noiseless=R1_amp_noiseless,R2_amp_noiseless=R2_amp_noiseless,
-                     R1_phase_noiseless=R1_phase_noiseless, R2_phase_noiseless=R2_phase_noiseless
+                     R1_phase_noiseless=R1_phase_noiseless, R2_phase_noiseless=R2_phase_noiseless,
+                     MONOMER=MONOMER, vals_set=vals_set, forceboth=forceboth,
+                     noiselevel = noiselevel
                      )
         Zmatrix = Zmat(df, frequencycolumn = 'drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', 
                        MONOMER=MONOMER, forceboth=forceboth, dtype=complex)
