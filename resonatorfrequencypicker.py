@@ -208,6 +208,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
         morefrequencies = np.append(morefrequencies,res2)    
         
     freqlist.extend(includefreqs)
+    morefrequencies = np.append(morefrequencies, includefreqs)
     res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
     freqlist.append(res1)
     try:
