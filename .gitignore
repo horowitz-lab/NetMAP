@@ -1,3 +1,4 @@
+*~
 myheatmap.py~
 *.pyc
 .ipynb_checkpoints/
@@ -7,3 +8,4 @@ myheatmap.py~
 *.pdf
 *.aux
 *.ini
+*.swp
