@@ -116,6 +116,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
                         morefrequencies = None, 
                         minfreq = None, maxfreq = None, 
                         staywithinlims = False,
+                        includefreqs = [],
                         callmakemore = False,
                         verbose = verbose):
     
@@ -206,6 +207,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
         freqlist.append(res2)
         morefrequencies = np.append(morefrequencies,res2)    
         
+    freqlist.extend(includefreqs)
     res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
     freqlist.append(res1)
     try:
@@ -231,10 +233,12 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
     if staywithinlims:
         while chosendrive[0] < minfreq or chosendrive[0] < 0:
             f = chosendrive.pop(0)
-            print('Warning: Unexpected frequency', f)
+            if verbose:
+                print('Warning: Unexpected frequency', f)
         while chosendrive[-1] > maxfreq:
             f = chosendrive.pop(-1)
-            print('Warning: Unexpected frequency', f)
+            if verbose:
+                print('Warning: Unexpected frequency', f)
     else:
         while chosendrive[0] < 0:
             f = chosendrive.pop(0)
@@ -478,7 +482,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         if verbose:
             print('indexlist:', indexlist)
         
-        narrowerW = resonatorphysics.calcnarrowerW(vals_set, MONOMER)
+        narrowerW = calcnarrowerW(vals_set, MONOMER)
         
         """ a and b are indices of morefrequencies """
         def veryclose(a,b):
@@ -698,7 +702,7 @@ def allmeasfreq_two_res(res1, res2, max_num_p, freqdiff):
 
 def best_choice_freq_set(vals_set, MONOMER, forceboth, reslist, num_p = 10):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
-    narrowerW = calcnarrowerW(k1_set, m1_set, b1_set, MONOMER)
+    narrowerW = calcnarrowerW(vals_set, MONOMER)
     freqdiff = round(narrowerW/6,4)
     if MONOMER:
         measurementfreqs = allmeasfreq_one_res(reslist[0], num_p, freqdiff)
