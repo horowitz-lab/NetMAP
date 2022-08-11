@@ -19,15 +19,15 @@ from resonatorstats import syserr, combinedsyserr
 from resonatorphysics import \
     approx_Q, approx_width, res_freq_weak_coupling, complexamp
 from resonatorfrequencypicker import freqpoints
-from resonatorsimulator import calculate_spectra, SNRs, SNRknown, rsqrdlist
+from resonatorsimulator import \
+    calculate_spectra, SNRs, SNRknown, rsqrdlist, arclength_between_pair
 from resonator_plotting import plot_SVD_results
 
 global complexamplitudenoisefactor
 complexamplitudenoisefactor = 0.0005
 
+global use_complexnoise
 use_complexnoise = True # this just works best. Don't use the other.
-# also this is now defined multiple places so it will be some effort to allow it to vary again.
-# But I don't think I will want it to vary.
 
 def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
