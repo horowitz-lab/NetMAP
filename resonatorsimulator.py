@@ -465,22 +465,27 @@ else:
 def SNRknown(freq,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise, 
              detailed = False):
     A1,_,_= noisyR1ampphase(freq, vals_set=vals_set,noiselevel = 0,MONOMER=MONOMER,forceboth=forceboth) # privilege! no noise!
-    A2,_,_= noisyR2ampphase(freq, vals_set=vals_set,noiselevel = 0,MONOMER=MONOMER,forceboth=forceboth)
+    A1 = A1[0]
+    if MONOMER:
+        A2 = np.nan
+    else:
+        A2,_,_= noisyR2ampphase(freq, vals_set=vals_set,noiselevel = 0,MONOMER=MONOMER,forceboth=forceboth)
+        A2 = A2[0]
     if use_complexnoise:
         STD1 = noiselevel* complexamplitudenoisefactor
         STD2 = STD1
-    else:
+    else: # legacy code
         STD1 = noiselevel* amplitudenoisefactor1
         STD2 = noiselevel* amplitudenoisefactor2
         
     SNR_R1 = A1 / STD1
     SNR_R2 = A2 / STD2
-    
+
     if detailed:
         # SNR, SNR, signal, noise, signal, noise
-        return SNR_R1[0],SNR_R2[0], A1, STD1, A2, STD2 # R1 and R2 for each quantity
+        return SNR_R1,SNR_R2, A1, STD1, A2, STD2 # R1 and R2 for each quantity
     else:
-        return SNR_R1[0],SNR_R2[0]
+        return SNR_R1,SNR_R2
 
 def SNRs(freqs,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise,
          privilege=True, detailed = False):

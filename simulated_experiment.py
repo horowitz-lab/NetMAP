@@ -106,7 +106,8 @@ def compile_rsqrd(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2
         # Polar coordinates and cartesian coordinates
         rsqrdl = rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
               drive, K1, K2, K12, B1, B2, FD, M1, M2, MONOMER = MONOMER, forceboth = forceboth)
-        expt_A1_rsqrd,expt_phase1_rsqrd,expt_A2_rsqrd,expt_phase2_rsqrd, expt_realZ1_rsqrd,expt_imZ1_rsqrd, expt_realZ2_rsqrd, expt_imZ2_rsqrd = rsqrdl
+        expt_A1_rsqrd,expt_phase1_rsqrd,expt_A2_rsqrd,expt_phase2_rsqrd, \
+            expt_realZ1_rsqrd,expt_imZ1_rsqrd, expt_realZ2_rsqrd, expt_imZ2_rsqrd = rsqrdl
       
         # polar
         theseresults.append([expt_A1_rsqrd,  expt_phase1_rsqrd])
@@ -262,8 +263,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         # 'arclength_R1' is the arclength separation 
         # between the first two frequency points on the R1 complex spectrum plot
         if len(p) < 3:
-            theseresults.append(arclength_R1,modifiedangle_R1)
-            theseresults_cols.append('arclength_R1', 'modifiedangle_R1')
+            theseresults.append([arclength_R1,modifiedangle_R1])
+            theseresults_cols.append(['arclength_R1', 'modifiedangle_R1'])
             
         theseresults.append(drive[p])
         theseresults_cols.append('frequencies')
@@ -275,7 +276,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                      MONOMER=MONOMER, vals_set=vals_set, forceboth=forceboth,
                      noiselevel = noiselevel
                      )
-        Zmatrix = Zmat(df, frequencycolumn = 'drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', 
+        Zmatrix = Zmat(df, frequencycolumn = 'drive', 
+                       complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', 
                        MONOMER=MONOMER, forceboth=forceboth, dtype=complex)
         u, s, vh = np.linalg.svd(Zmatrix, full_matrices = True)
         vh = make_real_iff_real(vh)
@@ -303,8 +305,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
 
         # normalize parameters vector to the force, assuming 1D nullspace
         allparameters = normalize_parameters_1d_by_force([M1, M2, B1, B2, K1, K2, K12, FD], F_set)
-        # recast as real, not complex # but real gets a warning
-        allparameters = [thisparameter.real for thisparameter in allparameters if thisparameter.imag == 0 ]
+
         M1, M2, B1, B2, K1, K2, K12, FD = allparameters
         
         if MONOMER:
@@ -358,7 +359,9 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             theseresults_cols.append(['K1syserr%_1D', 'B1syserr%_1D','FDsyserr%_1D', 'M1syserr%_1D'])
         else:
             theseresults.append([K1syserr,K2syserr, K12syserr, B1syserr, B2syserr, FDsyserr, M1syserr, M2syserr])
-            theseresults_cols.append(['K1syserr%_1D','K2syserr%_1D', 'K12syserr%_1D', 'B1syserr%_1D', 'B2syserr%_1D', 'FDsyserr%_1D', 'M1syserr%_1D', 'M2syserr%_1D'])
+            theseresults_cols.append(['K1syserr%_1D','K2syserr%_1D', 'K12syserr%_1D', 
+                                      'B1syserr%_1D', 'B2syserr%_1D', 'FDsyserr%_1D', 
+                                      'M1syserr%_1D', 'M2syserr%_1D'])
         theseresults.append([avgsyserr, rmssyserr, maxsyserr, Lavgsyserr])
         theseresults_cols.append(['avgsyserr%_1D', 'rmssyserr%_1D', 'maxsyserr%_1D', 'Lavgsyserr%_1D'])
         theseresults.append([np.log10(avgsyserr), np.log10(rmssyserr), np.log10(maxsyserr), np.log10(Lavgsyserr)])
@@ -376,7 +379,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         #    normalize_parameters_to_m1_m2_assuming_2d(vh, verbose = False, m1_set = m1_set, m2_set = m2_set)
         el_2D, coefa, coefb = \
             normalize_parameters_to_m1_F_set_assuming_2d(vh, MONOMER,verbose = False, m1_set = m1_set, F_set = F_set)
-        normalizationpair = 'm1 and F'
+        #normalizationpair = 'm1 and F'
         
         if MONOMER:
             theseresults.append(el_2D)
@@ -505,7 +508,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             theseresults_cols.append(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D',
                                       'K2syserr%_3D','K12syserr%_3D','B2syserr%_3D','M2syserr%_3D'])
 
-        avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D = combinedsyserr(syserrs_3D,3) # subtract 3 degrees of freedom for 3D nullspace
+        avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D = \
+            combinedsyserr(syserrs_3D,3) # subtract 3 degrees of freedom for 3D nullspace
         theseresults.append([avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D])
         theseresults_cols.append(['avgsyserr%_3D', 'rmssyserr%_3D', 'maxsyserr%_3D', 'Lavgsyserr%_3D'])
         theseresults.append([np.log10(avgsyserr_3D), np.log10(rmssyserr_3D), np.log10(maxsyserr_3D), np.log10(Lavgsyserr_3D)])
