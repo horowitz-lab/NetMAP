@@ -181,11 +181,18 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         np.mean(SNR_R1_list),np.mean(SNR_R2_list), SNR_R1_list, SNR_R2_list, \
         np.mean(A1list), np.mean(STD1list), np.mean(A2list), np.mean(STD2list)"""
 
+    ## privileged SNR and amplitude
     maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2,meanSNR_R1,meanSNR_R2, SNR_R1_list, SNR_R2_list, \
         A1, STD1, A2, STD2 = SNRs( \
             drive[p],vals_set, noiselevel=noiselevel, MONOMER=MONOMER,forceboth=forceboth, 
-            use_complexnoise=use_complexnoise, detailed = True)
+            use_complexnoise=use_complexnoise, detailed = True,
+            privilege = True)
 
+    if len(p) <= 3:
+        ZprivR1f1 = R1_real_amp_noiseless[p[0]] + R1_im_amp_noiseless[p[0]]*1j
+        ZprivR1f2 = R1_real_amp_noiseless[p[1]] + R1_im_amp_noiseless[p[1]]*1j
+        ## R1 arclength, assuming freq1 is at resonance1
+        [arclength_R1, modifiedangle_R1, rad] = arclength_between_pair(A1, ZprivR1f1, ZprivR1f2)
     
     first = True
     results = []
@@ -251,6 +258,12 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             if not MONOMER:
                 theseresults.append(R2_phase_noiseless[p[1]] - R2_phase_noiseless[p[0]])
                 theseresults_cols.append('R2_phase_diff')
+        
+        # 'arclength_R1' is the arclength separation 
+        # between the first two frequency points on the R1 complex spectrum plot
+        if len(p) < 3:
+            theseresults.append(arclength_R1,modifiedangle_R1)
+            theseresults_cols.append('arclength_R1', 'modifiedangle_R1')
             
         theseresults.append(drive[p])
         theseresults_cols.append('frequencies')
