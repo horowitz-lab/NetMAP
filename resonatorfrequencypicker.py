@@ -92,6 +92,7 @@ def makemorefrequencies(vals_set, minfreq, maxfreq,MONOMER,forceboth,
         print('k1_set:', k1_set)
         print('m1_set:', m1_set)
         print('b1_set:', b1_set)
+        W1 = (maxfreq - minfreq)/5
     morefrequencies = np.append(morefrequencies, np.linspace(res1-W1, res1+W1, num = 7*n))
     morefrequencies = np.append(morefrequencies, np.linspace(res1-2*W1, res1+2*W1, num = 10*n)) 
     if not MONOMER:
