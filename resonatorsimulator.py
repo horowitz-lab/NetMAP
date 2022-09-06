@@ -501,23 +501,33 @@ def SNRs(freqs,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_co
             if privilege:
                 SNR_R1,SNR_R2, A1, STD1, A2, STD2 = SNRknown(
                     freq,vals_set, noiselevel=noiselevel,MONOMER=MONOMER, forceboth=forceboth,
-                    use_complexnoise=use_complexnoise, detailed = detailed)
+                    use_complexnoise=use_complexnoise, detailed = True)
             else:
                 SNR_R1,SNR_R2, A1, STD1, A2, STD2 = SNRcalc(
                     freq,vals_set=vals_set, noiselevel = noiselevel, MONOMER=MONOMER, forceboth=forceboth,
-                    detailed = detailed)
+                    detailed = True)
             A1list.append(A1)
             STD1list.append(STD1)
             A2list.append(A2)
             STD2list.append(STD2)
-        else:    
+        else:    # detailed = False
             if privilege:
                 SNR_R1,SNR_R2 = SNRknown(freq,vals_set, noiselevel=noiselevel, forceboth=forceboth,
-                                         use_complexnoise=use_complexnoise,MONOMER=MONOMER, detailed = detailed)
+                                         use_complexnoise=use_complexnoise,MONOMER=MONOMER, detailed = False)
             else:
-                SNR_R1,SNR_R2 = SNRcalc(freq,vals_set=vals_set, noiselevel = noiselevel, MONOMER=MONOMER, detailed = detailed)
+                SNR_R1,SNR_R2 = SNRcalc(freq,vals_set=vals_set, 
+                                        noiselevel = noiselevel, MONOMER=MONOMER, 
+                                        forceboth=forceboth,
+                                        detailed = False)
         SNR_R1_list.append(SNR_R1) # list is in same order as frequencies
         SNR_R2_list.append(SNR_R2)
+    
+    if False: # especially verbose
+        print('SNR_R1_list', SNR_R1_list)
+        print('SNR_R2_list', SNR_R2_list)
+        print('mean(SNR_R1_list)', np.mean(SNR_R1_list))
+        print('mean(SNR_R2_list)', np.mean(SNR_R2_list))
+        
     
     if detailed:
         return max(SNR_R1_list),max(SNR_R2_list),min(SNR_R1_list),min(SNR_R2_list), \
