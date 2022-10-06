@@ -63,7 +63,7 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                          xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
     ax.set_xlabel('Freq (rad/s)')
     
-    plt.legend()
+    plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1.05), ncol=1,)
     
     if MONOMER or labelfreqs is None or labelfreqs == []:
         return;
