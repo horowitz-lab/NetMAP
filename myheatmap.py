@@ -1,6 +1,6 @@
 """
 My heatmap functions similarly to seaborn.heatmap but it makes a plot with
-numeric axes.
+numeric axes. Viva Horowitz.
 """
 import matplotlib.pyplot as plt 
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
