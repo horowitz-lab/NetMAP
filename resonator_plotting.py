@@ -37,15 +37,23 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   dfcolumn,
                   ylabel,
                   title, labelfreqs, 
-                  measurementdf, ax, unitsofpi = False, labelcounts = False,):
+                  measurementdf, ax, unitsofpi = False, labelcounts = False,
+                  legend = False, 
+                  cmap = 'rainbow',s=50, 
+                  rainbow_colors = True):
     if unitsofpi:
         divisor = np.pi
     else:
         divisor = 1
     ax.plot(morefrequencies, noiseless/divisor, 
             '-', color = 'gray', label='set values') # intended curves
-    ax.plot(drive, noisydata/divisor, 
-            '.', color = datacolor, alpha = alpha_data, label='simulated data') # simulated data
+    
+    if rainbow_colors:
+        ax.scatter(drive, noisydata/divisor, 
+                        s=s,c = drive, cmap = cmap, label = 'simulated data' ) # s is marker size
+    else:
+        ax.plot(drive, noisydata/divisor, 
+                '.', color = datacolor, alpha = alpha_data, label='simulated data') # simulated data
     ax.plot(morefrequencies, 
             curvefunction(morefrequencies, K1, K2, K12, B1, B2, FD, M1, M2, 
                           0, MONOMER=MONOMER, forceboth=forceboth)/divisor, 
@@ -63,7 +71,8 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                          xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
     ax.set_xlabel('Freq (rad/s)')
     
-    plt.legend()
+    if legend:
+        plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1.05), ncol=1,)
     
     if MONOMER or labelfreqs is None or labelfreqs == []:
         return;
@@ -123,7 +132,8 @@ measurementdf has a row for each measured frequency
 columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
-                     vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor):
+                     vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
+                     legend = False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
         
     Z1 = complexamp(R1_amp, R1_phase)
@@ -178,6 +188,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ylabel = 'Amplitude $A$ (m)\n',
                 title = 'Simulated R1 Spectrum', labelfreqs=labelfreqs, labelcounts = labelcounts,
                 measurementdf = measurementdf,
+                legend = legend,
                 ax = ax1) 
         
     spectrum_plot(drive=drive, noisydata=R1_phase,
@@ -188,7 +199,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 dfcolumn = 'R1Phase',
                 ylabel = 'Phase $\delta$ ($\pi$)', unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
-                  measurementdf = measurementdf,
+                measurementdf = measurementdf,
+                legend = legend,
                 ax = ax2) 
 
     if not MONOMER:
@@ -200,7 +212,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 dfcolumn = 'R2Amp',
                 ylabel = 'Amplitude $A$ (m)\n', unitsofpi = False,
                 title = 'Simulated R2 Spectrum', labelfreqs=labelfreqs,
-                      measurementdf = measurementdf,labelcounts = labelcounts,
+                measurementdf = measurementdf,labelcounts = labelcounts,
+                legend = legend,
                 ax = ax3) 
         
         spectrum_plot(drive=drive, noisydata=R2_phase,
@@ -211,7 +224,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 dfcolumn = 'R2Phase',
                 ylabel = 'Phase $\delta$ ($\pi$)', unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
-                      measurementdf = measurementdf,
+                measurementdf = measurementdf,
+                legend = legend,
                 ax = ax4) 
 
     plt.tight_layout()    
@@ -231,7 +245,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                  imamp2(morefrequencies, K1, K2, K12, B1, B2, FD, M1, M2, 0,forceboth=forceboth,), 
                  '--', color='black', alpha = alpha_model)
 
-    plotcomplex(Z1, drive, 'Complex Amplitude $Z_1$', ax=ax5, label_markers=labelfreqs)
+    plotcomplex(Z1, drive, 'Complex Amplitude $Z_1$', ax=ax5, 
+                label_markers=labelfreqs )
     ax5.scatter(np.real(measurementdf.R1AmpCom), np.imag(measurementdf.R1AmpCom), 
                 s=150, facecolors='none', edgecolors='k', label="points for analysis")
     if labelcounts:
@@ -269,10 +284,11 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         axs = [ax1, ax2, ax5]
     else:
         axs = [ax1, ax2, ax3, ax4, ax5, ax6]
-        
-    for ax in axs:
-        plt.sca(ax)
-        plt.legend()
+       
+    if legend:
+        for ax in axs:
+            plt.sca(ax)
+            plt.legend()
     return axs
 
   
