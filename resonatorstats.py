@@ -8,8 +8,13 @@ Created on Tue Aug  9 16:08:13 2022
 import numpy as np
 import matplotlib.pyplot as plt
 
-def syserr(x_found,x_set):
-    return 100*abs(x_found-x_set)/x_set
+def syserr(x_found,x_set, absval = True):
+    se = 100*(x_found-x_set)/x_set
+    if absval:
+        return abs(se)
+    else:
+        return se
+
 
 def combinedsyserr(syserrs, notdof): # notdof = not degrees of freedom, meaning the count of fixed parameters.
     assert len(syserrs) > 0
