@@ -153,6 +153,19 @@ def compile_rsqrd(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2
         
         return theseresults, theseresults_cols
 
+def assert_results_length(results, columns):
+    try: 
+        assert len(results) == len(columns)
+    except:
+        print("len(results)",  len(results))
+        print("len(columns)", len(columns))
+    try: 
+        assert len(flatten(results)) == len(flatten(columns))
+    except:
+        print('Unequal!')
+        print( "len(flatten(results))",  len(flatten(results)) )
+        print( "len(flatten(columns))", len(flatten(columns)) )
+
 def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
                          drive=None,#np.linspace(minfreq,maxfreq,n), 
                          verbose = False, repeats=1,  labelcounts = False,
@@ -249,7 +262,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                 theseresults_cols.append('R1_amp_meas' + str(i+1))
                 if not MONOMER:
                     theseresults.append(R2_amp[p[i]])
-                    theseresults_cols.append('R2_amp_meas' + str(i+1))                
+                    theseresults_cols.append('R2_amp_meas' + str(i+1))   
+        assert_results_length(results=theseresults,columns = theseresults_cols)
         
         if len(p) == 2: # two frequency measurements
             theseresults.append(drive[p[1]] - drive[p[0]])
@@ -300,6 +314,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         theseresults.append([s[-1], s[-2]])
         theseresults_cols.append(['smallest singular value', 'second smallest singular value'])
         
+        assert_results_length(results=theseresults,columns = theseresults_cols)
+
         ## 1D NULLSPACE
         M1, M2, B1, B2, K1, K2, K12, FD = read_params(vh[-1], MONOMER) # the 7th singular value is the smallest one (closest to zero)
 
@@ -553,6 +569,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         #theseresults_cols.append([ 'num frequency points','frequencies'])
 
         results.append(flatten(theseresults))
+        assert_results_length(results=theseresults,columns = theseresults_cols)
+
 
     assert (len(flatten(theseresults)) == len(flatten(theseresults_cols)))
     resultsdf = pd.DataFrame(
