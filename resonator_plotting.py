@@ -14,6 +14,7 @@ from resonatorphysics import complexamp, res_freq_weak_coupling
 from helperfunctions import read_params
 from resonatorfrequencypicker import makemorefrequencies
 import seaborn as sns
+from datetime import datetime
 
 global co1
 global co2
@@ -143,7 +144,7 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
-                     legend = False, context = None):
+                     legend = False, context = None, saving= False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
         
     Z1 = complexamp(R1_amp, R1_phase)
@@ -264,6 +265,11 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ax = ax4) 
 
     plt.tight_layout()    
+    if saving:
+        datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
+        filename = datestr + 'spectrum' 
+        plt.savefig(filename + '.pdf')
+        plt.savefig(filename + '.png')
 
     if context == 'paper':
         figsize2 = (figwidth, (1/2)*figwidth)
@@ -327,8 +333,6 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                  imamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
                         0,MONOMER=MONOMER, forceboth=forceboth,), 
                  color='gray', alpha = .5)
-
-    plt.tight_layout()
     
     if MONOMER:
         axs = [ax1, ax2, ax5]
@@ -339,6 +343,14 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         for ax in axs:
             plt.sca(ax)
             plt.legend()
+            
+    plt.tight_layout()
+            
+    if saving:
+            filename = datestr + 'spectrumZ' 
+            plt.savefig(filename + '.pdf')
+            plt.savefig(filename + '.png')
+            
     return axs
 
   
