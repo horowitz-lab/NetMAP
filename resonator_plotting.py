@@ -13,22 +13,29 @@ from resonatorsimulator import \
 from resonatorphysics import complexamp, res_freq_weak_coupling
 from helperfunctions import read_params
 from resonatorfrequencypicker import makemorefrequencies
+import seaborn as sns
 
 global co1
 global co2
 global co3
-global datacolor
+global datacolor # not actually used anymore
+global figwidth 
 
 co1 = 'C0'
 co2 = 'C1'
 co3 = 'C2'
-datacolor = 'C4'
+datacolor = 'C4' 
+maxfigwidth = 7.086 # 180 mm
+figwidth = maxfigwidth/2
+
+
 
 #Plots of singular value decomposition
 
 alpha_circles = .8 ## set transparency for the black circles around the measurement values
 alpha_model = .8   ## set transparency for the dashed black line
 alpha_data = .8
+
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results """
 def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
@@ -39,8 +46,9 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   title, labelfreqs, 
                   measurementdf, ax, unitsofpi = False, labelcounts = False,
                   legend = False, 
-                  cmap = 'rainbow',s=50, 
+                  cmap = 'rainbow',s=50, bigcircle = 150,
                   rainbow_colors = True):
+    
     if unitsofpi:
         divisor = np.pi
     else:
@@ -64,8 +72,9 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
 
     #For loop to plot R1 amplitude values from table
     for i in range(measurementdf.shape[0]):
-        ax.plot(measurementdf.drive[i], (measurementdf[dfcolumn])[i]/divisor, 
-                'ko', fillstyle='none', markeredgewidth = 3, alpha = alpha_circles)
+        ax.scatter(measurementdf.drive[i], (measurementdf[dfcolumn])[i]/divisor, 
+                facecolors='none', edgecolors='k', label="points for analysis",
+                s=bigcircle,alpha = alpha_circles)
         if labelcounts:   # number the measurements in the order they were added (just for vary_num_p)        
             plt.annotate(text=str(i+1), 
                          xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
@@ -100,7 +109,8 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
                 label_markers=[],  ax=plt.gca(), s=50, cmap = 'rainbow'):
     assert len(complexZ) == len(parameter)
     plt.sca(ax)
-    sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter, cmap = cmap, label = 'simulated data' ) # s is marker size
+    sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter,
+                    cmap = cmap, label = 'simulated data' ) # s is marker size
     cbar = plt.colorbar(sc)
     cbar.outline.set_visible(False)
     cbar.set_label(cbar_label)
@@ -133,7 +143,7 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
-                     legend = False):
+                     legend = False, context = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
         
     Z1 = complexamp(R1_amp, R1_phase)
@@ -173,11 +183,36 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
     except:
         pass
     
+    if context:
+        sns.set_context(context)
+        
+    figratio = 5/(9.5)
+    if context == 'paper':
+        figsize = (figwidth, figratio * figwidth )
+        s = 3
+        bigcircle = 45
+        amplabel = '$A\;$(m)'
+        phaselabel = '$\delta\;(\pi)$'
+        titleR1 = ''
+        titleR2 = ''
+    else:
+        figsize = (9.5,5)
+        s=50
+        bigcircle = 150
+        amplabel = 'Amplitude $A$ (m)\n'
+        phaselabel = 'Phase $\delta$ ($\pi$)'
+        titleR1= 'Simulated R1 Spectrum'
+        titleR2 = 'Simulated R2 Spectrum'
+    if MONOMER:
+        figsize[0] = figsize[0]/2
+    
     #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
     if MONOMER:
-        fig, ((ax1),(ax2)) = plt.subplots(2,1, figsize = (9.5/2,5), gridspec_kw={'hspace': 0}, sharex = 'all' )
+        fig, ((ax1),(ax2)) = plt.subplots(2,1, 
+            figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
     else:
-        fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2, figsize = (9.5,5), gridspec_kw={'hspace': 0}, sharex = 'all' )
+        fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
+            figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
 
     spectrum_plot(drive=drive, noisydata=R1_amp,
                 morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
@@ -185,22 +220,22 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
                 MONOMER=MONOMER, forceboth=forceboth,
                 dfcolumn = 'R1Amp',
-                ylabel = 'Amplitude $A$ (m)\n',
-                title = 'Simulated R1 Spectrum', labelfreqs=labelfreqs, labelcounts = labelcounts,
+                ylabel = amplabel,
+                title = titleR1, labelfreqs=labelfreqs, labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend,
+                legend = legend, s=s, bigcircle = bigcircle,
                 ax = ax1) 
         
     spectrum_plot(drive=drive, noisydata=R1_phase,
                 morefrequencies=morefrequencies, noiseless=R1_phase_noiseless, 
                 curvefunction = theta1,
                 K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
-                  MONOMER=MONOMER, forceboth=forceboth,
+                MONOMER=MONOMER, forceboth=forceboth,
                 dfcolumn = 'R1Phase',
-                ylabel = 'Phase $\delta$ ($\pi$)', unitsofpi = True,
+                ylabel = phaselabel, unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend,
+                legend = legend,s=s,bigcircle = bigcircle,
                 ax = ax2) 
 
     if not MONOMER:
@@ -208,12 +243,12 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 morefrequencies=morefrequencies, noiseless=R2_amp_noiseless, 
                 curvefunction = curve2,
                 K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
-                      MONOMER=MONOMER, forceboth=forceboth,
+                MONOMER=MONOMER, forceboth=forceboth,
                 dfcolumn = 'R2Amp',
-                ylabel = 'Amplitude $A$ (m)\n', unitsofpi = False,
-                title = 'Simulated R2 Spectrum', labelfreqs=labelfreqs,
+                ylabel = amplabel, unitsofpi = False,
+                title = titleR2, labelfreqs=labelfreqs,
                 measurementdf = measurementdf,labelcounts = labelcounts,
-                legend = legend,
+                legend = legend,s=s,bigcircle = bigcircle,
                 ax = ax3) 
         
         spectrum_plot(drive=drive, noisydata=R2_phase,
@@ -222,18 +257,23 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
                       MONOMER=MONOMER, forceboth=forceboth,
                 dfcolumn = 'R2Phase',
-                ylabel = 'Phase $\delta$ ($\pi$)', unitsofpi = True,
+                ylabel = phaselabel, unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend,
+                legend = legend,s=s,bigcircle = bigcircle,
                 ax = ax4) 
 
     plt.tight_layout()    
 
-    if MONOMER:
-        fig2, ax5 = plt.subplots(1,1, figsize = (10/2,4))
+    if context == 'paper':
+        figsize2 = (figwidth, (1/2)*figwidth)
     else:
-        fig2, ((ax5, ax6)) = plt.subplots(1,2, figsize = (10,4))
+        figsize2 = (10, 4)
+    if MONOMER:
+        figsize2[0] = figsize2[0]/2
+        fig2, ax5 = plt.subplots(1,1, figsize = figsize2)
+    else:
+        fig2, ((ax5, ax6)) = plt.subplots(1,2, figsize = figsize2)
     
     # svd curves
     #morefrequencies = np.linspace(minfreq, maxfreq, num = n*10)
@@ -245,19 +285,29 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                  imamp2(morefrequencies, K1, K2, K12, B1, B2, FD, M1, M2, 0,forceboth=forceboth,), 
                  '--', color='black', alpha = alpha_model)
 
-    plotcomplex(Z1, drive, 'Complex Amplitude $Z_1$', ax=ax5, 
+    if context == 'paper':
+        title1 = '$Z_1$'
+        title2 = '$Z_2$'
+        #cbar_label = '$\omega$ (rad/s)'
+        cbar_label = ''
+    else:
+        title1 = 'Complex Amplitude $Z_1$'
+        title2 = 'Complex Amplitude $Z_2$'
+        cbar_label = 'Frequency (rad/s)'
+    plotcomplex(Z1, drive, title1, ax=ax5, cbar_label=cbar_label,s=s,
                 label_markers=labelfreqs )
     ax5.scatter(np.real(measurementdf.R1AmpCom), np.imag(measurementdf.R1AmpCom), 
-                s=150, facecolors='none', edgecolors='k', label="points for analysis")
+                s=bigcircle, facecolors='none', edgecolors='k', label="points for analysis")
     if labelcounts:
         for i in range(len(measurementdf)):
             plt.annotate(text=str(i+1), 
                          xy=(np.real(measurementdf.R1AmpCom), 
                              np.imag(measurementdf.R1AmpCom)) )
     if not MONOMER:
-        plotcomplex(Z2, drive, 'Complex Amplitude $Z_2$', ax=ax6, label_markers=labelfreqs)
+        plotcomplex(Z2, drive,title2, ax=ax6, cbar_label=cbar_label,s=s,
+                    label_markers=labelfreqs)
         ax6.scatter(np.real(measurementdf.R2AmpCom), np.imag(measurementdf.R2AmpCom), 
-                    s=150, facecolors='none', edgecolors='k', label="points for analysis") 
+                    s=bigcircle, facecolors='none', edgecolors='k', label="points for analysis") 
         if labelcounts:
             for i in range(len(measurementdf)):
                 plt.annotate(text=str(i+1), 

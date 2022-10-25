@@ -156,7 +156,8 @@ def compile_rsqrd(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2
 def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
                          drive=None,#np.linspace(minfreq,maxfreq,n), 
                          verbose = False, repeats=1,  labelcounts = False,
-                         noiseless_spectra = None, noisy_spectra = None, freqnoise = False):
+                         noiseless_spectra = None, noisy_spectra = None, freqnoise = False,
+                         context = None):
     
     if verbose:
         print('Running simulated_experiment()', repeats, 'times.')
@@ -317,7 +318,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         if verbose and first:
             print("1D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
-                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts) 
+                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts,
+                             context = context) 
             plt.show()
 
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
@@ -393,7 +395,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             print("2D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
                              K1_2D, K2_2D, K12_2D, B1_2D, B2_2D, FD_2D, M1_2D, M2_2D, vals_set,
-                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts)
+                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts,
+                             context = context)
             plt.show()
                             
         theseresults.append(any(x<0 for x in el_2D))
@@ -464,7 +467,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             print("3D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
                              K1_3D, K2_3D, K12_3D, B1_3D, B2_3D, FD_3D, M1_3D, M2_3D, vals_set,
-                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts)
+                             MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts,
+                             context = context)
             plt.show()
             first = False
                             
