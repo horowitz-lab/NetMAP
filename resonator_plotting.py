@@ -144,7 +144,7 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
-                     legend = False, context = None, saving= False):
+                     legend = False, context = None, overlay = False, saving= False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
         
     Z1 = complexamp(R1_amp, R1_phase)
@@ -211,13 +211,22 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         titleR1= 'Simulated R1 Spectrum'
         titleR2 = 'Simulated R2 Spectrum'
     
-    #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
-    if MONOMER: # *** in future might want to include the circular plot in this
-        fig, ((ax1),(ax2)) = plt.subplots(2,1, 
-            figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+    if overlay:
+        if MONOMER:
+            fig, ax1 = plt.subplots(1,1,figsize = figsize)
+        else:
+            fig, (ax1, ax3) = plt.subplots(1,2, figsize)
+            ax4 = ax3
+        ax2 = ax1 ## probably not ok
+        
     else:
-        fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
-            figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+        #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
+        if MONOMER: # *** in future might want to include the circular plot in this
+            fig, ((ax1),(ax2)) = plt.subplots(2,1, 
+                figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+        else:
+            fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
+                figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
 
     spectrum_plot(drive=drive, noisydata=R1_amp,
                 morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
