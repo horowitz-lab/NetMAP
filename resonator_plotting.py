@@ -189,7 +189,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         
     figratio = 5/(9.5)
     if context == 'paper':
-        figsize = (figwidth, figratio * figwidth )
+        if MONOMER:
+            figsize = (figwidth/2, figratio * figwidth )
+        else:
+            figsize = (figwidth, figratio * figwidth )
         s = 3
         bigcircle = 45
         amplabel = '$A\;$(m)'
@@ -197,18 +200,19 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         titleR1 = ''
         titleR2 = ''
     else:
-        figsize = (9.5,5)
+        if MONOMER:
+            figsize = (9.5/2,5)
+        else:
+            figsize = (9.5,5)
         s=50
         bigcircle = 150
         amplabel = 'Amplitude $A$ (m)\n'
         phaselabel = 'Phase $\delta$ ($\pi$)'
         titleR1= 'Simulated R1 Spectrum'
         titleR2 = 'Simulated R2 Spectrum'
-    if MONOMER:
-        figsize[0] = figsize[0]/2
     
     #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
-    if MONOMER:
+    if MONOMER: # *** in future might want to include the circular plot in this
         fig, ((ax1),(ax2)) = plt.subplots(2,1, 
             figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
     else:
@@ -272,11 +276,16 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         plt.savefig(filename + '.png')
 
     if context == 'paper':
-        figsize2 = (figwidth, (1/2)*figwidth)
+        if MONOMER:
+            figsize2 = (figwidth/2, figwidth/2.2) # what would best fit a circle?
+        else:
+            figsize2 = (figwidth, (1/2)*figwidth)
     else:
-        figsize2 = (10, 4)
+        if MONOMER:
+            figsize2 = (5,4)
+        else:
+            figsize2 = (10, 4)
     if MONOMER:
-        figsize2[0] = figsize2[0]/2
         fig2, ax5 = plt.subplots(1,1, figsize = figsize2)
     else:
         fig2, ((ax5, ax6)) = plt.subplots(1,2, figsize = figsize2)
