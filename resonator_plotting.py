@@ -11,6 +11,7 @@ import pandas as pd
 from resonatorsimulator import \
     curve1, theta1, curve2, theta2, realamp1, imamp1, realamp2, imamp2
 from resonatorphysics import complexamp, res_freq_weak_coupling
+import helperfunctions
 from helperfunctions import read_params
 from resonatorfrequencypicker import makemorefrequencies
 import seaborn as sns
@@ -281,8 +282,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
     if saving:
         datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
         filename = datestr + 'spectrum' + labelname
-        plt.savefig(filename + '.pdf')
-        plt.savefig(filename + '.png')
+        helperfunctions.savefigure(filename)
 
     if context == 'paper':
         if MONOMER:
@@ -366,8 +366,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             
     if saving:
             filename = datestr + 'spectrumZ' 
-            plt.savefig(filename + '.pdf')
-            plt.savefig(filename + '.png')
+            helperfunctions.savefigure(filename)
             
     return axs
 
