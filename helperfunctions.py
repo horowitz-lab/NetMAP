@@ -5,6 +5,7 @@ Created on Tue Aug  9 16:08:31 2022
 @author: vhorowit
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 try:
     import winsound
@@ -58,6 +59,11 @@ def read_params(vect, MONOMER):
         [M1, M2, B1, B2, K1, K2, K12, FD] = vect
     return [M1, M2, B1, B2, K1, K2, K12, FD]
 
+def savefigure(savename):
+    plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight')
+    plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight')
+    plt.savefig(savename + '.png', dpi = 600, bbox_inches='tight',)
+    print("Saved:\n", os.path.join(savefolder,savename) + '.png')
 
 
 def beep():

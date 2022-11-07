@@ -170,7 +170,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                          drive=None,#np.linspace(minfreq,maxfreq,n), 
                          verbose = False, repeats=1,  labelcounts = False,
                          noiseless_spectra = None, noisy_spectra = None, freqnoise = False, overlay=False,
-                         context = None):
+                         context = None, saving = False):
+
     
     if verbose:
         print('Running simulated_experiment()', repeats, 'times.')
@@ -335,7 +336,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             print("1D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
-                             context = context) 
+                             context = context, saving = saving, labelname = '1D') 
             plt.show()
 
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
@@ -412,7 +413,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
                              K1_2D, K2_2D, K12_2D, B1_2D, B2_2D, FD_2D, M1_2D, M2_2D, vals_set,
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay=overlay,
-                             context = context)
+                             context = context,saving = saving, labelname = '2D')
+
             plt.show()
                             
         theseresults.append(any(x<0 for x in el_2D))
@@ -484,7 +486,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
                              K1_3D, K2_3D, K12_3D, B1_3D, B2_3D, FD_3D, M1_3D, M2_3D, vals_set,
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay=overlay,
-                             context = context)
+                             context = context,saving = saving, labelname = '3D')
+
             plt.show()
             first = False
                             
