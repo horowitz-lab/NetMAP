@@ -5,12 +5,17 @@ Created on Tue Aug  9 16:08:31 2022
 @author: vhorowit
 """
 
+import os
+import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 try:
     import winsound
 except:
     pass
+
+def datestring():
+    return datetime.datetime.today().strftime('%Y-%m-%d %H;%M;%S')
 
 ## source: https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(list_of_lists):
