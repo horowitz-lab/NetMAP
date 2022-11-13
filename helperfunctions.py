@@ -68,7 +68,7 @@ def savefigure(savename):
     plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight')
     plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight')
     plt.savefig(savename + '.png', dpi = 600, bbox_inches='tight',)
-    print("Saved:\n", os.path.join(savefolder,savename) + '.png')
+    print("Saved:\n", savename + '.png')
 
 
 def beep():
