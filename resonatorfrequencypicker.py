@@ -17,6 +17,7 @@ from scipy.signal import find_peaks
 # default settings
 verbose = False
 n=100
+debug = False
 
 """ Given a limited set of available frequencies called "drive", 
 find those indices that most closely correspond to the desired frequencies. 
@@ -301,13 +302,20 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
     if not MONOMER:
         approx_res_freqs.append(res_freq_weak_coupling(k2_set, m2_set, b2_set))
         
+    for f in approx_res_freqs:
+        if f > maxfreq or f < minfreq:
+            print('Warning! Check minfreq and maxfreq')
+            print('minfreq', minfreq)
+            print('maxfreq', maxfreq)
+            print('Approx resonant freq', f)
+        
     if morefrequencies is None:
         morefrequencies = makemorefrequencies(vals_set=vals_set, minfreq=minfreq, maxfreq=maxfreq,
-                                                  forceboth=forceboth,
+                                                  forceboth=forceboth, includefreqs = approx_res_freqs,
                                                   MONOMER=MONOMER, n=n)
     else:
         morefrequencies = np.append(morefrequencies, approx_res_freqs)
-    morefrequencies = np.sort(np.unique(np.append(morefrequencies, includefreqs)))
+    morefrequencies = np.sort(np.unique(morefrequencies))
     
     # init
     indexlist = []
@@ -325,32 +333,65 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                         print('len(morefrequencies):', len(morefrequencies))
                     print('Repeating with finer frequency mesh around frequencies:', morefrequencies[np.sort(indexlist)])
 
+                assert min(morefrequencies) >= minfreq
+                assert max(morefrequencies) <= maxfreq
+                if debug:
+                    print('minfreq', minfreq)
+                    print('Actual min freq', min(morefrequencies))
+                    print('maxfreq', maxfreq)
+                    print('Actual max freq', max(morefrequencies))
                 morefrequenciesprev = morefrequencies.copy()
                 for index in indexlist:
                     try:
                         spacing = abs(morefrequenciesprev[index] - morefrequenciesprev[index-1])
                     except:
                         spacing = abs(morefrequenciesprev[index+1] - morefrequenciesprev[index])
-                    finerlist = np.linspace(morefrequenciesprev[index]-spacing, morefrequenciesprev[index] + spacing, num = n)
+                    finerlist = np.linspace(max(minfreq,morefrequenciesprev[index]-spacing), 
+                                            min(maxfreq,morefrequenciesprev[index] + spacing), 
+                                            num = n)
+                    assert min(finerlist) >= minfreq
+                    assert max(finerlist) <= maxfreq
                     morefrequencies = np.append(morefrequencies,finerlist)
                 morefrequencies = np.sort(np.unique(morefrequencies))
 
 
+            while morefrequencies[-1] > maxfreq:
+                if False:
+                    print('Removing frequency', morefrequencies[-1])
+                morefrequencies = morefrequencies[:-1]
+            while morefrequencies[0]< minfreq:
+                if False:
+                    print('Removing frequency', morefrequencies[0])
+                morefrequencies = morefrequencies[1:]
             R1_amp_noiseless = curve1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
                                       0, MONOMER, forceboth=forceboth)
             R1_phase_noiseless = theta1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
                                         0, MONOMER, forceboth=forceboth)
             R1_phase_noiseless = np.unwrap(R1_phase_noiseless)
+            if debug:
+                plt.figure()
+                plt.plot(morefrequencies, R1_amp_noiseless, label = 'R1_amp')
+                plt.plot(morefrequencies, R1_phase_noiseless, label = 'R1_phase')
             if not MONOMER:
                 R2_amp_noiseless = curve2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
                                           0, forceboth=forceboth)
                 R2_phase_noiseless = theta2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
                                             0, forceboth=forceboth)
                 R2_phase_noiseless = np.unwrap(R2_phase_noiseless)
+                if debug:
+                    plt.plot(morefrequencies, R2_amp_noiseless, label = 'R2_amp')
+                    plt.plot(morefrequencies, R2_phase_noiseless, label = 'R2_phase')
 
             ## find maxima
             index1 = np.argmax(R1_amp_noiseless)
             indexlist1, heights = find_peaks(R1_amp_noiseless, height=.015, distance = 5)
+            if debug:
+                print('index1:', index1)
+                print('indexlist1:',indexlist1)
+                print('heights', heights)
+                plt.axvline(morefrequencies[index1])
+                for i in indexlist1:
+                    plt.axvline(morefrequencies[i])
             assert index1 <= len(morefrequencies)
             if len(indexlist1)>0:
                 assert max(indexlist1) <= len(morefrequencies)
@@ -359,6 +400,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                 plt.figure()
                 plt.plot(R1_amp_noiseless)
                 plt.xlabel(R1_amp_noiseless)
+                plt.figure()
             if MONOMER:
                 indexlist2 = []
             else:
