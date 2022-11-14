@@ -352,7 +352,13 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
             index1 = np.argmax(R1_amp_noiseless)
             indexlist1, heights = find_peaks(R1_amp_noiseless, height=.015, distance = 5)
             assert index1 <= len(morefrequencies)
-            assert max(indexlist1) <= len(morefrequencies)
+            if len(indexlist1)>0:
+                assert max(indexlist1) <= len(morefrequencies)
+            else:
+                print('Warning: find_peaks on R1_amp returned indexlist:', indexlist1)
+                plt.figure()
+                plt.plot(R1_amp_noiseless)
+                plt.xlabel(R1_amp_noiseless)
             if MONOMER:
                 indexlist2 = []
             else:
