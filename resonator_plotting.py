@@ -145,7 +145,7 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
-                     overlay = False, legend = False, context = None, saving= False, labelname = ''):
+                     overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
         
     Z1 = complexamp(R1_amp, R1_phase)
@@ -195,7 +195,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         else:
             figsize = (figwidth, figratio * figwidth )
         s = 3
-        bigcircle = 45
+        bigcircle = 30
         amplabel = '$A\;$(m)'
         phaselabel = '$\delta\;(\pi)$'
         titleR1 = ''
@@ -211,6 +211,14 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         phaselabel = 'Phase $\delta$ ($\pi$)'
         titleR1= 'Simulated R1 Spectrum'
         titleR2 = 'Simulated R2 Spectrum'
+    if demo: # overwrite all these
+        figsize = (1,1)
+        s = 3
+        bigcircle = 30
+        amplabel = ''
+        phaselabel = ''
+        titleR1 = ''
+        titleR2 = ''
     
     if overlay:
         if MONOMER:
@@ -218,11 +226,11 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         else:
             fig, (ax1, ax3) = plt.subplots(1,2, figsize)
             ax4 = ax3
-        ax2 = ax1 ## probably not ok
+        ax2 = ax1.twiny()
         
     else:
         #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
-        if MONOMER: # *** in future might want to include the circular plot in this
+        if MONOMER: # in future might want to include the circular plot in this
             fig, ((ax1),(ax2)) = plt.subplots(2,1, 
                 figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
         else:
