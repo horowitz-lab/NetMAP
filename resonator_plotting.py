@@ -72,8 +72,15 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   show_output = True, # show the SVD output plot
                   show_set = True, # show the set values
                   show_selected_points = True,
+                  verbose = False,
                   cmap = 'rainbow',s=50, bigcircle = 150, 
                   rainbow_colors = True):
+    
+    if verbose:
+        print('Running spectrum_plot(), show_points is', 
+            show_points, ', show_output is', show_output,
+            ', show_set is', show_set, ', and show_selected points is',
+            show_selected_points)
     
     if unitsofpi:
         divisor = np.pi
@@ -276,6 +283,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         elif i > 0 and plotcount == 2:
             # previous demo plot
             plt.tight_layout()  
+            plt.show()
             if saving: # save the first round of plots
                 filename = datestr + 'demo1spectrum' + labelname
                 helperfunctions.savefigure(filename)
@@ -367,6 +375,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ax = ax4) 
 
     plt.tight_layout()    
+    plt.show()
     if saving:
         filename = datestr + 'spectrum' + labelname
         helperfunctions.savefigure(filename)
@@ -450,7 +459,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             plt.legend()
             
     plt.tight_layout()
-            
+    plt.show()
     if saving:
             filename = datestr + 'spectrumZ' 
             helperfunctions.savefigure(filename)
