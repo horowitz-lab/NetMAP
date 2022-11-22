@@ -282,11 +282,11 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             print('Not showing SVD output, unless buggy')
         elif i > 0 and plotcount == 2:
             # previous demo plot
-            plt.tight_layout()  
-            plt.show()
+            plt.tight_layout() 
             if saving: # save the first round of plots
                 filename = datestr + 'demo1spectrum' + labelname
                 helperfunctions.savefigure(filename)
+            plt.show()
             # next demo plot
             show_points = True # show the spectra data
             show_output = True # show the SVD output plot
@@ -375,10 +375,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ax = ax4) 
 
     plt.tight_layout()    
-    plt.show()
     if saving:
         filename = datestr + 'spectrum' + labelname
         helperfunctions.savefigure(filename)
+    plt.show()        
 
     if context == 'paper':
         if MONOMER:
@@ -459,10 +459,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             plt.legend()
             
     plt.tight_layout()
-    plt.show()
     if saving:
             filename = datestr + 'spectrumZ' 
             helperfunctions.savefigure(filename)
+    plt.show()
             
     return axs
 
