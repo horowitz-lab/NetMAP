@@ -68,6 +68,10 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   title, labelfreqs, 
                   measurementdf, ax, unitsofpi = False, labelcounts = False,
                   legend = False, demo = False,
+                  show_points = True, # show the spectra data
+                  show_output = True, # show the SVD output plot
+                  show_set = True, # show the set values
+                  show_selected_points = True,
                   cmap = 'rainbow',s=50, bigcircle = 150, 
                   rainbow_colors = True):
     
@@ -75,31 +79,35 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
         divisor = np.pi
     else:
         divisor = 1
-    ax.plot(morefrequencies, noiseless/divisor, 
-            '-', color = 'gray', label='set values') # intended curves
+    if show_set:
+        ax.plot(morefrequencies, noiseless/divisor, 
+                '-', color = 'gray', label='set values') # intended curves
     
-    if rainbow_colors:
-        ax.scatter(drive, noisydata/divisor, 
-                        s=s,c = drive, cmap = cmap, label = 'simulated data' ) # s is marker size
-    else:
-        ax.plot(drive, noisydata/divisor, 
-                '.', color = datacolor, alpha = alpha_data, label='simulated data') # simulated data
-    ax.plot(morefrequencies, 
-            curvefunction(morefrequencies, K1, K2, K12, B1, B2, FD, M1, M2, 
-                          0, MONOMER=MONOMER, forceboth=forceboth)/divisor, 
-            '--', color='black', alpha = alpha_model, label='SVD results') # predicted spectrum from SVD)
+    if show_points:
+        if rainbow_colors:
+            ax.scatter(drive, noisydata/divisor, 
+                            s=s,c = drive, cmap = cmap, label = 'simulated data' ) # s is marker size
+        else:
+            ax.plot(drive, noisydata/divisor, 
+                    '.', color = datacolor, alpha = alpha_data, label='simulated data') # simulated data
+    if show_output:               
+        ax.plot(morefrequencies, 
+                curvefunction(morefrequencies, K1, K2, K12, B1, B2, FD, M1, M2, 
+                              0, MONOMER=MONOMER, forceboth=forceboth)/divisor, 
+                '--', color='black', alpha = alpha_model, label='SVD results') # predicted spectrum from SVD)
     ax.set_ylabel(ylabel)
     if title is not None:
         ax.set_title(title)
 
-    #For loop to plot R1 amplitude values from table
-    for i in range(measurementdf.shape[0]):
-        ax.scatter(measurementdf.drive[i], (measurementdf[dfcolumn])[i]/divisor, 
-                facecolors='none', edgecolors='k', label="points for analysis",
-                s=bigcircle,alpha = alpha_circles)
-        if labelcounts:   # number the measurements in the order they were added (just for vary_num_p)        
-            plt.annotate(text=str(i+1), 
-                         xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
+    if show_selected_points:
+        #For loop to plot R1 amplitude values from table
+        for i in range(measurementdf.shape[0]):
+            ax.scatter(measurementdf.drive[i], (measurementdf[dfcolumn])[i]/divisor, 
+                    facecolors='none', edgecolors='k', label="points for analysis",
+                    s=bigcircle,alpha = alpha_circles)
+            if labelcounts:   # number the measurements in the order they were added (just for vary_num_p)        
+                plt.annotate(text=str(i+1), 
+                             xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
     ax.set_xlabel('Freq (rad/s)')
     
     if legend:
@@ -173,6 +181,9 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
                      overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+       
+    if saving:
+        datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
         
     Z1 = complexamp(R1_amp, R1_phase)
     Z2 = complexamp(R2_amp, R2_phase)
@@ -245,47 +256,90 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         phaselabel = ''
         titleR1 = ''
         titleR2 = ''
-    
-    if overlay:
-        if MONOMER:
-            fig, ax1 = plt.subplots(1,1,figsize = figsize)
-        else:
-            fig, (ax1, ax3) = plt.subplots(1,2, figsize)
-            ax4 = ax3.twinx()
-        ax2 = ax1.twinx()
-        
+        plotcount = 2 # plot two steps
     else:
-        #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
-        if MONOMER: # in future might want to include the circular plot in this
-            fig, ((ax1),(ax2)) = plt.subplots(2,1, 
-                figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
-        else:
-            fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
-                figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+        plotcount = 1 # normally plot everything together
+    
+    for i in range(plotcount):
+        if plotcount == 1:
+            show_points = True, # show the spectra data
+            show_output = True, # show the SVD output plot
+            show_set = True, # show the set values
+            show_selected_points = True,
+        elif i <=0 and plotcount == 2:
+            # first demo plot:
+            show_points = True, # show the spectra data
+            show_output = False, # show the SVD output plot
+            show_set = True, # show the set values
+            show_selected_points = True,
+            print('Not showing SVD output, unless buggy')
+        elif i > 0 and plotcount == 2:
+            # previous demo plot
+            plt.tight_layout()  
+            if saving: # save the first round of plots
+                filename = datestr + 'demo1spectrum' + labelname
+                helperfunctions.savefigure(filename)
+            # next demo plot
+            show_points = True, # show the spectra data
+            show_output = True, # show the SVD output plot
+            show_set = False, # show the set values
+            show_selected_points = False
 
-    spectrum_plot(drive=drive, noisydata=R1_amp,
-                morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
-                curvefunction = curve1,
-                K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
-                MONOMER=MONOMER, forceboth=forceboth,
-                dfcolumn = 'R1Amp',
-                ylabel = amplabel,
-                title = titleR1, labelfreqs=labelfreqs, labelcounts = labelcounts,
-                measurementdf = measurementdf,
-                legend = legend, s=s, bigcircle = bigcircle, demo=demo,
-                ax = ax1) 
+            
+        if overlay:
+            if MONOMER:
+                fig, ax1 = plt.subplots(1,1,figsize = figsize)
+            else:
+                fig, (ax1, ax3) = plt.subplots(1,2, figsize)
+                ax4 = ax3.twinx()
+            ax2 = ax1.twinx()
         
-    spectrum_plot(drive=drive, noisydata=R1_phase,
-                morefrequencies=morefrequencies, noiseless=R1_phase_noiseless, 
-                curvefunction = theta1,
-                K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
-                MONOMER=MONOMER, forceboth=forceboth,
-                dfcolumn = 'R1Phase',
-                ylabel = phaselabel, unitsofpi = True,
-                title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
-                measurementdf = measurementdf,
-                legend = legend,s=s,bigcircle = bigcircle, demo=demo,
-                ax = ax2) 
+        
+        else:
+            #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
+            if MONOMER: # in future might want to include the circular plot in this
+                fig, ((ax1),(ax2)) = plt.subplots(2,1, 
+                    figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+            else:
+                fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
+                    figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
+
+        spectrum_plot(drive=drive, noisydata=R1_amp,
+                    morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
+                    curvefunction = curve1,
+                    K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
+                    MONOMER=MONOMER, forceboth=forceboth,
+                    dfcolumn = 'R1Amp',
+                    ylabel = amplabel,
+                    show_points = show_points, 
+                    show_output = show_output, # show the SVD output plot
+                    show_set = show_set, # show the set values
+                    show_selected_points = show_selected_points,
+                    title = titleR1, labelfreqs=labelfreqs, labelcounts = labelcounts,
+                    measurementdf = measurementdf,
+                    legend = legend, s=s, bigcircle = bigcircle, demo=demo,
+                    ax = ax1) 
+            
+        spectrum_plot(drive=drive, noisydata=R1_phase,
+                    morefrequencies=morefrequencies, noiseless=R1_phase_noiseless, 
+                    curvefunction = theta1,
+                    K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
+                    MONOMER=MONOMER, forceboth=forceboth,
+                    dfcolumn = 'R1Phase',
+                    ylabel = phaselabel, unitsofpi = True,
+                    title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
+                    measurementdf = measurementdf,
+                    show_points = show_points, 
+                    show_output = show_output, # show the SVD output plot
+                    show_set = show_set, # show the set values
+                    show_selected_points = show_selected_points,
+                    legend = legend,s=s,bigcircle = bigcircle, demo=demo,
+                    ax = ax2)
+        if demo:
+            ax1.set_xlabel("")
+            ax2.set_xlabel("")
+            ax1.set_ylabel("")
+            ax2.set_ylabel("")
 
     if not MONOMER:
         spectrum_plot(drive=drive, noisydata=R2_amp,
@@ -314,7 +368,6 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
 
     plt.tight_layout()    
     if saving:
-        datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
         filename = datestr + 'spectrum' + labelname
         helperfunctions.savefigure(filename)
 
