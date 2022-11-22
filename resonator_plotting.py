@@ -269,16 +269,16 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
     
     for i in range(plotcount):
         if plotcount == 1:
-            show_points = True, # show the spectra data
-            show_output = True, # show the SVD output plot
-            show_set = True, # show the set values
-            show_selected_points = True,
+            show_points = True # show the spectra data
+            show_output = True # show the SVD output plot
+            show_set = True # show the set values
+            show_selected_points = True
         elif i <=0 and plotcount == 2:
             # first demo plot:
-            show_points = True, # show the spectra data
-            show_output = False, # show the SVD output plot
-            show_set = True, # show the set values
-            show_selected_points = True,
+            show_points = True # show the spectra data
+            show_output = False # show the SVD output plot
+            show_set = False # show the set values
+            show_selected_points = True
             print('Not showing SVD output, unless buggy')
         elif i > 0 and plotcount == 2:
             # previous demo plot
@@ -288,9 +288,9 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 filename = datestr + 'demo1spectrum' + labelname
                 helperfunctions.savefigure(filename)
             # next demo plot
-            show_points = True, # show the spectra data
-            show_output = True, # show the SVD output plot
-            show_set = False, # show the set values
+            show_points = True # show the spectra data
+            show_output = True # show the SVD output plot
+            show_set = False # show the set values
             show_selected_points = False
 
             
