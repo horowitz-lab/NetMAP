@@ -30,6 +30,25 @@ datacolor = 'C4'
 maxfigwidth = 7.086 # 180 mm
 figwidth = maxfigwidth/2
 
+sns.set_context('paper')
+# default plotting parameters
+#plt.rcParams["length"] = 3
+plt.rcParams['axes.linewidth'] = 0.7
+plt.rcParams['xtick.major.width'] = 0.7
+plt.rcParams['ytick.major.width'] = 0.7
+plt.rcParams['xtick.minor.width'] = 0.5
+plt.rcParams['ytick.minor.width'] = 0.5
+plt.rcParams['xtick.major.size'] = 2
+plt.rcParams['ytick.major.size'] = 2
+plt.rcParams['xtick.minor.size'] = .5
+plt.rcParams['ytick.minor.size'] = .5
+#plt.rcParams['figure.dpi']= 400
+#plt.rcParams['figure.figsize'] = (3.38/2,3.38/2)
+ 
+plt.rcParams['ytick.minor.visible'] = True
+plt.rcParams['xtick.minor.visible'] = True
+plt.rcParams['axes.spines.top'] = True
+plt.rcParams['axes.spines.right'] = True
 
 
 #Plots of singular value decomposition
@@ -39,7 +58,8 @@ alpha_model = .8   ## set transparency for the dashed black line
 alpha_data = .8
 
 
-""" Plot amplitude or phase versus frequency with set values, simulated data, and SVD results """
+""" Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
+    Demo: if true, plot without tick marks """
 def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   K1, K2, K12, B1, B2, FD, M1, M2,
                   MONOMER, forceboth,
@@ -47,8 +67,8 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   ylabel,
                   title, labelfreqs, 
                   measurementdf, ax, unitsofpi = False, labelcounts = False,
-                  legend = False, 
-                  cmap = 'rainbow',s=50, bigcircle = 150,
+                  legend = False, demo = False,
+                  cmap = 'rainbow',s=50, bigcircle = 150, 
                   rainbow_colors = True):
     
     if unitsofpi:
@@ -84,6 +104,12 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
     
     if legend:
         plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1.05), ncol=1,)
+    
+    if demo:
+        plt.sca(ax)
+        plt.xticks([])
+        plt.yticks([])
+        return;
     
     if MONOMER or labelfreqs is None or labelfreqs == []:
         return;
@@ -190,7 +216,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         
     figratio = 5/(9.5)
     if context == 'paper':
-        if MONOMER:
+        if (MONOMER and not overlay):
             figsize = (figwidth/2, figratio * figwidth )
         else:
             figsize = (figwidth, figratio * figwidth )
@@ -201,7 +227,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         titleR1 = ''
         titleR2 = ''
     else:
-        if MONOMER:
+        if (MONOMER and not overlay):
             figsize = (9.5/2,5)
         else:
             figsize = (9.5,5)
@@ -225,8 +251,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             fig, ax1 = plt.subplots(1,1,figsize = figsize)
         else:
             fig, (ax1, ax3) = plt.subplots(1,2, figsize)
-            ax4 = ax3
-        ax2 = ax1.twiny()
+            ax4 = ax3.twinx()
+        ax2 = ax1.twinx()
         
     else:
         #fig, ((ax1, ax3),(ax2,ax4),(ax5, ax6)) = plt.subplots(3,2, figsize = (10,10))
@@ -246,7 +272,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ylabel = amplabel,
                 title = titleR1, labelfreqs=labelfreqs, labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend, s=s, bigcircle = bigcircle,
+                legend = legend, s=s, bigcircle = bigcircle, demo=demo,
                 ax = ax1) 
         
     spectrum_plot(drive=drive, noisydata=R1_phase,
@@ -258,7 +284,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ylabel = phaselabel, unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend,s=s,bigcircle = bigcircle,
+                legend = legend,s=s,bigcircle = bigcircle, demo=demo,
                 ax = ax2) 
 
     if not MONOMER:
@@ -271,19 +297,19 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 ylabel = amplabel, unitsofpi = False,
                 title = titleR2, labelfreqs=labelfreqs,
                 measurementdf = measurementdf,labelcounts = labelcounts,
-                legend = legend,s=s,bigcircle = bigcircle,
+                legend = legend,s=s,bigcircle = bigcircle, demo=demo,
                 ax = ax3) 
         
         spectrum_plot(drive=drive, noisydata=R2_phase,
                 morefrequencies=morefrequencies, noiseless=R2_phase_noiseless, 
                 curvefunction = theta2,
                 K1=K1, K2=K2, K12=K12, B1=B1, B2=B2, FD=FD, M1=M1, M2=M2,
-                      MONOMER=MONOMER, forceboth=forceboth,
+                      MONOMER=MONOMER, forceboth=forceboth, 
                 dfcolumn = 'R2Phase',
                 ylabel = phaselabel, unitsofpi = True,
                 title = None, labelfreqs=labelfreqs,labelcounts = labelcounts,
                 measurementdf = measurementdf,
-                legend = legend,s=s,bigcircle = bigcircle,
+                legend = legend,s=s,bigcircle = bigcircle,demo=demo,
                 ax = ax4) 
 
     plt.tight_layout()    
