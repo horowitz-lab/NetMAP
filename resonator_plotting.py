@@ -298,7 +298,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             if MONOMER:
                 fig, ax1 = plt.subplots(1,1,figsize = figsize)
             else:
-                fig, (ax1, ax3) = plt.subplots(1,2, figsize)
+                fig, (ax1, ax3) = plt.subplots(1,2, figsize = figsize)
                 ax4 = ax3.twinx()
             ax2 = ax1.twinx()
         
