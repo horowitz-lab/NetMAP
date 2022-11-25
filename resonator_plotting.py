@@ -20,13 +20,12 @@ from datetime import datetime
 global co1
 global co2
 global co3
-global datacolor # not actually used anymore
 global figwidth 
 
 co1 = 'C0'
 co2 = 'C1'
 co3 = 'C2'
-datacolor = 'C4' 
+purplecolor = 'C4' 
 maxfigwidth = 7.086 # 180 mm
 figwidth = maxfigwidth/2
 
@@ -74,7 +73,7 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   show_selected_points = True,
                   verbose = False,
                   cmap = 'rainbow',s=50, bigcircle = 150, 
-                  rainbow_colors = True):
+                  rainbow_colors = True, datacolor = purplecolor):
     
     if verbose:
         print('Running spectrum_plot(), show_points is', 
@@ -185,7 +184,7 @@ measurementdf has a row for each measured frequency
 columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
-                     vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=datacolor,
+                     vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=purplecolor,
                      overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
        
@@ -312,6 +311,13 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 fig, ((ax1, ax3),(ax2,ax4)) = plt.subplots(2,2,
                     figsize = figsize, gridspec_kw={'hspace': 0}, sharex = 'all' )
 
+        if demo:
+            rainbow_colors = False
+        else:
+            rainbow_colors = True
+        datacolor1 = 'C3'
+        datacolor2 = 'C4'
+
         spectrum_plot(drive=drive, noisydata=R1_amp,
                     morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
                     curvefunction = curve1,
@@ -326,6 +332,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                     title = titleR1, labelfreqs=labelfreqs, labelcounts = labelcounts,
                     measurementdf = measurementdf,
                     legend = legend, s=s, bigcircle = bigcircle, demo=demo,
+                    rainbow_colors = rainbow_colors, datacolor = datacolor1, # only used if demo
                     ax = ax1) 
             
         spectrum_plot(drive=drive, noisydata=R1_phase,
@@ -342,6 +349,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                     show_set = show_set, # show the set values
                     show_selected_points = show_selected_points,
                     legend = legend,s=s,bigcircle = bigcircle, demo=demo,
+                    rainbow_colors = rainbow_colors, datacolor = datacolor2, # only used if demo
                     ax = ax2)
         if demo:
             ax1.set_xlabel("")
