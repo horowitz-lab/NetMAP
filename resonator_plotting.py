@@ -235,6 +235,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
     if context == 'paper':
         if (MONOMER and not overlay):
             figsize = (figwidth/2, figratio * figwidth )
+        elif (MONOMER and overlay):
+            figsize = (figwidth/2, figratio * figwidth/2 )
         else:
             figsize = (figwidth, figratio * figwidth )
         s = 3

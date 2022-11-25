@@ -601,8 +601,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
             freqlist = list(freqlist)
             # instead I should add another frequency corresponding to some desireable phase.
             if verbose:
-                print('Returning instead a freq2 at phase -pi/4.')
-            goodphase = -np.pi/4
+                print('Returning instead a freq2 at phase -3pi/4.')
+            goodphase = -3*np.pi/4
             for i in range(iterations):
                 f2, ind2 = find_freq_from_angle(drive = morefrequencies, 
                                          phase = theta1(morefrequencies, 
