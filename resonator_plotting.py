@@ -29,25 +29,6 @@ purplecolor = 'C4'
 maxfigwidth = 7.086 # 180 mm
 figwidth = maxfigwidth/2
 
-sns.set_context('paper')
-# default plotting parameters
-#plt.rcParams["length"] = 3
-plt.rcParams['axes.linewidth'] = 0.7
-plt.rcParams['xtick.major.width'] = 0.7
-plt.rcParams['ytick.major.width'] = 0.7
-plt.rcParams['xtick.minor.width'] = 0.5
-plt.rcParams['ytick.minor.width'] = 0.5
-plt.rcParams['xtick.major.size'] = 2
-plt.rcParams['ytick.major.size'] = 2
-plt.rcParams['xtick.minor.size'] = .5
-plt.rcParams['ytick.minor.size'] = .5
-#plt.rcParams['figure.dpi']= 400
-#plt.rcParams['figure.figsize'] = (3.38/2,3.38/2)
- 
-plt.rcParams['ytick.minor.visible'] = True
-plt.rcParams['xtick.minor.visible'] = True
-plt.rcParams['axes.spines.top'] = True
-plt.rcParams['axes.spines.right'] = True
 
 
 #Plots of singular value decomposition
@@ -56,6 +37,33 @@ alpha_circles = .8 ## set transparency for the black circles around the measurem
 alpha_model = .8   ## set transparency for the dashed black line
 alpha_data = .8
 
+
+# Nature says: (https://www.nature.com/npp/authors-and-referees/artwork-figures-tables)
+#Figure width - single image	86 mm (3.38 in) (should be able to fit into a single column of the printed journal)
+#Figure width - multi-part	178 mm (7 in) (should be able to fit into a double column of the printed journal)
+#Text size	8 point (should be readable after reduction - avoid large type or thick lines)
+#Line width	Between 0.5 and 1 point
+
+def set_format():
+    sns.set_context('paper')
+    # default plotting parameters
+    #plt.rcParams["length"] = 3
+    plt.rcParams['axes.linewidth'] = 0.7
+    plt.rcParams['xtick.major.width'] = 0.7
+    plt.rcParams['ytick.major.width'] = 0.7
+    plt.rcParams['xtick.minor.width'] = 0.5
+    plt.rcParams['ytick.minor.width'] = 0.5
+    plt.rcParams['xtick.major.size'] = 2
+    plt.rcParams['ytick.major.size'] = 2
+    plt.rcParams['xtick.minor.size'] = 0.5 # VERY short.
+    plt.rcParams['ytick.minor.size'] = 0.5
+    plt.rcParams['figure.dpi']= 150
+    #plt.rcParams['figure.figsize'] = (3.38/2,3.38/2)
+     
+    plt.rcParams['ytick.minor.visible'] = True
+    plt.rcParams['xtick.minor.visible'] = True
+    plt.rcParams['axes.spines.top'] = True
+    plt.rcParams['axes.spines.right'] = True
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
     Demo: if true, plot without tick marks """
@@ -75,6 +83,7 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   cmap = 'rainbow',s=50, bigcircle = 150, 
                   rainbow_colors = True, datacolor = purplecolor):
     
+    set_format()
     if verbose:
         print('Running spectrum_plot(), show_points is', 
             show_points, ', show_output is', show_output,
@@ -149,6 +158,7 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
     parameter = drive is normal """
 def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Frequency (rad/s)', 
                 label_markers=[],  ax=plt.gca(), s=50, cmap = 'rainbow'):
+    set_format()
     assert len(complexZ) == len(parameter)
     plt.sca(ax)
     sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter,
@@ -236,7 +246,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         if (MONOMER and not overlay):
             figsize = (figwidth/2, figratio * figwidth )
         elif (MONOMER and overlay):
-            figsize = (figwidth/2, figratio * figwidth/2 )
+            figsize = (figwidth*.6, figratio * figwidth*.8 )
         else:
             figsize = (figwidth, figratio * figwidth )
         s = 3
@@ -416,8 +426,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                  '--', color='black', alpha = alpha_model)
 
     if context == 'paper':
-        title1 = '$Z_1$'
-        title2 = '$Z_2$'
+        title1 = ''
+        title2 = ''
         #cbar_label = '$\omega$ (rad/s)'
         cbar_label = ''
     else:
@@ -433,6 +443,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             plt.annotate(text=str(i+1), 
                          xy=(np.real(measurementdf.R1AmpCom), 
                              np.imag(measurementdf.R1AmpCom)) )
+    plt.xlabel('Re($Z_1$) (m)')
+    plt.ylabel('Im($Z_1$) (m)')
     if not MONOMER:
         plotcomplex(Z2, drive,title2, ax=ax6, cbar_label=cbar_label,s=s,
                     label_markers=labelfreqs)
@@ -443,6 +455,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 plt.annotate(text=str(i+1), 
                              xy=(np.real(measurementdf.R2AmpCom), 
                                  np.imag(measurementdf.R2AmpCom)) )
+        plt.xlabel('Re($Z_2$) (m)')
+        plt.ylabel('Im($Z_2$) (m)')
         
     # true curves
     #morefrequencies = np.linspace(minfreq, maxfreq, num = n*10)
