@@ -195,9 +195,11 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 """
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=purplecolor,
-                     overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False):
+                     overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False,
+                     figsizeoverride1 = None, figsizeoverride2 = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
-       
+    
+    set_format()
     if saving:
         datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
         
@@ -243,6 +245,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         
     figratio = 5/(9.5)
     if context == 'paper':
+        set_format()
         if (MONOMER and not overlay):
             figsize = (figwidth/2, figratio * figwidth )
         elif (MONOMER and overlay):
@@ -277,6 +280,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         plotcount = 2 # plot two steps
     else:
         plotcount = 1 # normally plot everything together
+        
+    if figsizeoverride1 is not None:
+        figsize = figsizeoverride1
+    print('figsize1:', figsize)
     
     for i in range(plotcount):
         if plotcount == 1:
@@ -393,7 +400,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                 measurementdf = measurementdf,
                 legend = legend,s=s,bigcircle = bigcircle,demo=demo,
                 ax = ax4) 
-
+    set_format()
     plt.tight_layout()    
     if saving:
         filename = datestr + 'spectrum' + labelname
@@ -410,6 +417,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             figsize2 = (5,4)
         else:
             figsize2 = (10, 4)
+    
+    if figsizeoverride2 is not None:
+        figsize2 = figsizeoverride2
+    print('figsize2:', figsize2)
     if MONOMER:
         fig2, ax5 = plt.subplots(1,1, figsize = figsize2)
     else:
