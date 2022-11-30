@@ -79,11 +79,14 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
                   show_output = True, # show the SVD output plot
                   show_set = True, # show the set values
                   show_selected_points = True,
+                  include_zero = True,
                   verbose = False,
                   cmap = 'rainbow',s=50, bigcircle = 150, 
                   rainbow_colors = True, datacolor = purplecolor):
     
     set_format()
+    plt.sca(ax)
+    
     if verbose:
         print('Running spectrum_plot(), show_points is', 
             show_points, ', show_output is', show_output,
@@ -94,9 +97,19 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
         divisor = np.pi
     else:
         divisor = 1
+        
+    if include_zero:
+        # I want to include zero amplitude / phase in my plot.
+        # Plotting an invisible point there will work.
+        plt.plot(measurementdf.drive[0],0, alpha = 0) 
+        
+    if show_selected_points:
+        for i in range(measurementdf.shape[0]):
+            plt.axvline(measurementdf.drive[i], color = 'gray', lw = 0.5)
+        
     if show_set:
         ax.plot(morefrequencies, noiseless/divisor, 
-                '-', color = 'gray', label='set values') # intended curves
+                '-', color = 'gray', alpha = 0.8, label='set values') # intended curves
     
     if show_points:
         if rainbow_colors:
