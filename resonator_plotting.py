@@ -454,9 +454,12 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             plt.annotate(text=str(i+1), 
                          xy=(np.real(measurementdf.R1AmpCom), 
                              np.imag(measurementdf.R1AmpCom)) )
-    plt.xlabel('Re($Z_1$) (m)')
-    plt.ylabel('Im($Z_1$) (m)')
-    if not MONOMER:
+    if MONOMER:
+        plt.xlabel('Re($Z$) (m)')
+        plt.ylabel('Im($Z$) (m)')
+    else:
+        plt.xlabel('Re($Z_1$) (m)')
+        plt.ylabel('Im($Z_1$) (m)')        
         plotcomplex(Z2, drive,title2, ax=ax6, cbar_label=cbar_label,s=s,
                     label_markers=labelfreqs)
         ax6.scatter(np.real(measurementdf.R2AmpCom), np.imag(measurementdf.R2AmpCom), 
