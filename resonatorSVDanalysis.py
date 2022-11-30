@@ -26,6 +26,7 @@ def Zmatrix2resonators(measurementdf, forceboth,
         #print(w)
         ZZ1 = measurementdf[complexamplitude1][rowindex]
         ZZ2 = measurementdf[complexamplitude2][rowindex]
+        # Matrix columns: m1, m2, b1, b2, k1, k2, k12, F1
         Zmatrix.append([-w**2*np.real(ZZ1), 0, -w*np.imag(ZZ1), 0, np.real(ZZ1), 0, np.real(ZZ1)-np.real(ZZ2), -1])
         Zmatrix.append([-w**2*np.imag(ZZ1), 0, w*np.real(ZZ1), 0, np.imag(ZZ1), 0, np.imag(ZZ1)-np.imag(ZZ2), 0])
         if forceboth:
@@ -48,6 +49,7 @@ def ZmatrixMONOMER(measurementdf,
         w = measurementdf[frequencycolumn][rowindex]
         #print(w)
         ZZ1 = measurementdf[complexamplitude1][rowindex]
+        # Matrix columns: m, b, k, F
         Zmatrix.append([-w**2*np.real(ZZ1), -w*np.imag(ZZ1), np.real(ZZ1), -1])
         Zmatrix.append([-w**2*np.imag(ZZ1),  w*np.real(ZZ1), np.imag(ZZ1),  0])
     #display(Zmatrix)
