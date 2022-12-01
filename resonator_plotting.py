@@ -16,6 +16,7 @@ from helperfunctions import read_params
 from resonatorfrequencypicker import makemorefrequencies
 import seaborn as sns
 from datetime import datetime
+import matplotlib as mpl
 
 global co1
 global co2
@@ -39,14 +40,23 @@ alpha_data = .8
 
 
 # Nature says: (https://www.nature.com/npp/authors-and-referees/artwork-figures-tables)
+# Wait but this is for neuropsychopharmacology!
 #Figure width - single image	86 mm (3.38 in) (should be able to fit into a single column of the printed journal)
-#Figure width - multi-part	178 mm (7 in) (should be able to fit into a double column of the printed journal)
-#Text size	8 point (should be readable after reduction - avoid large type or thick lines)
 #Line width	Between 0.5 and 1 point
+# https://www.nature.com/nphys/submission-guidelines/aip-and-formatting>  font size 5 to 7 pt
+# Figure panels should be prepared at a minimum resolution of 300 dpi and saved at a maximum width of 180 mm.  
 
 def set_format():
     sns.set_context('paper')
     # default plotting parameters
+    
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = ['Arial']
+    font = {'family' : 'sans-serif',
+            'size'   : 7}
+    mpl.rc('font', **font)
+    plt.rcParams.update({'font.size': 7}) ## Nature Physics wants font size 5 to 7.
+    
     #plt.rcParams["length"] = 3
     plt.rcParams['axes.linewidth'] = 0.7
     plt.rcParams['xtick.major.width'] = 0.7
@@ -136,7 +146,7 @@ def spectrum_plot(drive, noisydata,morefrequencies, noiseless, curvefunction,
             if labelcounts:   # number the measurements in the order they were added (just for vary_num_p)        
                 plt.annotate(text=str(i+1), 
                              xy=(measurementdf.drive[i],(measurementdf[dfcolumn])[i]/divisor) )
-    ax.set_xlabel('Freq (rad/s)')
+    ax.set_xlabel('$\omega$ (rad/s)')
     
     if legend:
         plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1.05), ncol=1,)
