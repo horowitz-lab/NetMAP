@@ -50,8 +50,23 @@ def set_format():
     sns.set_context('paper')
     # default plotting parameters
     
+    params = {'legend.fontsize': 'medium',
+         'axes.labelsize': 'medium',
+         'axes.titlesize':'medium',
+         'xtick.labelsize':'medium',
+         'ytick.labelsize':'medium'}
+    plt.rcParams.update(params)
+    plt.rcParams['axes.labelsize'] = 7
+    plt.rcParams['axes.titlesize'] = 7
+    
     plt.rcParams['font.family'] = 'sans-serif'
     plt.rcParams['font.sans-serif'] = ['Arial']
+    #plt.rcParams['font.sans-serif'] = "Comic Sans MS"
+    
+    # Key mathtext.fontset:
+    # supported values are ['dejavusans', 'dejavuserif', 'cm', 'stix', 'stixsans', 'custom']
+    plt.rcParams['mathtext.fontset'] = 'dejavusans' # I can also copy-paste Greek in Illustrator to get an italic arial font.
+
     font = {'family' : 'sans-serif',
             'size'   : 7}
     mpl.rc('font', **font)
@@ -74,6 +89,9 @@ def set_format():
     plt.rcParams['xtick.minor.visible'] = True
     plt.rcParams['axes.spines.top'] = True
     plt.rcParams['axes.spines.right'] = True
+    # source: https://physicalmodelingwithpython.blogspot.com/2015/06/making-plots-for-publication.html
+    plt.rcParams['pdf.fonttype'] = 42 # Don't outline text for NPhys
+    plt.rcParams['svg.fonttype'] = 'none'
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
     Demo: if true, plot without tick marks """
@@ -219,6 +237,7 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=purplecolor,
                      overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False,
+                     resonatorsystem = None,
                      figsizeoverride1 = None, figsizeoverride2 = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
     
@@ -398,6 +417,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             ax2.set_xlabel("")
             ax1.set_ylabel("")
             ax2.set_ylabel("")
+            
+    if resonatorsystem == 2: # specific instructions for nanuscript figure
+        ax1.set_yticks([0,50])
+        ax2.set_yticks([0,-1])
 
     if not MONOMER:
         spectrum_plot(drive=drive, noisydata=R2_amp,
