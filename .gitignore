@@ -10,3 +10,5 @@ myheatmap.py~
 *.ini
 *.swp
 main.py
+*.svg
+*.png
