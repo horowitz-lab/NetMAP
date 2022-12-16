@@ -72,6 +72,8 @@ def set_format():
     mpl.rc('font', **font)
     plt.rcParams.update({'font.size': 7}) ## Nature Physics wants font size 5 to 7.
     
+    
+    
     #plt.rcParams["length"] = 3
     plt.rcParams['axes.linewidth'] = 0.7
     plt.rcParams['xtick.major.width'] = 0.7
@@ -237,10 +239,11 @@ columns: drive, R1Amp, R1Phase, R2Amp, R2Phase, R1AmpCom, R2AmpCom
 def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, K2, K12, B1, B2, FD, M1, M2, 
                      vals_set,  MONOMER, forceboth,labelfreqs = None,labelcounts = False, datacolor=purplecolor,
                      overlay = False, legend = False, context = None, saving= False, labelname = '', demo=False,
-                     resonatorsystem = None,
+                     resonatorsystem = None, show_set=None,
                      figsizeoverride1 = None, figsizeoverride2 = None):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
     
+    show_set_override = show_set
     set_format()
     if saving:
         datestr = datetime.today().strftime('%Y-%m-%d %H;%M;%S')
@@ -378,6 +381,8 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             rainbow_colors = True
         datacolor1 = 'C3'
         datacolor2 = 'C4'
+        if show_set_override is not None:
+            show_set = show_set_override
 
         spectrum_plot(drive=drive, noisydata=R1_amp,
                     morefrequencies=morefrequencies, noiseless=R1_amp_noiseless, 
@@ -517,20 +522,21 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
                                  np.imag(measurementdf.R2AmpCom)) )
         plt.xlabel('Re($Z_2$) (m)')
         plt.ylabel('Im($Z_2$) (m)')
-        
-    # true curves
-    #morefrequencies = np.linspace(minfreq, maxfreq, num = n*10)
-    ax5.plot(realamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                      0, MONOMER=MONOMER, forceboth=forceboth,), 
-             imamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                    0, MONOMER=MONOMER, forceboth=forceboth,), 
-             color='gray', alpha = .5)
-    if not MONOMER:
-        ax6.plot(realamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                          0,MONOMER=MONOMER, forceboth=forceboth,), 
-                 imamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                        0,MONOMER=MONOMER, forceboth=forceboth,), 
+       
+    if show_set:
+        # true curves
+        #morefrequencies = np.linspace(minfreq, maxfreq, num = n*10)
+        ax5.plot(realamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
+                          0, MONOMER=MONOMER, forceboth=forceboth,), 
+                 imamp1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
+                        0, MONOMER=MONOMER, forceboth=forceboth,), 
                  color='gray', alpha = .5)
+        if not MONOMER:
+            ax6.plot(realamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
+                              0,MONOMER=MONOMER, forceboth=forceboth,), 
+                     imamp2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
+                            0,MONOMER=MONOMER, forceboth=forceboth,), 
+                     color='gray', alpha = .5)
     
     if MONOMER:
         axs = [ax1, ax2, ax5]
