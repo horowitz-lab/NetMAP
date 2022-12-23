@@ -165,6 +165,14 @@ def assert_results_length(results, columns):
         print('Unequal!')
         print( "len(flatten(results))",  len(flatten(results)) )
         print( "len(flatten(columns))", len(flatten(columns)) )
+        
+"""        
+def describe_results():
+    	The smallest singular value, s_1=4.76132988×〖10〗^(-8), corresponds to singular vector p ⃗  ̂=(m ̂, b ̂, k ̂, F)=α(-2.42090968e-01 kg, -6.05227330e-04 N/(m/s), -9.68363873e-01 N/m,
+  -6.05227821e-02 N), where α=1/-6.05227821e-02 is a normalization constant obtained from our knowledge of the force amplitude F.
+	Dividing by α allows us to scale the singular vector to yield the modeled parameters vector.
+	Therefore, we obtain m ̂= 3.999997 kg, b ̂=0.01 N/(m/s)  and k ̂=15.999989 N/m, which is within 0.00000001% of the correct values for m,b, and k.
+"""
 
 """ demo indicates that the data should be plotted without ticks"""
 def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
@@ -343,6 +351,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                              resonatorsystem = resonatorsystem, show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2) 
             plt.show()
+            
 
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
                             
