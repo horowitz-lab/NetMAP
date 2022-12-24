@@ -166,13 +166,35 @@ def assert_results_length(results, columns):
         print( "len(flatten(results))",  len(flatten(results)) )
         print( "len(flatten(columns))", len(flatten(columns)) )
         
-"""        
-def describe_results():
-    	The smallest singular value, s_1=4.76132988×〖10〗^(-8), corresponds to singular vector p ⃗  ̂=(m ̂, b ̂, k ̂, F)=α(-2.42090968e-01 kg, -6.05227330e-04 N/(m/s), -9.68363873e-01 N/m,
-  -6.05227821e-02 N), where α=1/-6.05227821e-02 is a normalization constant obtained from our knowledge of the force amplitude F.
-	Dividing by α allows us to scale the singular vector to yield the modeled parameters vector.
-	Therefore, we obtain m ̂= 3.999997 kg, b ̂=0.01 N/(m/s)  and k ̂=15.999989 N/m, which is within 0.00000001% of the correct values for m,b, and k.
-"""
+       
+# unscaled_vector = vh[-1] has elements: m1, b1, k1, f1
+def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, absval = False ):
+    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+    m_err = syserr(M1,m1_set, absval)
+    b_err = syserr(B1,b1_set, absval)
+    k_err = syserr(K1,k1_set, absval)
+    
+    print("The Z matrix is ", Zmatrix,
+        "It's smallest singular value, s_1=", smallest_s, 
+        ", corresponds to singular vector\n p\\vec\\hat=(m\\hat, b\\hat, k\\hat, F)=α(", 
+        unscaled_vector[0], " kg, ", #M
+        unscaled_vector[1], "N/(m/s)," #B
+        unscaled_vector[2], "N/m,", #K
+        unscaled_vector[3], "N), where α=F_set/", unscaled_vector[3], "=",
+        F_set, "/" , unscaled_vector[3], "=", F_set/unscaled_vector[3],
+        "is a normalization constant obtained from our knowledge of the force amplitude F for a 1D-SVD analysis",
+        "Dividing by α allows us to scale the singular vector to yield the modeled parameters vector.",
+        "Therefore, we obtain m\\hat= ",
+        M1, " kg, b\\hat=",
+        B1, " N/(m/s)  and k\\hat="
+        K1 "N/m. The percent errors for each of these is",
+        m_err, "\%,"
+        b_err, "\%, and",
+        k_err, "\%, respectively.",
+        "Each of these is within ",
+        max([abs(err) for err in [m_err, b_err, k_err]]),
+        "\% of the correct values for m, b, and k.")
+
 
 """ demo indicates that the data should be plotted without ticks"""
 def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
@@ -345,6 +367,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             theseresults_cols.append(['M1_1D', 'M2_1D', 'B1_1D', 'B2_1D', 'K1_1D', 'K2_1D', 'K12_1D', 'FD_1D'])
         if verbose and first:
             print("1D:")
+            describe_monomer_results(Zmatrix, s[-1], vh[-1], M1_1D, B1_1D, K1_1D, vals_set)
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
                              context = context, saving = saving, labelname = '1D', demo=demo,
