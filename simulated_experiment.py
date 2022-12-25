@@ -374,12 +374,15 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             theseresults_cols.append(['M1_1D', 'M2_1D', 'B1_1D', 'B2_1D', 'K1_1D', 'K2_1D', 'K12_1D', 'FD_1D'])
         if verbose and first:
             print("1D:")
+            if MONOMER:
+                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set)
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
                              context = context, saving = saving, labelname = '1D', demo=demo,
                              resonatorsystem = resonatorsystem, show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2) 
             plt.show()
+            
 
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
                             
