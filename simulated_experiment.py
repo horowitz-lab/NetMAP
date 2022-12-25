@@ -199,6 +199,7 @@ def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, v
         np.sqrt(K1/M1), "rad/s is more accurate than the individually recovered values for mass and spring stiffness;",
         "this is generally true."
         "The percent error for √(k ̂/m ̂ ) is",
+        sqrtkoverm_err, "%."
         )
 
 
