@@ -175,7 +175,7 @@ def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, v
     k_err = syserr(K1,k1_set, absval)
     sqrtkoverm_err = syserr(np.sqrt(K1/M1),np.sqrt(k1_set/m1_set), absval)
     
-    if freqs:
+    if freqs is not None:
         print("Using", len(freqs), "frequencies for SVD analysis, namely",
             freqs,
             "rad/s." )
