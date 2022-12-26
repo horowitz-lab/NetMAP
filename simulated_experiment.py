@@ -168,12 +168,18 @@ def assert_results_length(results, columns):
         
        
 # unscaled_vector = vh[-1] has elements: m1, b1, k1, f1
-def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, absval = False ):
+def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, freqs = None, absval = False ):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, True)
     m_err = syserr(M1,m1_set, absval)
     b_err = syserr(B1,b1_set, absval)
     k_err = syserr(K1,k1_set, absval)
     sqrtkoverm_err = syserr(np.sqrt(K1/M1),np.sqrt(k1_set/m1_set), absval)
+    
+    if freqs:
+        print("Using", len(freqs), "frequencies for SVD analysis, namely",
+            freqs,
+            "rad/s." )
+        
     
     print("The Z matrix is ", make_real_iff_real(Zmatrix), \
         ". Its smallest singular value, s_1=", smallest_s,  \
@@ -375,7 +381,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         if verbose and first:
             print("1D:")
             if MONOMER:
-                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set)
+                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set, freqs = drive[p])
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
                              context = context, saving = saving, labelname = '1D', demo=demo,
