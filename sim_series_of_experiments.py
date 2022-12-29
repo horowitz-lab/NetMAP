@@ -24,8 +24,7 @@ def vary_num_p_with_fixed_freqdiff(vals_set, noiselevel,
                                    n = 100, # number of frequencies for R^2
                                    freqdiff = .1,just_res1 = False, repeats = 100,
                                    verbose = False,recalculate_randomness=True,
-                                   overlay = False, context = 'paper', resonatorsystem = None,
-                                   figsizeoverride1 = None, figsizeoverride2 = None
+                                   **kwargs
                                    ):
     if verbose:
         print('Running vary_num_p_with_fixed_freqdiff()')
@@ -89,9 +88,8 @@ def vary_num_p_with_fixed_freqdiff(vals_set, noiselevel,
 
             thisres = simulated_experiment(drive[p], drive=drive,vals_set = vals_set, noiselevel=noiselevel, MONOMER=MONOMER, 
                                            repeats=1 , verbose = verbose, forceboth=forceboth,labelcounts = False,
-                                           noiseless_spectra=noiseless_spectra, noisy_spectra = noisy_spectra, overlay=overlay,
-                                           context = context, resonatorsystem = resonatorsystem,
-                                           figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2)
+                                           noiseless_spectra=noiseless_spectra, noisy_spectra = noisy_spectra, **kwargs
+                                           )
             
             try: # repeated experiments results
                 resultsdf = pd.concat([resultsdf,thisres], ignore_index=True)
