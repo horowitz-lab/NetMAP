@@ -7,9 +7,11 @@ Created on Tue Aug  9 16:08:13 2022
 
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 def syserr(x_found,x_set, absval = True):
-    se = 100*(x_found-x_set)/x_set
+    with warnings.simplefilter('ignore'):
+        se = 100*(x_found-x_set)/x_set
     if absval:
         return abs(se)
     else:
