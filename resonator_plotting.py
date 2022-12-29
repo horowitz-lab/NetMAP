@@ -71,8 +71,9 @@ def set_format():
             'size'   : 7}
     mpl.rc('font', **font)
     plt.rcParams.update({'font.size': 7}) ## Nature Physics wants font size 5 to 7.
-    
-    
+    #plt.rcParams.update({
+    #    "pdf.use14corefonts": True # source: https://github.com/matplotlib/matplotlib/issues/21893
+    #}) # findfont: Generic family 'sans-serif' not found because none of the following families were found: Arial
     
     #plt.rcParams["length"] = 3
     plt.rcParams['axes.linewidth'] = 0.7
@@ -89,6 +90,7 @@ def set_format():
      
     plt.rcParams['ytick.minor.visible'] = True
     plt.rcParams['xtick.minor.visible'] = True
+    plt.minorticks_on()
     plt.rcParams['axes.spines.top'] = True
     plt.rcParams['axes.spines.right'] = True
     # source: https://physicalmodelingwithpython.blogspot.com/2015/06/making-plots-for-publication.html
@@ -297,7 +299,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             figsize = (figwidth*.6, figratio * figwidth*.8 )
         else:
             figsize = (figwidth, figratio * figwidth )
-        s = 3
+        s = 25 # increased from 3, 2022-12-29
         bigcircle = 30
         amplabel = '$A\;$(m)'
         phaselabel = '$\delta\;(\pi)$'
