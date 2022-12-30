@@ -96,6 +96,8 @@ def set_format():
     # source: https://physicalmodelingwithpython.blogspot.com/2015/06/making-plots-for-publication.html
     plt.rcParams['pdf.fonttype'] = 42 # Don't outline text for NPhys
     plt.rcParams['svg.fonttype'] = 'none'
+    
+    plt.rcParams['axes.titlepad'] = -5 
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
     Demo: if true, plot without tick marks """
