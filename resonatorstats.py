@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import warnings
 
 def syserr(x_found,x_set, absval = True):
-    with warnings.simplefilter('ignore'):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
         se = 100*(x_found-x_set)/x_set
     if absval:
         return abs(se)
