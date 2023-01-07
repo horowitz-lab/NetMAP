@@ -71,6 +71,26 @@ def savefigure(savename):
     print("Saved:\n", savename + '.png')
 
 
+def calc_error_interval(resultsdf, resultsdfmean, groupby, fractionofdata = .95):
+    for column in ['E_lower_1D', 'E_upper_1D','E_lower_2D', 'E_upper_2D','E_lower_3D', 'E_upper_3D']:
+        resultsdfmean[column] = np.nan
+    dimensions =  ['1D', '2D', '3D']
+    items = resultsdfmean[groupby].unique()
+    
+    for item in items:
+        for D in dimensions:
+            avgerr = resultsdf[resultsdf[groupby]== item]['avgsyserr%_' + D]
+            avgerr = np.sort(avgerr)
+            halfalpha = (1 - fractionofdata)/2
+            ## literally select the 95% confidence interval by tossing out the top 2.5% and the bottom 2.5% 
+            ## I could do a weighted average to work better with selecting the top 2.5% and bottom 2.5%
+            ## But perhaps this is good enough for an estimate. It's ideal if I do 40*N measurements for some integer N.
+            lowerbound = np.mean([avgerr[int(np.floor(halfalpha*len(avgerr)))], avgerr[int(np.ceil(halfalpha*len(avgerr)))]])
+            upperbound = np.mean([avgerr[-int(np.floor(halfalpha*len(avgerr))+1)],avgerr[-int(np.ceil(halfalpha*len(avgerr))+1)]])
+            resultsdfmean.loc[resultsdfmean[groupby]== item,'E_lower_'+ D] = lowerbound
+            resultsdfmean.loc[resultsdfmean[groupby]== item,'E_upper_' + D] = upperbound
+    return resultsdf, resultsdfmean
+
 def beep():
     try:
         winsound.PlaySound(r'C:\Windows\Media\Speech Disambiguation.wav', flags = winsound.SND_ASYNC)
