@@ -98,6 +98,18 @@ def set_format():
     plt.rcParams['svg.fonttype'] = 'none'
     
     plt.rcParams['axes.titlepad'] = -5 
+    
+def text_color_legend(**kwargs):
+    l = plt.legend(**kwargs)
+    # set text color in legend
+    for text in l.get_texts():
+        if '1D' in str(text):
+            text.set_color(co1)
+        elif '2D' in str(text):
+            text.set_color(co2)
+        elif '3D' in str(text):
+            text.set_color(co3)
+    return l
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
     Demo: if true, plot without tick marks """
