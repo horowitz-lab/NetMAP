@@ -341,7 +341,11 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         Zmatrix = Zmat(df, frequencycolumn = 'drive', 
                        complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', 
                        MONOMER=MONOMER, forceboth=forceboth, dtype=complex)
-        u, s, vh = np.linalg.svd(Zmatrix, full_matrices = True)
+        try:
+            u, s, vh = np.linalg.svd(Zmatrix, full_matrices = True)
+        except:
+            print('Could not solve with noiselevel', noiselevel)
+            continue
         vh = make_real_iff_real(vh)
         
         theseresults.append(approx_Q(m = m1_set, k = k1_set, b = b1_set))
