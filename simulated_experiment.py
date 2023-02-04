@@ -216,7 +216,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                          noiseless_spectra = None, noisy_spectra = None, freqnoise = False, overlay=False,
                          context = None, saving = False, demo = False,
                          resonatorsystem = None,  show_set = None,
-                         figsizeoverride1 = None, figsizeoverride2 = None,):
+                         figsizeoverride1 = None, figsizeoverride2 = None, return_1D_plot_info= False):
 
     
     if verbose:
@@ -392,8 +392,12 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                              resonatorsystem = resonatorsystem, show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2) 
             plt.show()
+            plot_info_1D = [drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
+                             MONOMER, forceboth, labelcounts, overlay,
+                             context, saving, '1D', demo,
+                             resonatorsystem, show_set,
+                             figsizeoverride1, figsizeoverride2]
             
-
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
                             
         theseresults.append(any(x<0 for x in el))
@@ -642,4 +646,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
     resultsdf = pd.DataFrame(
             data=results, 
             columns = flatten(theseresults_cols))
-    return resultsdf
+    if return_1D_plot_info:
+        return resultsdf, plot_info_1D
+    else:
+        return resultsdf
