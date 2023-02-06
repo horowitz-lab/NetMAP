@@ -258,6 +258,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
     
     first = True
     results = []
+    plot_info_1D = []
 
     for i in range(repeats): # repeat the same measurement with different gaussian noise
         theseresults = []
