@@ -220,6 +220,8 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
     set_format()
     assert len(complexZ) == len(parameter)
     plt.sca(ax)
+    plt.axvline(0,  color = 'k', linestyle='solid',  linewidth = .5)
+    plt.axhline(0, color = 'k', linestyle='solid',  linewidth = .5)
     sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter,
                     cmap = cmap, label = 'simulated data' ) # s is marker size
     cbar = plt.colorbar(sc)
@@ -229,11 +231,6 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
     ax.set_ylabel('$\mathrm{Im}(Z)$ (m)')
     ax.axis('equal');
     plt.title(title)
-    plt.gcf().canvas.draw() # draw so I can get xlim and ylim.
-    ymin, ymax = ax.get_ylim()
-    xmin, xmax = ax.get_xlim()
-    plt.vlines(0, ymin=ymin, ymax = ymax, colors = 'k', linestyle='solid', alpha = .5)
-    plt.hlines(0, xmin=xmin, xmax = xmax, colors = 'k', linestyle='solid', alpha = .5)
     #ax.plot([0,1],[0,0], lw=10,transform=ax.xaxis.get_transform() )#,transform=ax.xaxis.get_transform() ) #transform=ax.transAxes
     
     # label markers that are closest to the desired frequencies
