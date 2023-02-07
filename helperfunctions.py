@@ -65,8 +65,14 @@ def read_params(vect, MONOMER):
     return [M1, M2, B1, B2, K1, K2, K12, FD]
 
 def savefigure(savename):
-    plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight')
-    plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight')
+    try:
+        plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight')
+    except:
+        print('Could not save svg')
+    try:
+        plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight')
+    except:
+        print('Could not save pdf')
     plt.savefig(savename + '.png', dpi = 600, bbox_inches='tight',)
     print("Saved:\n", savename + '.png')
 
