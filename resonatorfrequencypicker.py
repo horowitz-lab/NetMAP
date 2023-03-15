@@ -356,7 +356,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
 
 
             while morefrequencies[-1] > maxfreq:
-                if False:
+                if False: # too verbose!
                     print('Removing frequency', morefrequencies[-1])
                 morefrequencies = morefrequencies[:-1]
             while morefrequencies[0]< minfreq:
@@ -417,7 +417,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
 
             indexlistampR1 = np.append(indexlist1,index1)
             assert max(indexlistampR1) <= len(morefrequencies)
-            if False:
+            if False: # too verbose!
                 print('indexlistampR1:', indexlistampR1)
             if MONOMER:
                 indexlist = indexlistampR1

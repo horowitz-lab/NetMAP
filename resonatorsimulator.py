@@ -235,7 +235,9 @@ def imampmono(w, k_1, b1_, F_, m_1, e):
      
      
 """ calculate rsqrd in polar and cartesian
-    using either the vals_set (privileged rsqrd) or the parameters from SVD (experimental rsqrd) """
+    using either the vals_set (privileged rsqrd) or the parameters from SVD (experimental rsqrd) 
+    rsqrd is the Coefficient of Determination.
+    """
 def rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
               drive, k1, k2, k12, b1, b2, F, m1, m2, MONOMER, forceboth):
     R1_amp_rsqrd = rsqrd(model = curve1(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , MONOMER, forceboth = forceboth), 
@@ -268,6 +270,7 @@ def rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_rea
 """
 maxamp is the maximum amplitude, probably the amplitude at the resonance peak.
 Returns arclength in same units as amplitude.
+Not used.
 """
 def arclength_between_pair(maxamp, Z1, Z2):
     radius = maxamp/2 # radius of twirl, approximating it as a circle 
@@ -538,7 +541,7 @@ def SNRs(freqs,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_co
         return max(SNR_R1_list),max(SNR_R2_list),min(SNR_R1_list),min(SNR_R2_list), \
             np.mean(SNR_R1_list),np.mean(SNR_R2_list), SNR_R1_list, SNR_R2_list 
 
-""" Experimentalist style to determine SNR """
+""" Experimentalist style to determine SNR, not used because I have a priori privilege """
 def SNRcalc(freq,vals_set, noiselevel, MONOMER, forceboth, plot = False, ax = None, detailed = False):
     n = 50 # number of randomized values to calculate
     amps1 = np.zeros(n)
