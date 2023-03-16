@@ -313,7 +313,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         s = 25 # increased from 3, 2022-12-29
         bigcircle = 30
         amplabel = '$A\;$(m)'
-        phaselabel = '$\delta\;(\pi)$'
+        phaselabel = '$\phi\;(\pi)$'
         titleR1 = ''
         titleR2 = ''
     else:
@@ -324,7 +324,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         s=50
         bigcircle = 150
         amplabel = 'Amplitude $A$ (m)\n'
-        phaselabel = 'Phase $\delta$ ($\pi$)'
+        phaselabel = 'Phase $\phi$ ($\pi$)'
         titleR1= 'Simulated R1 Spectrum'
         titleR2 = 'Simulated R2 Spectrum'
     if demo: # overwrite all these
