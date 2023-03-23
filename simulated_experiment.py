@@ -14,7 +14,7 @@ from helperfunctions import \
     read_params, store_params, make_real_iff_real, flatten
 from resonatorSVDanalysis import Zmat, \
     normalize_parameters_1d_by_force, normalize_parameters_assuming_3d, \
-    normalize_parameters_to_m1_F_in_assuming_2d
+    normalize_parameters_to_m1_F_set_assuming_2d
 from resonatorstats import syserr, combinedsyserr
 from resonatorphysics import \
     approx_Q, approx_width, res_freq_weak_coupling, complexamp
@@ -29,8 +29,8 @@ complexamplitudenoisefactor = 0.0005
 global use_complexnoise
 use_complexnoise = True # this just works best. Don't use the other.
 
-def describeresonator(vals_in, MONOMER, forceboth, noiselevel = None):
-    [m1_in, m2_in, b1_in, b2_in, k1_in, k2_in, k12_in, F_in] = read_params(vals_in, MONOMER)
+def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
+    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
     
     if MONOMER:
         print('MONOMER')
@@ -40,16 +40,16 @@ def describeresonator(vals_in, MONOMER, forceboth, noiselevel = None):
             print('Applying oscillating force to both masses.')
         else:
             print('Applying oscillating force to m1.')
-    print('Approximate Q1: ' + "{:.2f}".format(approx_Q(k = k1_in, m = m1_in, b=b1_in)) + 
-          ' width: ' + "{:.2f}".format(approx_width(k = k1_in, m = m1_in, b=b1_in)))
+    print('Approximate Q1: ' + "{:.2f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
+          ' width: ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)))
     if not MONOMER:
-        print('Approximate Q2: ' + "{:.2f}".format(approx_Q(k = k2_in, m = m2_in, b=b2_in)) +
-              ' width: ' + "{:.2f}".format(approx_width(k = k2_in, m = m2_in, b=b2_in)))
+        print('Approximate Q2: ' + "{:.2f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
+              ' width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
     print('Q ~ sqrt(m*k)/b')
     print('Set values:')
     if MONOMER:
-        print('m: ' + str(m1_in) + ', b: ' + str(b1_in) + ', k: ' + str(k1_in) + ', F: ' + str(F_in))
-        res1 = res_freq_weak_coupling(k1_in, m1_in, b1_in)
+        print('m: ' + str(m1_set) + ', b: ' + str(b1_set) + ', k: ' + str(k1_set) + ', F: ' + str(F_set))
+        res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
         print('res freq: ', res1)
     else:
         if forceboth:
@@ -57,8 +57,8 @@ def describeresonator(vals_in, MONOMER, forceboth, noiselevel = None):
         else:
             forcestr = ', F1: '
 
-        print('m1: ' + str(m1_in) + ', b1: ' + str(b1_in) + ', k1: ' + str(k1_in) + forcestr + str(F_in))
-        print('m2: ' + str(m2_in) + ', b2: ' + str(b2_in) + ', k2: ' + str(k2_in) + ', k12: ' + str(k12_in))
+        print('m1: ' + str(m1_set) + ', b1: ' + str(b1_set) + ', k1: ' + str(k1_set) + forcestr + str(F_set))
+        print('m2: ' + str(m2_set) + ', b2: ' + str(b2_set) + ', k2: ' + str(k2_set) + ', k12: ' + str(k12_set))
     if noiselevel is not None and use_complexnoise:
         print('noiselevel:', noiselevel)
         print('stdev sigma:', complexamplitudenoisefactor*noiselevel)
@@ -68,7 +68,7 @@ def measurementdfcalc(drive, p,
                       R1_amp,R2_amp,R1_phase, R2_phase, 
                      R1_amp_noiseless,R2_amp_noiseless,
                       R1_phase_noiseless, R2_phase_noiseless,
-                      vals_in, noiselevel, MONOMER, forceboth):
+                      vals_set, noiselevel, MONOMER, forceboth):
     table = []
     for i in range(len(p)):
         if False:
@@ -78,7 +78,7 @@ def measurementdfcalc(drive, p,
             print('correct amplitude: ' + str(R1_amp_noiseless[p[i]]))
             print('Syserr: ', syserr(R1_amp[p[i]], R1_amp_noiseless[p[i]]), ' %')
         
-        SNR_R1, SNR_R2 = SNRknown(drive[p[i]],vals_in=vals_in, noiselevel=noiselevel, MONOMER=MONOMER, forceboth=forceboth)
+        SNR_R1, SNR_R2 = SNRknown(drive[p[i]],vals_set=vals_set, noiselevel=noiselevel, MONOMER=MONOMER, forceboth=forceboth)
         table.append([drive[p[i]], R1_amp[p[i]], R1_phase[p[i]], R2_amp[p[i]], R2_phase[p[i]], 
                       complexamp(R1_amp[p[i]],R1_phase[p[i]] ),
                       complexamp(R2_amp[p[i]], R2_phase[p[i]]),
@@ -168,13 +168,12 @@ def assert_results_length(results, columns):
         
        
 # unscaled_vector = vh[-1] has elements: m1, b1, k1, f1
-def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_in, freqs = None, absval = False ):
-
-    [m1_in, m2_in, b1_in, b2_in, k1_in, k2_in, k12_in, F_in] = read_params(vals_in, True)
-    m_err = syserr(M1,m1_in, absval)
-    b_err = syserr(B1,b1_in, absval)
-    k_err = syserr(K1,k1_in, absval)
-    sqrtkoverm_err = syserr(np.sqrt(K1/M1),np.sqrt(k1_in/m1_in), absval)
+def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, freqs = None, absval = False ):
+    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, True)
+    m_err = syserr(M1,m1_set, absval)
+    b_err = syserr(B1,b1_set, absval)
+    k_err = syserr(K1,k1_set, absval)
+    sqrtkoverm_err = syserr(np.sqrt(K1/M1),np.sqrt(k1_set/m1_set), absval)
     
     if freqs is not None:
         print("Using", len(freqs), "frequencies for SVD analysis, namely",
@@ -188,8 +187,8 @@ def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, v
         unscaled_vector[0], " kg, ", #M
         unscaled_vector[1], "N/(m/s),", #B
         unscaled_vector[2], "N/m,", #K
-        unscaled_vector[3], "N), where α=F_in/", unscaled_vector[3], "=", \
-        F_in, "/" , unscaled_vector[3], "=", F_in/unscaled_vector[3], \
+        unscaled_vector[3], "N), where α=F_set/", unscaled_vector[3], "=", \
+        F_set, "/" , unscaled_vector[3], "=", F_set/unscaled_vector[3], \
         "is a normalization constant obtained from our knowledge of the force amplitude F for a 1D-SVD analysis.", 
         "Dividing by α allows us to scale the singular vector to yield the modeled parameters vector.", 
         "Therefore, we obtain m\\hat= ", 
@@ -202,29 +201,29 @@ def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, v
         "Each of these is within ", \
         max([abs(err) for err in [m_err, b_err, k_err]]), \
         "% of the correct values for m, b, and k.", \
-        "We also see that the recovered value √(k̂/m̂)=",
+        "We also see that the recovered value √(k ̂/m ̂ )=",
         np.sqrt(K1/M1), "rad/s is more accurate than the individually recovered values for mass and spring stiffness;",
         "this is generally true. ", 
-        "The percent error for √(k̂/m̂) compared to √(k_in/m_in ) is",
+        "The percent error for √(k ̂/m ̂ ) compared to √(k_set/m_set ) is",
         sqrtkoverm_err, "%. This high accuracy likely arises because we choose frequency ω_a at the peak amplitude."
         )
 
 
 """ demo indicates that the data should be plotted without ticks"""
-def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceboth,
+def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, forceboth,
                          drive=None,#np.linspace(minfreq,maxfreq,n), 
                          verbose = False, repeats=1,  labelcounts = False,
                          noiseless_spectra = None, noisy_spectra = None, freqnoise = False, overlay=False,
                          context = None, saving = False, demo = False,
-                         resonatorsystem = None,  show_in = None,
+                         resonatorsystem = None,  show_set = None,
                          figsizeoverride1 = None, figsizeoverride2 = None, return_1D_plot_info= False):
 
     
     if verbose:
         print('Running simulated_experiment()', repeats, 'times.')
-        describeresonator(vals_in, MONOMER, forceboth, noiselevel)
+        describeresonator(vals_set, MONOMER, forceboth, noiselevel)
     
-    [m1_in, m2_in, b1_in, b2_in, k1_in, k2_in, k12_in, F_in] = read_params(vals_in, MONOMER)
+    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
     
     if drive is None:
         drive = measurementfreqs # fastest way to do it, but R^2 isn't very accurate
@@ -235,7 +234,7 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
     p = freqpoints(desiredfreqs = measurementfreqs, drive = drive)
     
     if noiseless_spectra is None: # calculate noiseless spectra
-        noiseless_spectra = calculate_spectra(drive, vals_in, noiselevel = 0, MONOMER = MONOMER, forceboth = forceboth)
+        noiseless_spectra = calculate_spectra(drive, vals_set, noiselevel = 0, MONOMER = MONOMER, forceboth = forceboth)
     R1_amp_noiseless, R1_phase_noiseless, R2_amp_noiseless, R2_phase_noiseless, \
         R1_real_amp_noiseless, R1_im_amp_noiseless, R2_real_amp_noiseless, R2_im_amp_noiseless, _ = noiseless_spectra
 
@@ -247,7 +246,7 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
     ## privileged SNR and amplitude
     maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2,meanSNR_R1,meanSNR_R2, SNR_R1_list, SNR_R2_list, \
         A1, STD1, A2, STD2 = SNRs( \
-            drive[p],vals_in, noiselevel=noiselevel, MONOMER=MONOMER,forceboth=forceboth, 
+            drive[p],vals_set, noiselevel=noiselevel, MONOMER=MONOMER,forceboth=forceboth, 
             use_complexnoise=use_complexnoise, detailed = True,
             privilege = True)
 
@@ -268,11 +267,11 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         theseresults.append(len(p))
         theseresults_cols.append([ 'num frequency points'])
         
-        theseresults.append(vals_in) # Store vals_in # same for every row
+        theseresults.append(vals_set) # Store vals_set # same for every row
         if MONOMER:
-            theseresults_cols.append(['m1_in',  'b1_in',  'k1_in', 'F_in'])
+            theseresults_cols.append(['m1_set',  'b1_set',  'k1_set', 'F_set'])
         else:
-            theseresults_cols.append(['m1_in', 'm2_in', 'b1_in', 'b2_in', 'k1_in', 'k2_in', 'k12_in', 'F_in'])
+            theseresults_cols.append(['m1_set', 'm2_set', 'b1_set', 'b2_set', 'k1_set', 'k2_set', 'k12_set', 'F_set'])
         theseresults.append([noiselevel, noiselevel * complexamplitudenoisefactor])
         theseresults_cols.append(['noiselevel', 'stdev'])
         
@@ -282,7 +281,7 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
 
         if noisy_spectra is None or i > 0 or freqnoise:
             # recalculate noisy spectra
-            noisy_spectra = calculate_spectra(drive, vals_in=vals_in, 
+            noisy_spectra = calculate_spectra(drive, vals_set=vals_set, 
                                               noiselevel=noiselevel,MONOMER=MONOMER, forceboth=forceboth)
         R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,_ = noisy_spectra
         
@@ -337,7 +336,7 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
                      R1_amp=R1_amp,R2_amp=R2_amp,R1_phase=R1_phase, R2_phase=R2_phase, 
                      R1_amp_noiseless=R1_amp_noiseless,R2_amp_noiseless=R2_amp_noiseless,
                      R1_phase_noiseless=R1_phase_noiseless, R2_phase_noiseless=R2_phase_noiseless,
-                     MONOMER=MONOMER, vals_in=vals_in, forceboth=forceboth,
+                     MONOMER=MONOMER, vals_set=vals_set, forceboth=forceboth,
                      noiselevel = noiselevel
                      )
         Zmatrix = Zmat(df, frequencycolumn = 'drive', 
@@ -350,10 +349,10 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
             continue
         vh = make_real_iff_real(vh)
         
-        theseresults.append(approx_Q(m = m1_in, k = k1_in, b = b1_in))
+        theseresults.append(approx_Q(m = m1_set, k = k1_set, b = b1_set))
         theseresults_cols.append('approxQ1')
         if not MONOMER:
-            theseresults.append(approx_Q(m = m2_in, k = k2_in, b = b2_in))
+            theseresults.append(approx_Q(m = m2_set, k = k2_set, b = b2_set))
             theseresults_cols.append('approxQ2')
         theseresults.append(df['R1Amp_syserr%'].mean())
         theseresults_cols.append('R1Ampsyserr%mean(priv)')
@@ -374,7 +373,7 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         M1, M2, B1, B2, K1, K2, K12, FD = read_params(vh[-1], MONOMER) # the 7th singular value is the smallest one (closest to zero)
 
         # normalize parameters vector to the force, assuming 1D nullspace
-        allparameters = normalize_parameters_1d_by_force([M1, M2, B1, B2, K1, K2, K12, FD], F_in)
+        allparameters = normalize_parameters_1d_by_force([M1, M2, B1, B2, K1, K2, K12, FD], F_set)
 
         M1, M2, B1, B2, K1, K2, K12, FD = allparameters
         
@@ -387,17 +386,17 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         if verbose and first:
             print("1D:")
             if MONOMER:
-                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_in, freqs = drive[p])
-            plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_in, 
+                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set, freqs = drive[p])
+            plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
                              context = context, saving = saving, labelname = '1D', demo=demo,
-                             resonatorsystem = resonatorsystem, show_in = show_in,
+                             resonatorsystem = resonatorsystem, show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2) 
             plt.show()
-            plot_info_1D = [drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_in, 
+            plot_info_1D = [drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER, forceboth, labelcounts, overlay,
                              context, saving, '1D', demo,
-                             resonatorsystem, show_in,
+                             resonatorsystem, show_set,
                              figsizeoverride1, figsizeoverride2]
             
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
@@ -413,25 +412,25 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
               drive, K1, K2, K12, B1, B2, FD, M1, M2, MONOMER = MONOMER, forceboth = forceboth, label="1D")
         
         # calculate how close the SVD-determined parameters are compared to the originally set parameters
-        syserrs = [syserr(el[i], vals_in[i]) for i in range(len(el))]
+        syserrs = [syserr(el[i], vals_set[i]) for i in range(len(el))]
 
         # Values to compare:
-        # Set values: k1_in, k2_in, k12_in, b1_in, b2_in, F_in, m1_in, m2_in
+        # Set values: k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set
         # SVD-determined values: M1, M2, B1, B2, K1, K2, K12, FD
-        K1syserr = syserr(K1,k1_in)
-        B1syserr = syserr(B1,b1_in)
-        FDsyserr = syserr(FD,F_in)
-        M1syserr = syserr(M1,m1_in)
+        K1syserr = syserr(K1,k1_set)
+        B1syserr = syserr(B1,b1_set)
+        FDsyserr = syserr(FD,F_set)
+        M1syserr = syserr(M1,m1_set)
         if MONOMER:
             K2syserr = 0
             K12syserr = 0
             B2syserr = 0
             M2syserr = 0
         else:
-            K2syserr = syserr(K2,k2_in)
-            K12syserr = syserr(K12,k12_in)
-            B2syserr = syserr(B2,b2_in)
-            M2syserr = syserr(M2,m2_in)
+            K2syserr = syserr(K2,k2_set)
+            K12syserr = syserr(K12,k12_set)
+            B2syserr = syserr(B2,b2_set)
+            M2syserr = syserr(M2,m2_set)
         avgsyserr, rmssyserr, maxsyserr, Lavgsyserr = combinedsyserr(syserrs,1) # subtract 1 degrees of freedom for 1D nullspace
 
         if MONOMER:
@@ -450,15 +449,15 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         ### Normalize parameters in 2D nullspace 
         """ # Problem: res1 formula only for weak coupling.
         [M1_2D, M2_2D, B1_2D, B2_2D, K1_2D, K2_2D, K12_2D, FD_2D] = \
-            normalize_parameters_to_res1_and_F_2d(vh, vals_in = vals_in)
+            normalize_parameters_to_res1_and_F_2d(vh, vals_set = vals_set)
         coefa = np.nan
         coefb = np.nan"""
         #[M1_2D, M2_2D, B1_2D, B2_2D, K1_2D, K2_2D, K12_2D, FD_2D], coefa, coefb = \
-        #    normalize_parameters_to_m1_in_k1_in_assuming_2d(vh)
+        #    normalize_parameters_to_m1_set_k1_set_assuming_2d(vh)
         #[M1_2D, M2_2D, B1_2D, B2_2D, K1_2D, K2_2D, K12_2D, FD_2D], coefa, coefb = \
-        #    normalize_parameters_to_m1_m2_assuming_2d(vh, verbose = False, m1_in = m1_in, m2_in = m2_in)
+        #    normalize_parameters_to_m1_m2_assuming_2d(vh, verbose = False, m1_set = m1_set, m2_set = m2_set)
         el_2D, coefa, coefb = \
-            normalize_parameters_to_m1_F_in_assuming_2d(vh, MONOMER,verbose = False, m1_in = m1_in, F_in = F_in)
+            normalize_parameters_to_m1_F_set_assuming_2d(vh, MONOMER,verbose = False, m1_set = m1_set, F_set = F_set)
         #normalizationpair = 'm1 and F'
         
         if MONOMER:
@@ -472,10 +471,10 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         if verbose and first:
             print("2D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
-                             K1_2D, K2_2D, K12_2D, B1_2D, B2_2D, FD_2D, M1_2D, M2_2D, vals_in,
+                             K1_2D, K2_2D, K12_2D, B1_2D, B2_2D, FD_2D, M1_2D, M2_2D, vals_set,
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay=overlay,
                              context = context,saving = saving, labelname = '2D', demo=demo,
-                             resonatorsystem = resonatorsystem,  show_in = show_in,
+                             resonatorsystem = resonatorsystem,  show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2)
 
             plt.show()
@@ -488,16 +487,16 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         rsqrdresults2D, rsqrdcolumns2D = compile_rsqrd(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_real_amp, R2_im_amp,
               drive, K1_2D, K2_2D, K12_2D, B1_2D, B2_2D, FD_2D, M1_2D, M2_2D, MONOMER = MONOMER, forceboth = forceboth, label="2D")
         
-        syserrs_2D = [syserr(el_2D[i], vals_in[i]) for i in range(len(el_2D))]
+        syserrs_2D = [syserr(el_2D[i], vals_set[i]) for i in range(len(el_2D))]
 
         # Values to compare:
-        # Set values: k1_in, k2_in, k12_in, b1_in, b2_in, F_in, m1_in, m2_in
+        # Set values: k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set
         # SVD-determined values: M1, M2, B1, B2, K1, K2, K12, FD
 
-        K1syserr_2D = syserr(K1_2D,k1_in)
-        B1syserr_2D = syserr(B1_2D,b1_in)
-        FDsyserr_2D = syserr(FD_2D,F_in)
-        M1syserr_2D = syserr(M1_2D,m1_in)
+        K1syserr_2D = syserr(K1_2D,k1_set)
+        B1syserr_2D = syserr(B1_2D,b1_set)
+        FDsyserr_2D = syserr(FD_2D,F_set)
+        M1syserr_2D = syserr(M1_2D,m1_set)
 
         if MONOMER:
             K2syserr_2D = 0
@@ -505,10 +504,10 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
             B2syserr_2D = 0
             M2syserr_2D = 0
         else:
-            K2syserr_2D = syserr(K2_2D,k2_in)
-            K12syserr_2D = syserr(K12_2D,k12_in)
-            B2syserr_2D = syserr(B2_2D,b2_in)
-            M2syserr_2D = syserr(M2_2D,m2_in)
+            K2syserr_2D = syserr(K2_2D,k2_set)
+            K12syserr_2D = syserr(K12_2D,k12_set)
+            B2syserr_2D = syserr(B2_2D,b2_set)
+            M2syserr_2D = syserr(M2_2D,m2_set)
         if MONOMER:
             theseresults.append([K1syserr_2D,B1syserr_2D,FDsyserr_2D,M1syserr_2D])
             theseresults_cols.append(['K1syserr%_2D','B1syserr%_2D','FDsyserr%_2D','M1syserr%_2D'])           
@@ -531,9 +530,9 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         
         ## 3D normalization.
         if MONOMER:
-            el_3D, coefa, coefb, coefc = normalize_parameters_assuming_3d(vh,vals_in, MONOMER) 
+            el_3D, coefa, coefb, coefc = normalize_parameters_assuming_3d(vh,vals_set, MONOMER) 
         else:
-            el_3D, coefa, coefb, coefc = normalize_parameters_assuming_3d(vh, vals_in, MONOMER=MONOMER)
+            el_3D, coefa, coefb, coefc = normalize_parameters_assuming_3d(vh, vals_set, MONOMER=MONOMER)
         el_3D = [parameter.real for parameter in el_3D if parameter.imag == 0 ]
         
         if MONOMER:
@@ -547,10 +546,10 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
         if verbose and first:
             print("3D:")
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df, 
-                             K1_3D, K2_3D, K12_3D, B1_3D, B2_3D, FD_3D, M1_3D, M2_3D, vals_in,
+                             K1_3D, K2_3D, K12_3D, B1_3D, B2_3D, FD_3D, M1_3D, M2_3D, vals_set,
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay=overlay,
                              context = context,saving = saving, labelname = '3D', demo=demo,
-                             resonatorsystem = resonatorsystem,  show_in = show_in,
+                             resonatorsystem = resonatorsystem,  show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2)
 
             plt.show()
@@ -566,16 +565,16 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
               drive, K1_3D, K2_3D, K12_3D, B1_3D, B2_3D, FD_3D, M1_3D, M2_3D, 
               MONOMER = MONOMER, forceboth = forceboth, label="3D")
                         
-        syserrs_3D = [syserr(el_3D[i], vals_in[i]) for i in range(len(el_3D))]
+        syserrs_3D = [syserr(el_3D[i], vals_set[i]) for i in range(len(el_3D))]
 
         # Values to compare:
-        # Set values: k1_in, k2_in, k12_in, b1_in, b2_in, F_in, m1_in, m2_in
+        # Set values: k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set
         # SVD-determined values: M1, M2, B1, B2, K1, K2, K12, FD
 
-        K1syserr_3D = syserr(K1_3D,k1_in)
-        B1syserr_3D = syserr(B1_3D,b1_in)
-        FDsyserr_3D = syserr(FD_3D,F_in)
-        M1syserr_3D = syserr(M1_3D,m1_in)
+        K1syserr_3D = syserr(K1_3D,k1_set)
+        B1syserr_3D = syserr(B1_3D,b1_set)
+        FDsyserr_3D = syserr(FD_3D,F_set)
+        M1syserr_3D = syserr(M1_3D,m1_set)
 
         if MONOMER:
             K2syserr_3D = 0
@@ -583,10 +582,10 @@ def simulated_experiment(measurementfreqs,  vals_in, noiselevel, MONOMER, forceb
             B2syserr_3D = 0
             M2syserr_3D = 0
         else:
-            K2syserr_3D = syserr(K2_3D,k2_in)
-            K12syserr_3D = syserr(K12_3D,k12_in)
-            B2syserr_3D = syserr(B2_3D,b2_in)
-            M2syserr_3D = syserr(M2_3D,m2_in)
+            K2syserr_3D = syserr(K2_3D,k2_set)
+            K12syserr_3D = syserr(K12_3D,k12_set)
+            B2syserr_3D = syserr(B2_3D,b2_set)
+            M2syserr_3D = syserr(M2_3D,m2_set)
         if MONOMER:
             theseresults.append([K1syserr_3D,B1syserr_3D,FDsyserr_3D,M1syserr_3D])
             theseresults_cols.append(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D'])           
