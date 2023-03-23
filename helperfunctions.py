@@ -66,14 +66,15 @@ def read_params(vect, MONOMER):
 
 def savefigure(savename):
     try:
-        plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight')
+        plt.savefig(savename + '.svg', dpi = 600, bbox_inches='tight', transparent=True)
     except:
         print('Could not save svg')
     try:
-        plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight')
+        plt.savefig(savename + '.pdf', dpi = 600, bbox_inches='tight', transparent=True)
+           # transparent true source: https://jonathansoma.com/lede/data-studio/matplotlib/exporting-from-matplotlib-to-open-in-adobe-illustrator/
     except:
         print('Could not save pdf')
-    plt.savefig(savename + '.png', dpi = 600, bbox_inches='tight',)
+    plt.savefig(savename + '.png', dpi = 600, bbox_inches='tight', transparent=True)
     print("Saved:\n", savename + '.png')
 
 
@@ -88,9 +89,8 @@ def calc_error_interval(resultsdf, resultsdfmean, groupby, fractionofdata = .95)
             avgerr = resultsdf[resultsdf[groupby]== item]['avgsyserr%_' + D]
             avgerr = np.sort(avgerr)
             halfalpha = (1 - fractionofdata)/2
-            ## literally select the 95% confidence interval by tossing out the top 2.5% and the bottom 2.5% 
-            ## I could do a weighted average to work better with selecting the top 2.5% and bottom 2.5%
-            ## But perhaps this is good enough for an estimate. It's ideal if I do 40*N measurements for some integer N.
+            ## literally select the 95% fraction by tossing out the top 2.5% and the bottom 2.5% 
+            ## For 95%, It's ideal if I do 40*N measurements for some integer N.
             lowerbound = np.mean([avgerr[int(np.floor(halfalpha*len(avgerr)))], avgerr[int(np.ceil(halfalpha*len(avgerr)))]])
             upperbound = np.mean([avgerr[-int(np.floor(halfalpha*len(avgerr))+1)],avgerr[-int(np.ceil(halfalpha*len(avgerr))+1)]])
             resultsdfmean.loc[resultsdfmean[groupby]== item,'E_lower_'+ D] = lowerbound

@@ -99,6 +99,11 @@ def set_format():
     
     plt.rcParams['axes.titlepad'] = -5 
     
+    plt.rcParams['pdf.fonttype']=42 
+        # source: Nature https://drive.google.com/drive/folders/15m_c_ZfP2X4C9G7bOtQBdSlcLmJkUA7D
+    plt.rcParams['ps.fonttype'] = 42
+        # source: https://jonathansoma.com/lede/data-studio/matplotlib/exporting-from-matplotlib-to-open-in-adobe-illustrator/
+    
 def text_color_legend(**kwargs):
     l = plt.legend(**kwargs)
     # set text color in legend
