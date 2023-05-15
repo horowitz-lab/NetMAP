@@ -40,25 +40,28 @@ def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
             print('Applying oscillating force to both masses.')
         else:
             print('Applying oscillating force to m1.')
-    print('Approximate Q1: ' + "{:.2f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
-          ' width: ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)))
+    print('Q1 ~ ' + "{:.0f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
+          ' and peak width ~ ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)) + ' rad/s')
     if not MONOMER:
-        print('Approximate Q2: ' + "{:.2f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
-              ' width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
+    print(' Q2 ~ ' + "{:.0f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
+          ' and second peak width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
     print('Q ~ sqrt(m*k)/b')
-    print('Set values:')
+    print('We set the input values to:')
     if MONOMER:
-        print('m: ' + str(m1_set) + ', b: ' + str(b1_set) + ', k: ' + str(k1_set) + ', F: ' + str(F_set))
+        print('m = ' + str(m1_set) + ' kg, b = ' + str(b1_set) + ' N s/m, k = ' + str(k1_set) + ' N/m, f = ' + str(F_set), ' N')
         res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
-        print('res freq: ', res1)
+        print('res freq ~ ', res1, 'rad/s')
     else:
         if forceboth:
-            forcestr = ', F1=F2: '
+            forcestr = ', f1=f2: '
         else:
-            forcestr = ', F1: '
-
-        print('m1: ' + str(m1_set) + ', b1: ' + str(b1_set) + ', k1: ' + str(k1_set) + forcestr + str(F_set))
-        print('m2: ' + str(m2_set) + ', b2: ' + str(b2_set) + ', k2: ' + str(k2_set) + ', k12: ' + str(k12_set))
+            forcestr = ', f1 = '
+            
+        print('m_1= ' + str(m1_set) + 'kg, b_1 = ' + str(b1_set) 
+              + 'N s/m, k_1 = ' + str(k1_set) + forcestr + str(F_set))
+        print('m_2= ' + str(m2_set) + 'kg, b_2 = ' + str(b2_set) 
+              + 'N s/m, k_2 = ' + str(k2_set) + ', k_{12} = ' + str(k12_set))
+   
     if noiselevel is not None and use_complexnoise:
         print('noiselevel:', noiselevel)
         print('stdev sigma:', complexamplitudenoisefactor*noiselevel)
