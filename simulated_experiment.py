@@ -43,8 +43,8 @@ def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
     print('Q1 ~ ' + "{:.0f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
           ' and peak width ~ ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)) + ' rad/s')
     if not MONOMER:
-    print(' Q2 ~ ' + "{:.0f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
-          ' and second peak width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
+        print(' Q2 ~ ' + "{:.0f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
+              ' and second peak width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
     print('Q ~ sqrt(m*k)/b')
     print('We set the input values to:')
     if MONOMER:
