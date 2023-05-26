@@ -338,8 +338,11 @@ def complex_noise(n, noiselevel):
 ## Calculate the amplitude and phase as spectra, possibly adding noise
 def calculate_spectra(drive, vals_set, noiselevel, MONOMER, forceboth):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
-        
-    n = len(drive)
+      
+    try:
+        n = len(drive)
+    except TypeError:
+        n = drive.size
     
     if usenoise: # add a random vector of positive and negative numbers to the curve.
 
