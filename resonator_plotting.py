@@ -227,6 +227,7 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
     plt.sca(ax)
     plt.axvline(0,  color = 'k', linestyle='solid',  linewidth = .5)
     plt.axhline(0, color = 'k', linestyle='solid',  linewidth = .5)
+    # colorful circles
     sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter,
                     cmap = cmap, label = 'simulated data' ) # s is marker size
     cbar = plt.colorbar(sc)
