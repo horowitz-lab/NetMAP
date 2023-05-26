@@ -169,6 +169,16 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
     else:
         m = int((n-3-(fracevenfreq*n))/2)
     
+    morefrequencies = list(np.sort(morefrequencies))
+    while morefrequencies[-1] > maxfreq:
+        if False: # too verbose!
+            print('Removing frequency', morefrequencies[-1])
+        morefrequencies = morefrequencies[:-1]
+    while morefrequencies[0]< minfreq:
+        if False:
+            print('Removing frequency', morefrequencies[0])
+        morefrequencies = morefrequencies[1:]
+    
     phaseR1 = theta1(morefrequencies, k1_set, k2_set, k12_set, 
                                         b1_set, b2_set, F_set, m1_set, m2_set, 
                                          0, MONOMER, forceboth=forceboth)
