@@ -23,7 +23,7 @@ def vary_num_p_with_fixed_freqdiff(vals_set, noiselevel,
                                    max_num_p = 10,  
                                    n = 100, # number of frequencies for R^2
                                    freqdiff = .1,just_res1 = False, repeats = 100,
-                                   verbose = False,recalculate_randomness=True,
+                                   verbose = False,recalculate_randomness=True, use_R2_only = False,
                                    **kwargs
                                    ):
     if True:
@@ -36,10 +36,12 @@ def vary_num_p_with_fixed_freqdiff(vals_set, noiselevel,
     else:
         numtoreturn = 2
     
-    ## To be fair for each, I use 3 iterations to really nail down the highest amplitudes.
-    reslist = res_freq_numeric(vals_set=vals_set, MONOMER=MONOMER,forceboth=forceboth,
-                               mode = 'amp', iterations = 3, includefreqs = reslist,
-             unique = True, veryunique = True, numtoreturn = numtoreturn, verboseplot = False, verbose=verbose)
+    for i in range(5):## To be fair for each, I use iterations to really nail down the highest amplitudes.
+        reslist = res_freq_numeric(vals_set=vals_set, MONOMER=MONOMER,forceboth=forceboth,
+                    mode = 'amp', iterations = 3, includefreqs = reslist,
+                    unique = True, veryunique = True, numtoreturn = numtoreturn, 
+                    use_R2_only = use_R2_only,
+                    verboseplot = False, verbose=verbose)
     ## measure the top two resonant frequencies
     res1 = reslist[0]
     if not MONOMER:
@@ -70,8 +72,10 @@ def vary_num_p_with_fixed_freqdiff(vals_set, noiselevel,
                                                   noiselevel=noiselevel, MONOMER=MONOMER, forceboth=forceboth)
             
         for this_num_p in range(2, max_num_p+1):
-            if this_num_p == max_num_p and y == 0: # first time with all the frequencies
+            if y == 0 and (this_num_p == max_num_p or  this_num_p == 2): # first time with 2 or all the frequencies
                 verbose = True
+            else:
+                verbose = False
 
             ## Do we recalculate the spectra every time or use the same datapoints as before? (This is slower.)
             if recalculate_randomness:

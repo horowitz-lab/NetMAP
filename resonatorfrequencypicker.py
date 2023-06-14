@@ -289,6 +289,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                      minfreq=.1, maxfreq=5, morefrequencies=None, includefreqs = [],
                      unique = True, veryunique = True, numtoreturn = None, 
                      verboseplot = False, plottitle = None, verbose=verbose, iterations = 1,
+                     use_R2_only = False,
                      returnoptions = False):
     
     if verbose:
@@ -341,6 +342,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                     print('indexlist:', indexlist)
                     if max(indexlist) > len(morefrequencies):
                         print('len(morefrequencies):', len(morefrequencies))
+                    print('morefrequencies:', morefrequencies)
+                    print('indexlist:', indexlist)
                     print('Repeating with finer frequency mesh around frequencies:', morefrequencies[np.sort(indexlist)])
 
                 assert min(morefrequencies) >= minfreq
@@ -355,6 +358,9 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                     try:
                         spacing = abs(morefrequenciesprev[index] - morefrequenciesprev[index-1])
                     except:
+                        if verbose:
+                            print('morefrequenciesprev:',morefrequenciesprev)
+                            print('index:', index)
                         spacing = abs(morefrequenciesprev[index+1] - morefrequenciesprev[index])
                     finerlist = np.linspace(max(minfreq,morefrequenciesprev[index]-spacing), 
                                             min(maxfreq,morefrequenciesprev[index] + spacing), 
@@ -394,23 +400,26 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
 
             ## find maxima
             index1 = np.argmax(R1_amp_noiseless)
-            indexlist1, heights = find_peaks(R1_amp_noiseless, height=.015, distance = 5)
-            if debug:
-                print('index1:', index1)
-                print('indexlist1:',indexlist1)
-                print('heights', heights)
-                plt.axvline(morefrequencies[index1])
-                for i in indexlist1:
-                    plt.axvline(morefrequencies[i])
-            assert index1 <= len(morefrequencies)
-            if len(indexlist1)>0:
-                assert max(indexlist1) <= len(morefrequencies)
+            if not MONOMER and not use_R2_only:
+                indexlist1, heights = find_peaks(R1_amp_noiseless, height=.015, distance = 5)
+                if debug:
+                    print('index1:', index1)
+                    print('indexlist1:',indexlist1)
+                    print('heights', heights)
+                    plt.axvline(morefrequencies[index1])
+                    for i in indexlist1:
+                        plt.axvline(morefrequencies[i])
+                assert index1 <= len(morefrequencies)
+                if len(indexlist1)>0:
+                    assert max(indexlist1) <= len(morefrequencies)
+                else:
+                    print('Warning: find_peaks on R1_amp returned indexlist:', indexlist1)
+                    plt.figure()
+                    plt.plot(R1_amp_noiseless)
+                    plt.xlabel(R1_amp_noiseless)
+                    plt.figure()
             else:
-                print('Warning: find_peaks on R1_amp returned indexlist:', indexlist1)
-                plt.figure()
-                plt.plot(R1_amp_noiseless)
-                plt.xlabel(R1_amp_noiseless)
-                plt.figure()
+                indexlist1 = []
             if MONOMER:
                 indexlist2 = []
             else:
@@ -444,7 +453,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
 
             assert max(indexlist) <= len(morefrequencies)
             indexlist = list(np.unique(indexlist))
-
+            indexlist = [int(index) for index in indexlist]
             first = False
     
         ## Check to see if findpeaks just worked
@@ -458,7 +467,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                     if returnoptions:
                         return opt2freqlist, 2
                     return opt2freqlist
-            if len(indexlist1) == 2:
+            if len(indexlist1) == 2 and not use_R2_only:
                 opt3freqlist = list(np.sort(morefrequencies[indexlist1]))
                 if abs(opt3freqlist[1]-opt3freqlist[0]) > thresh:
                     if verbose:
