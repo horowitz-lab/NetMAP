@@ -2,7 +2,9 @@
 """
 Created on Tue Aug  9 16:08:21 2022
 
-Simulated spectra + SVD recovery
+Validating NetMAP:
+
+Simulated spectra + NetMAP recovery
 
 @author: vhorowit
 """
