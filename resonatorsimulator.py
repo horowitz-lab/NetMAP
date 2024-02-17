@@ -2,6 +2,8 @@
 """
 Created on Tue Aug  9 16:42:36 2022
 
+Solve equations of motion using Cramer's rule in order to obtain amplitude and phase of each resonator in the network.
+
 @author: vhorowit
 """
 
