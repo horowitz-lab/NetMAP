@@ -2,6 +2,8 @@
 """
 Created on Tue Aug  9 16:50:38 2022
 
+NetMAP: Create script-Z matrix and find its kernel, or null-space.
+
 @author: vhorowit
 """
 
