@@ -9,18 +9,23 @@ Created on Mon Jul  8 15:13:48 2024
 import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import Model
-from Trimer_simulator import c2, t2
+from Trimer_simulator import c2, t2, curve2, theta2
+from resonatorsimulator import complex_noise
 
-#type of function to fit for all three amplitude curves
+#type of function to fit for curves
 def c2_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
         return c2(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
 def t2_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
         return t2(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
     
-#create data for all three amplitudes
+#create data 
 freq = np.linspace(0.001, 5, 300)
-Amp = c2_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
-Phase = t2_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
+force_all = False
+#noise
+e = complex_noise(300, 2)
+
+Amp = curve2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
+Phase = theta2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
 
 model1 = Model(c2_function)
 model2 = Model(t2_function)

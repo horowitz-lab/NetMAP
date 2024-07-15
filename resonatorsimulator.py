@@ -326,27 +326,6 @@ def arclength_between_pair(maxamp, Z1, Z2):
     # calculate signed arclength
     s = r*theta
     return s, theta, r     
-     
-#define noise (randn(n,) gives a array of normally-distributed random numbers of size n)
-# legacy values from before I implemented use_complexnoise. Hold on to them; Brittany was thoughtful about choosing these.
-def amp1_noise(n, noiselevel): 
-    global amplitudenoisefactor1
-    amplitudenoisefactor1 = 0.005 
-    return noiselevel* amplitudenoisefactor1 * np.random.randn(n,)
-def phase1_noise(n, noiselevel):
-    global phasenoisefactor1
-    phasenoisefactor1 = 0.1
-    return noiselevel* phasenoisefactor1 * np.random.randn(n,)
-def amp2_noise(n, noiselevel):
-    global amplitudenoisefactor2
-    amplitudenoisefactor2 = 0.0005
-    return noiselevel* amplitudenoisefactor2 * np.random.randn(n,)
-def phase2_noise(n, noiselevel):
-    global phasenoisefactor2
-    phasenoisefactor2 = 0.2
-    return noiselevel* phasenoisefactor2 * np.random.randn(n,)
-
-""" This is the one I'm actually using """
 
 def complex_noise(n, noiselevel):
     global complexamplitudenoisefactor
