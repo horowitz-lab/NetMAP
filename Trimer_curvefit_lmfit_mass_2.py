@@ -25,7 +25,7 @@ force_all = False
 e = complex_noise(300, 2)
 
 Amp = curve2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
-Phase = theta2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
+Phase = theta2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) + 2*np.pi
 
 model1 = Model(c2_function)
 model2 = Model(t2_function)
