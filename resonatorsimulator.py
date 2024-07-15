@@ -40,7 +40,7 @@ m2 = sp.symbols('m2', real = True)
 F = sp.symbols('F', real = True)
 
 #driving frequency (leave as variable)
-wd = sp.symbols('\omega_d', real = True)
+wd = sp.symbols(r'\omega_d', real = True)
 
 #symbolically Solve for driving amplitudes and phase using sympy
 
@@ -64,8 +64,10 @@ delta2 = sp.arg(complexamp2) # sp.re(complexamp2)/sp.cos(delta2) (this is the sa
 #Matrices for Cramer's Rule: substitute force vector Fvec=[F,0] for each column in turn (m1 is driven, m2 is not)
 unknownsmatrix1FF = sp.Matrix([[F, -k12], [F, -wd**2*m2 + 1j*wd*b2 + k2 + k12]])
 unknownsmatrix2FF = sp.Matrix([[-wd**2*m1 + 1j*wd*b1 + k1 + k12, F], [-k12, F]])
+
 #Apply Cramer's Rule to solve for Zvec
 complexamp1FF, complexamp2FF = (unknownsmatrix1FF.det()/unknownsmatrix.det(), unknownsmatrix2FF.det()/unknownsmatrix.det())
+
 #Solve for phases for each mass
 delta1FF = sp.arg(complexamp1FF) # Returns the argument (phase angle in radians) of a complex number. 
 delta2FF = sp.arg(complexamp2FF) # sp.re(complexamp2)/sp.cos(delta2) (this is the same thing)
@@ -74,12 +76,12 @@ delta2FF = sp.arg(complexamp2FF) # sp.re(complexamp2)/sp.cos(delta2) (this is th
 complexamp1monomer = F/(-wd**2*m1 + 1j*wd*b1 + k1) # Don't need Cramer's rule for monomer.
 deltamono = sp.arg(complexamp1monomer)
 
-### Ampolitude and phase
+### Amplitude and phase
 #Wrap phases for plots
 
 wrap1 = (delta1)%(2*sp.pi)
 wrap2 = (delta2)%(2*sp.pi)
-wrapmono = deltamono%(2*sp.pi)
+wrapmono = (deltamono)%(2*sp.pi)
 wrap1FF = (delta1FF)%(2*sp.pi)
 wrap2FF = (delta2FF)%(2*sp.pi)
 
@@ -121,6 +123,8 @@ if verbose: # display symbolic solutions
     """
 
 #lambdify curves using sympy
+#c = amplitude (not complex), t = phase
+#re and im are the real and imaginary parts of complex number
 
 c1 = sp.lambdify((wd, k1, k2, k12, b1, b2, F, m1, m2), amp1)
 t1 = sp.lambdify((wd, k1, k2, k12, b1, b2, F,  m1, m2), wrap1)
@@ -149,11 +153,17 @@ im2FF = sp.lambdify((wd, k1, k2, k12, b1, b2, F, m1, m2), sp.im(complexamp2FF))
 
 #define functions
 
-#curve = amplitude, theta = phase, e = err (i.e. noise)
-def curve1(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2, e, MONOMER, forceboth):
+#curve = amplitude, theta = phase, e = error (i.e. noise)
+#realamp and imamp refer to the real and imaginary parts of the complex amplitude
+#for MONOMER and forceboth, you would enter True or False
+#forceboth means there are forces on both masses of the dimer
+#to do a trimer, code needs to be added ofc. And you could forceone, forceboth or forcethree
+#w takes in a list of frequencies
+
+def curve1(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2, e, MONOMER, forceboth): 
     with np.errstate(divide='ignore'):
         if MONOMER:
-            return c1mono(np.array(w), k_1, b1_, F_, m_1) + e
+            return c1mono(np.array(w), k_1, b1_, F_, m_1) + e #why np.array(w)
         else: # dimer
             if forceboth:
                 return c1FF(np.array(w), k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2) + e
@@ -204,6 +214,7 @@ def imamp1(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2, e, MONOMER, forceboth):
             else: 
                 return im1(np.array(w), k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2) + e
     
+#MONOMER = False here because there would only be one complex # and thus one re and one im for a monomer 
 def realamp2(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2, e, forceboth, MONOMER = False):
     with np.errstate(divide='ignore'):
         if forceboth:
@@ -218,7 +229,11 @@ def imamp2(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2, e, forceboth, MONOMER = Fa
         else:
             return im2(w, k_1, k_2, k_12, b1_, b2_, F_, m_1, m_2) + e
     
-## Monomer:    
+## Monomer:
+    # Could use this or could use functions above and just specify MONOMER = True. 
+    # Note: you would just put something like 0 for all the known parameters that 
+    # don't apply to a monomer (like m_2, k_2)
+    
 def curvemono(w, k_1, b1_, F_, m_1, e):
     with np.errstate(divide='ignore'):
          return c1mono(np.array(w), k_1, b1_, F_, m_1) + e
@@ -246,7 +261,7 @@ def rsqrdlist(R1_amp, R1_phase, R2_amp, R2_phase, R1_real_amp, R1_im_amp, R2_rea
                        data = R1_amp)
     R1_phase_rsqrd = rsqrd(model = theta1(drive, k1, k2, k12, b1, b2, F, m1, m2,0 , MONOMER, forceboth = forceboth), 
                        data = R1_phase)
-    if MONOMER:
+    if MONOMER: #np.nan - not a number (b/c a monomer only has one complex amplitude)
         R2_amp_rsqrd = np.nan
         R2_phase_rsqrd = np.nan
     else:
@@ -331,7 +346,8 @@ def phase2_noise(n, noiselevel):
     phasenoisefactor2 = 0.2
     return noiselevel* phasenoisefactor2 * np.random.randn(n,)
 
-# This is the one I'm actually using
+""" This is the one I'm actually using """
+
 def complex_noise(n, noiselevel):
     global complexamplitudenoisefactor
     complexamplitudenoisefactor = 0.0005
@@ -346,6 +362,7 @@ def calculate_spectra(drive, vals_set, noiselevel, MONOMER, forceboth):
     except TypeError:
         n = drive.size
     
+    #usenoise and use_complexnoise are already set to True at the beginning of the code
     if usenoise: # add a random vector of positive and negative numbers to the curve.
 
         if use_complexnoise: # apply noise in cartesian coordinates
@@ -395,6 +412,7 @@ def calculate_spectra(drive, vals_set, noiselevel, MONOMER, forceboth):
             R2_real_amp = np.real(R2_complexamp)
             R2_im_amp   = np.imag(R2_complexamp)
 
+    #this is for no noise
     else: ## This won't work later when I expand the drive list but I use it as a sanity check.
         R1_amp_noiseless = curve1(drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, MONOMER, forceboth=forceboth)
         R1_phase_noiseless = theta1(drive, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, MONOMER, forceboth=forceboth)
@@ -467,7 +485,7 @@ else:
         return a,p, complexamp(a,p)
     
     
-""" Simulator privilege to determine SNR. 
+""" Simulator privilege to determine SNR (signal to noise ratio?). 
     Only one (first) frequency will be used.
 """
 def SNRknown(freq,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise, 
@@ -578,3 +596,106 @@ def SNRcalc(freq,vals_set, noiselevel, MONOMER, forceboth, plot = False, ax = No
         return SNR_R1,SNR_R2, np.mean(amps1), np.std(amps1),  np.mean(amps2), np.std(amps2)
     else:
         return SNR_R1,SNR_R2
+
+
+""" Below, I (Lydia) am practicing using the data to make graphs. 
+    This is a helpful teaching tool that can be used in the tutorial later on.
+    Comment and uncomment sections to see the graph produced
+"""
+
+#Making graphs for the monomer! Used example m, k, b, and f
+#Note, the range of frequency matters
+# freqs = np.linspace(1.99, 2.01, num=100)
+# amps1 = curve1(freqs, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+# phase1 = theta1(freqs, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+# realpart = realamp1(freqs, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+# impart = imamp1(freqs, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+
+#finding the maximum amplitude and the complex amplitude associated with it
+# maxamp = max(amps1)
+# maxamp_index = np.argmax(amps1)
+# corresponding_freq = freqs[maxamp_index]
+# real_atmax1 = realamp1(corresponding_freq, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+# im_atmax1 = imamp1(corresponding_freq, 16, 0, 0, 0.01, 0, 1, 4, 0, 0, True, False)
+
+#Create one plot for both amps vs freqs and phases vs freqs
+# fig, ax1 = plt.subplots()
+# ax1.plot(freqs, amps1,'r-', label='Amplitude')
+# ax1.set_xlabel('Frequency')
+# ax1.set_ylabel('Amplitude')
+# ax2 = ax1.twinx()
+# ax2.plot(freqs, phase1,'b-', label='Phase')
+# ax2.set_ylabel('Phase')
+# ax1.legend(loc='upper right')
+# ax2.legend(loc='center right')
+
+#plot on complex plane
+# plt.plot(realpart, impart, 'g-')
+# plt.xlabel('Re(Z)')
+# plt.ylabel('Im(Z)')
+# plt.axis('equal')
+
+#Making graphs for the dimer! Used example m, k, b, and f
+# freqs = np.linspace(0.5, 2, num=500)
+# amps1 = curve1(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# amps2 = curve2(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+# phase1 = theta1(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# phase2 = theta2(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+# realpart1 = realamp1(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# impart1 = imamp1(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# realpart2 = realamp2(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+# impart2 = imamp2(freqs, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+
+#getting info to use in NetMAP
+# w_1 = 1.9975
+# w_2 = 2.0025
+# realpart11 = realamp1(w_1, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# impart11 = imamp1(w_1, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# realpart12 = realamp2(w_1, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+# impart12 = imamp2(w_1, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+
+# realpart21 = realamp1(w_2, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# impart21 = imamp1(w_2, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False, False)
+# realpart22 = realamp2(w_2, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+# impart22 = imamp2(w_2, 1, 10, 1, 0.1, 0.1, 10, 1, 10, 0, False)
+
+#print(realpart11, impart11, realpart12, impart12, realpart21, impart21, realpart22, impart22)
+
+#Z_1 - amplitude and phase vs frequency
+# fig, ax1 = plt.subplots()
+# ax1.plot(freqs, amps1,'r-', label='Amplitude')
+# ax1.set_xlabel('Frequency')
+# ax1.set_ylabel('Amplitude')
+# ax2 = ax1.twinx()
+# ax2.plot(freqs, phase1,'b-', label='Phase')
+# ax2.set_ylabel('Phase')
+# ax1.legend(loc='upper right')
+# ax2.legend(loc='center right')
+# ax1.set_title('$Z_1(w)$')
+
+#Z_1 - complex plane
+# plt.plot(realpart1, impart1, 'go', linestyle='dashed')
+# plt.xlabel('Re(Z)')
+# plt.ylabel('Im(Z)')
+# plt.title('$Z_1(w)$')
+
+#Z_2 - amplitude and phase vs frequency
+# fig, ax1 = plt.subplots()
+# ax1.plot(freqs, amps2,'r-', label='Amplitude')
+# ax1.set_xlabel('Frequency')
+# ax1.set_ylabel('Amplitude')
+# ax2 = ax1.twinx()
+# ax2.plot(freqs, phase2,'b-', label='Phase')
+# ax2.set_ylabel('Phase')
+# ax1.legend(loc='upper right')
+# ax2.legend(loc='center right')
+# ax1.set_title('$Z_2(w)$')
+
+#Z_2 - complex plane
+# plt.plot(realpart2, impart2, 'go', linestyle='dashed')
+# plt.xlabel('Re(Z)')
+# plt.ylabel('Im(Z)')
+# plt.title('$Z_2(w)$')
+
+
+
