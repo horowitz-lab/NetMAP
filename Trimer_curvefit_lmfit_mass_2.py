@@ -9,21 +9,21 @@ Created on Mon Jul  8 15:13:48 2024
 import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import Model
-from Trimer_simulator import c1, t1
+from Trimer_simulator import c2, t2
 
 #type of function to fit for all three amplitude curves
-def c1_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
-        return c1(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
-def t1_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
-        return t1(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
+def c2_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
+        return c2(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
+def t2_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
+        return t2(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3)
     
 #create data for all three amplitudes
 freq = np.linspace(0.001, 5, 300)
-Amp = c1_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
-Phase = t1_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
+Amp = c2_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
+Phase = t2_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
 
-model1 = Model(c1_function)
-model2 = Model(t1_function)
+model1 = Model(c2_function)
+model2 = Model(t2_function)
 
 #make parameters/initial guesses
 #true parameters = [3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5]
@@ -59,8 +59,8 @@ Phase_fit = graph2.model.func(freq_fit, **graph2.best_values)
 
 #generate points for guessed parameters curve
 freq_guess = np.linspace(min(freq),max(freq), 500)
-Amp_guess = c1_function(freq_guess, **initial_guesses)
-Phase_guess = t1_function(freq_guess, **initial_guesses)
+Amp_guess = c2_function(freq_guess, **initial_guesses)
+Phase_guess = t2_function(freq_guess, **initial_guesses)
 
 plt.figure(figsize=(8,6))
 fig, ax1 = plt.subplots()
@@ -71,15 +71,15 @@ ax1.plot(freq, Amp,'ro', label='Amplitude')
 ax2.plot(freq, Phase,'bo', label='Phase')
 
 #fitted curve
-ax1.plot(freq_fit, Amp_fit, 'm-', label='Fitted Curve Amp 1')
-ax2.plot(freq_fit, Phase_fit, 'g-', label='Fitted Curve Phase 1')
+ax1.plot(freq_fit, Amp_fit, 'm-', label='Fitted Curve Amp 2')
+ax2.plot(freq_fit, Phase_fit, 'g-', label='Fitted Curve Phase 2')
 
 #guessed parameters curve
-ax1.plot(freq_guess, Amp_guess, linestyle='dashed', color='magenta', label='Guessed Parameters Amp 1')
-ax2.plot(freq_guess, Phase_guess, linestyle='dashed', color='green', label='Guessed Parameters Phase 1')
+ax1.plot(freq_guess, Amp_guess, linestyle='dashed', color='magenta', label='Guessed Parameters Amp 2')
+ax2.plot(freq_guess, Phase_guess, linestyle='dashed', color='green', label='Guessed Parameters Phase 2')
 
 #Graph parts
-ax1.set_title('Mass 1')
+ax1.set_title('Mass 2')
 ax1.set_xlabel('Frequency')
 ax1.set_ylabel('Amplitude')
 ax2.set_ylabel('Phase')
