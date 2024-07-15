@@ -22,7 +22,7 @@ def c3_function(w, k_1, k_2, k_3, k_4, b1, b2, b3, F, m1, m2, m3):
 #create data for all three amplitudes
 freq = np.linspace(0, 5, 300)
 A_c1 = c1_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
-# A_c2 = c2_function(frwq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
+# A_c2 = c2_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
 # A_c3 = c3_function(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5)
 
 model1 = Model(c1_function)

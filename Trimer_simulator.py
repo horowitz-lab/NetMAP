@@ -240,18 +240,18 @@ def imamp3(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all
 ''' Let's create some graphs '''
 
 #Amplitude and phase vs frequency
-freq = np.linspace(.01,5,500)
-amps1 = curve1(freq, 1,2,3,4,.5,.5,.5, 1, 2, 3, 4, 0 , False)
-phase1 = theta1(freq, 1,2,3,4,.5,.5,.5, 1, 2, 3, 4, 0 , False)
-fig, ax1 = plt.subplots()
-ax1.plot(freq, amps1,'r-', label='Amplitude')
-ax1.set_xlabel('Frequency')
-ax1.set_ylabel('Amplitude')
-ax2 = ax1.twinx()
-ax2.plot(freq, phase1,'b-', label='Phase')
-ax2.set_ylabel('Phase')
-ax1.legend(loc='upper right')
-ax2.legend(loc='center right')
+# freq = np.linspace(.01,5,500)
+# amps1 = curve1(freq, 1,2,3,4,.5,.5,.5, 1, 2, 3, 4, 0 , False)
+# phase1 = theta1(freq, 1,2,3,4,.5,.5,.5, 1, 2, 3, 4, 0 , False)
+# fig, ax1 = plt.subplots()
+# ax1.plot(freq, amps1,'r-', label='Amplitude')
+# ax1.set_xlabel('Frequency')
+# ax1.set_ylabel('Amplitude')
+# ax2 = ax1.twinx()
+# ax2.plot(freq, phase1,'b-', label='Phase')
+# ax2.set_ylabel('Phase')
+# ax1.legend(loc='upper right')
+# ax2.legend(loc='center right')
 
 # #Z_1 - complex plane
 # realpart1 = realamp1(freq, 1,2,3,4,.5,.5,.5, 1, 2, 3, 4, 0 , False)

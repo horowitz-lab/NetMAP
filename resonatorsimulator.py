@@ -485,7 +485,7 @@ else:
         return a,p, complexamp(a,p)
     
     
-""" Simulator privilege to determine SNR (signal to noise ratio?). 
+""" Simulator privilege to determine SNR. 
     Only one (first) frequency will be used.
 """
 def SNRknown(freq,vals_set, noiselevel, MONOMER, forceboth, use_complexnoise=use_complexnoise, 
@@ -599,7 +599,7 @@ def SNRcalc(freq,vals_set, noiselevel, MONOMER, forceboth, plot = False, ax = No
 
 
 """ Below, I (Lydia) am practicing using the data to make graphs. 
-    This is a helpful teaching tool that can be used in the tutorial later on.
+    This is a helpful teaching tool.
     Comment and uncomment sections to see the graph produced
 """
 
