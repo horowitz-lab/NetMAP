@@ -20,29 +20,29 @@ force_all = False
 e = complex_noise(300, 2)
 
 X1 = realamp1(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
-Y1 = imamp1(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) + 2*np.pi
+Y1 = imamp1(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) 
 
 X2 = realamp2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
-Y2 = imamp2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) + 2*np.pi
+Y2 = imamp2(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) 
 
 X3 = realamp3(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all)
-Y3 = imamp3(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) + 2*np.pi
+Y3 = imamp3(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) 
 
 #make parameters/initial guesses
 #true parameters = [3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5]
 
 params = lmfit.Parameters()
 params.add('k1', value = 3, min=0)
-params.add('k2', value = 3, min=0)
+params.add('k2', value = 3.864, min=0)
 params.add('k3', value = 3.009, min=0)
-params.add('k4', value = 0, min=0)
+params.add('k4', value = 0.008, min=0)
 params.add('b1', value = 2, min=0)
 params.add('b2', value = 1.99, min=0)
 params.add('b3', value = 2.006, min=0)
-params.add('F', value = 1, min=0)
+params.add('F', value = 1.0021, min=0)
 params.add('m1', value = 5, min=0)
 params.add('m2', value = 5.1568, min=0)
-params.add('m3', value = 4.739, min=0)
+params.add('m3', value = 4.0639, min=0)
 
 #get residuals
 def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
@@ -119,8 +119,16 @@ im3_guess = im3(freq, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
 
 ## Begin graphing
 fig = plt.figure(figsize=(10,6))
-gs = fig.add_gridspec(2, 3, hspace=0.1, wspace=0.1)
-((ax1, ax2, ax3), (ax4, ax5, ax6)) = gs.subplots(sharex=True, sharey='row')
+gs = fig.add_gridspec(3, 3, hspace=0.1, wspace=0.1)
+ax1 = fig.add_subplot(gs[0, 0], sharey = 'row')
+ax2 = fig.add_subplot(gs[0, 1], sharex=ax1, sharey = 'row')
+ax3 = fig.add_subplot(gs[0, 2], sharex=ax1, sharey = 'row')
+ax4 = fig.add_subplot(gs[1, 0], sharex=ax1, sharey = 'row')
+ax5 = fig.add_subplot(gs[1, 1], sharex=ax1, sharey = 'row')
+ax6 = fig.add_subplot(gs[1, 2], sharex=ax1, sharey = 'row')
+ax7 = fig.add_subplot(gs[2, 0], sharey = 'row')
+ax8 = fig.add_subplot(gs[2, 1], sharex=ax7, sharey = 'row')
+ax9 = fig.add_subplot(gs[2, 2], sharex=ax7, sharey = 'row')
 
 #original data
 ax1.plot(freq, X1,'ro',)
@@ -129,6 +137,9 @@ ax3.plot(freq, X3,'go')
 ax4.plot(freq, Y1,'ro')
 ax5.plot(freq, Y2,'bo')
 ax6.plot(freq, Y3,'go')
+ax7.plot(X1,Y1,'ro')
+ax8.plot(X2,Y2,'bo')
+ax9.plot(X3,Y3,'go')
 
 #fitted curves
 ax1.plot(freq, re1_fitted,'g-', label='Best Fit')
@@ -137,6 +148,7 @@ ax3.plot(freq, re3_fitted,'b-', label='Best Fit')
 ax4.plot(freq, im1_fitted,'g-', label='Best Fit')
 ax5.plot(freq, im2_fitted,'r-', label='Best Fit')
 ax6.plot(freq, im3_fitted,'b-', label='Best Fit')
+
 
 #inital guess curves
 ax1.plot(freq, re1_guess, linestyle='dashed', label='Initial Guess')
@@ -151,12 +163,15 @@ ax6.plot(freq, im3_guess, linestyle='dashed', label='Initial Guess')
 fig.suptitle('Trimer Resonator: Real and Imaginary')
 ax1.set_title('Mass 1')
 ax2.set_title('Mass 2')
-ax3.set_title('Mass 2')
+ax3.set_title('Mass 3')
 ax1.set_ylabel('Real')
 ax4.set_ylabel('Imaginary')
 
 for ax in fig.get_axes():
-    ax.set(xlabel='Frequency')
     ax.label_outer()
+    
+ax4.set_xlabel('Frequency')
+ax5.set_xlabel('Frequency')
+ax6.set_xlabel('Frequency')
 plt.show()
 

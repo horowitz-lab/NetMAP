@@ -204,9 +204,9 @@ def realamp1(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_a
 def imamp1(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all):
     with np.errstate(divide='ignore'):
         if force_all:
-            return im1FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im1FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
         else: #force just m1
-            return im1(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im1(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
 
 def realamp2(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all):
     with np.errstate(divide='ignore'):
@@ -218,9 +218,9 @@ def realamp2(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_a
 def imamp2(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all):
     with np.errstate(divide='ignore'):
         if force_all:
-            return im2FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im2FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
         else: #force just m1
-            return im2(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im2(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
 
 def realamp3(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all):
     with np.errstate(divide='ignore'):
@@ -232,9 +232,9 @@ def realamp3(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_a
 def imamp3(w, k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3, e, force_all):
     with np.errstate(divide='ignore'):
         if force_all:
-            return im3FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im3FFF(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
         else: #force just m1
-            return im3(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) - 2*np.pi + e
+            return im3(np.array(w), k_1, k_2, k_3, k_4, b1_, b2_, b_3, F_, m_1, m_2, m_3) + e
 
 
 ''' Let's create some graphs '''
