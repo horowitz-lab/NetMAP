@@ -13,7 +13,7 @@ from Trimer_simulator import curve1, theta1, curve2, theta2, curve3, theta3, c1,
 from resonatorsimulator import complex_noise
 
 ##Create data - functions from simulator code
-freq = np.linspace(0.001, 5, 300)
+freq = np.linspace(0.001, 4, 300)
 force_all = False
 
 #noise
@@ -33,20 +33,20 @@ Phase3 = theta3(freq, 3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5, e, force_all) \
 #true parameters = [3, 3, 3, 0, 2, 2, 2, 1, 5, 5, 5]
 
 params = lmfit.Parameters()
-params.add('k1', value = 3)
-params.add('k2', value = 3)
-params.add('k3', value = 3.009)
-params.add('k4', value = 0)
-params.add('b1', value = 2)
-params.add('b2', value = 1.99)
-params.add('b3', value = 2.0076)
-params.add('F', value = 1)
-params.add('m1', value = 5)
-params.add('m2', value = 5)
-params.add('m3', value = 4.739)
+params.add('k1', value = 3, min=0)
+params.add('k2', value = 3, min=0)
+params.add('k3', value = 3.109, min=0)
+params.add('k4', value = 0, min=0)
+params.add('b1', value = 2, min=0)
+params.add('b2', value = 1.99, min=0)
+params.add('b3', value = 2.76, min=0)
+params.add('F', value = 1, min=0)
+params.add('m1', value = 5, min=0)
+params.add('m2', value = 5.1568, min=0)
+params.add('m3', value = 4.739, min=0)
 
 #get residuals
-def residuals(params, wd, Amp1_data, Phase1_data): #, Amp2_data, Amp3_data, Phase1_data, Phase2_data, Phase3_data):
+def residuals(params, wd, Amp1_data, Amp2_data, Amp3_data, Phase1_data, Phase2_data, Phase3_data):
     k1 = params['k1'].value
     k2 = params['k2'].value
     k3 = params['k3'].value 
@@ -60,23 +60,23 @@ def residuals(params, wd, Amp1_data, Phase1_data): #, Amp2_data, Amp3_data, Phas
     m3 = params['m3'].value
     
     modelc1 = c1(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
-    # modelc2 = c2(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
-    # modelc3 = c3(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
+    modelc2 = c2(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
+    modelc3 = c3(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
     modelt1 = t1(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
-    # modelt2 = t2(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
-    # modelt3 = t3(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
+    modelt2 = t2(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
+    modelt3 = t3(wd, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
     
     residc1 = Amp1_data - modelc1
-    # residc2 = Amp2_data - modelc2
-    # residc3 = Amp3_data - modelc3
+    residc2 = Amp2_data - modelc2
+    residc3 = Amp3_data - modelc3
     residt1 = Phase1_data - modelt1
-    # residt2 = Phase2_data - modelt2
-    # residt3 = Phase3_data - modelt3
+    residt2 = Phase2_data - modelt2
+    residt3 = Phase3_data - modelt3
     
-    return np.concatenate((residc1, residt1)) #residc3, residt1, residt2, residt3)
+    return np.concatenate((residc1, residc2, residc3, residt1, residt2, residt3))
 
 
-result = lmfit.minimize(residuals, params, args = (freq, Amp1, Phase1))
+result = lmfit.minimize(residuals, params, args = (freq, Amp1, Amp2, Amp3, Phase1, Phase2, Phase3))
 print(lmfit.fit_report(result))
 
 #Create fitted y-values and intial guessed y-values
@@ -119,7 +119,7 @@ t2_guess = t2(freq, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
 t3_guess = t3(freq, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3)
 
 ## Begin graphing
-fig = plt.figure(figsize=(10,8))
+fig = plt.figure(figsize=(10,6))
 gs = fig.add_gridspec(2, 3, hspace=0.1, wspace=0.1)
 ((ax1, ax2, ax3), (ax4, ax5, ax6)) = gs.subplots(sharex=True, sharey='row')
 
@@ -152,7 +152,7 @@ ax6.plot(freq, t3_guess, linestyle='dashed', label='Initial Guess')
 fig.suptitle('Trimer Resonator: Amplitude and Phase')
 ax1.set_title('Mass 1')
 ax2.set_title('Mass 2')
-ax3.set_title('Mass 2')
+ax3.set_title('Mass 3')
 ax1.set_ylabel('Amplitude')
 ax4.set_ylabel('Phase')
 
