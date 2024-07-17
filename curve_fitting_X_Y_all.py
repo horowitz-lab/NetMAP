@@ -83,9 +83,9 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
             'k1_recovered': [], 'k2_recovered': [], 'k3_recovered': [], 'k4_recovered': [], 
             'b1_recovered': [], 'b2_recovered': [], 'b3_recovered': [], 
             'm1_recovered': [], 'm2_recovered': [], 'm3_recovered': [], 'F_recovered': [], 
-            'syserr_k1': [], 'syserr_k2': [], 'syserr_k3': [], 'syserr_k4': [],
-            'syserr_b1': [], 'syserr_b2': [], 'syserr_b3': [], 'syserr_F': [], 
-            'syserr_m1': [], 'syserr_m2': [], 'syserr_m3': []}
+            'e_k1': [], 'e_k2': [], 'e_k3': [], 'e_k4': [],
+            'e_b1': [], 'e_b2': [], 'e_b3': [], 'e_F': [], 
+            'e_m1': [], 'e_m2': [], 'e_m3': []}
     
     
     #get resulting data and fit parameters by minimizing the residuals
@@ -103,14 +103,18 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
         param_guess = params[param_name].value
         data[f'{param_name}_guess'].append(param_guess)
         
-        #Add fitted parameters to dictionary
+        #Scale fitted parameters by force
         param_fit = result.params[param_name].value
-        data[f'{param_name}_recovered'].append(param_fit)
+        scaling_factor = (true_params['F'])/(result.params['F'].value)
+        scaled_param_fit = param_fit*scaling_factor
+        
+        #Add fitted parameters to dictionary
+        data[f'{param_name}_recovered'].append(scaled_param_fit)
         
         #Calculate systematic error and add to dictionary
         param_true = true_params[param_name]
-        systematic_error = syserr(param_fit, param_true)
-        data[f'syserr_{param_name}'].append(systematic_error)
+        systematic_error = syserr(scaled_param_fit, param_true)
+        data[f'e_{param_name}'].append(systematic_error)
     
     #Create fitted y-values (for graphing)
     k1_fit = result.params['k1'].value
