@@ -52,7 +52,8 @@ params2 = model2.make_params(**initial_guesses)
 graph1 = model1.fit(Amp, params1, w=freq)
 graph2 = model2.fit(Phase, params2, w=freq)
 
-#print(graph1.fit_report())
+print(graph1.fit_report())
+
 #print(graph2.fit_report())
 
 ##Graph it!
