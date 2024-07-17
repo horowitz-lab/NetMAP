@@ -90,7 +90,7 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     
     #get resulting data and fit parameters by minimizing the residuals
     result = lmfit.minimize(residuals, params, args = (freq, X1, X2, X3, Y1, Y2, Y3))
-    # print(lmfit.fit_report(result))
+    print(lmfit.fit_report(result))
     
     #Create dictionary of true parameters from list provided (need for compliting data)
     true_params = {'k1': params_correct[0], 'k2': params_correct[1], 'k3': params_correct[2], 'k4': params_correct[3],
@@ -167,15 +167,15 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax9 = fig.add_subplot(gs[2, 2], sharex=ax7, sharey=ax7)
     
     #original data
-    ax1.plot(freq, X1,'ro', alpha=0.5, markersize=5.5)
-    ax2.plot(freq, X2,'bo', alpha=0.5, markersize=5.5)
-    ax3.plot(freq, X3,'go', alpha=0.5, markersize=5.5)
-    ax4.plot(freq, Y1,'ro', alpha=0.5, markersize=5.5)
-    ax5.plot(freq, Y2,'bo', alpha=0.5, markersize=5.5)
-    ax6.plot(freq, Y3,'go', alpha=0.5, markersize=5.5)
-    ax7.plot(X1,Y1,'ro', alpha=0.5, markersize=5.5)
-    ax8.plot(X2,Y2,'bo', alpha=0.5, markersize=5.5)
-    ax9.plot(X3,Y3,'go', alpha=0.5, markersize=5.5)
+    ax1.plot(freq, X1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax2.plot(freq, X2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax3.plot(freq, X3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    ax4.plot(freq, Y1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax5.plot(freq, Y2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax6.plot(freq, Y3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    ax7.plot(X1,Y1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax8.plot(X2,Y2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax9.plot(X3,Y3,'go', alpha=0.5, markersize=5.5, label = 'Data')
     
     #fitted curves
     ax1.plot(freq, re1_fitted,'c-', label='Best Fit', lw=2.5)
@@ -184,7 +184,9 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax4.plot(freq, im1_fitted,'c-', label='Best Fit', lw=2.5)
     ax5.plot(freq, im2_fitted,'r-', label='Best Fit', lw=2.5)
     ax6.plot(freq, im3_fitted,'m-', label='Best Fit', lw=2.5)
-    
+    ax7.plot(re1_fitted, im1_fitted, 'c-', label='Best Fit', lw=2.5)
+    ax8.plot(re2_fitted, im2_fitted, 'r-', label='Best Fit', lw=2.5)
+    ax9.plot(re3_fitted, im3_fitted, 'm-', label='Best Fit', lw=2.5)
     
     #inital guess curves
     ax1.plot(freq, re1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
@@ -193,7 +195,9 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax4.plot(freq, im1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
     ax5.plot(freq, im2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
     ax6.plot(freq, im3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
-    
+    ax7.plot(re1_guess, im1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax8.plot(re2_guess, im2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax9.plot(re3_guess, im3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
     
     #Graph parts
     fig.suptitle('Trimer Resonator: Real and Imaginary', fontsize=16)
@@ -226,11 +230,11 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax4.legend()
     ax5.legend()
     ax6.legend()
+    ax7.legend()
+    ax8.legend()
+    ax9.legend()
     
     plt.show()
         
     df = pd.DataFrame(data)
     return df
-     
-#with pd.ExcelWriter('Real_Imaginary_Curve_Fit_Simultaneously.xlsx', engine='xlsxwriter') as writer:
-   # df.to_excel(writer, sheet_name='', index=False)
