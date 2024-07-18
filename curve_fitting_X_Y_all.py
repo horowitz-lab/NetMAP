@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import lmfit
 from Trimer_simulator import re1, re2, re3, im1, im2, im3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3
-from resonatorstats import syserr
+from resonatorstats import syserr, rsqrd
 
 #get residuals
 def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
@@ -43,7 +43,7 @@ def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
     
     return np.concatenate((residX1, residX2, residX3, residY1, residY2, residY3))
 
-def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
+def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
 
     ##Create data - functions from simulator code
     freq = np.linspace(0.001, 5, 300)
@@ -76,21 +76,27 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     params.add('m2', value = params_guess[9], min=0)
     params.add('m3', value = params_guess[10], min=0)
     
+    #If you plan on fixing F so it cannot be changed
+    if fix_F: 
+        params['F'].vary = False
+    
     #Create dictionary for storing data
     data = {'k1_guess': [], 'k2_guess': [], 'k3_guess': [], 'k4_guess': [],
-            'b1_guess': [], 'b2_guess': [], 'b3_guess': [], 'F_guess': [],
-            'm1_guess': [], 'm2_guess': [], 'm3_guess': [],   
+            'b1_guess': [], 'b2_guess': [], 'b3_guess': [],
+            'm1_guess': [], 'm2_guess': [], 'm3_guess': [],  'F_guess': [],  
             'k1_recovered': [], 'k2_recovered': [], 'k3_recovered': [], 'k4_recovered': [], 
             'b1_recovered': [], 'b2_recovered': [], 'b3_recovered': [], 
             'm1_recovered': [], 'm2_recovered': [], 'm3_recovered': [], 'F_recovered': [], 
             'e_k1': [], 'e_k2': [], 'e_k3': [], 'e_k4': [],
             'e_b1': [], 'e_b2': [], 'e_b3': [], 'e_F': [], 
-            'e_m1': [], 'e_m2': [], 'e_m3': []}
+            'e_m1': [], 'e_m2': [], 'e_m3': [],
+            'X1_rsqrd': [], 'X2_rsqrd': [], 'X3_rsqrd': [],
+            'Y1_rsqrd': [], 'Y2_rsqrd': [], 'Y3_rsqrd': []}
     
     
     #get resulting data and fit parameters by minimizing the residuals
     result = lmfit.minimize(residuals, params, args = (freq, X1, X2, X3, Y1, Y2, Y3))
-    print(lmfit.fit_report(result))
+    #print(lmfit.fit_report(result))
     
     #Create dictionary of true parameters from list provided (need for compliting data)
     true_params = {'k1': params_correct[0], 'k2': params_correct[1], 'k3': params_correct[2], 'k4': params_correct[3],
@@ -102,21 +108,35 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
         #Add guessed parameters to dictionary
         param_guess = params[param_name].value
         data[f'{param_name}_guess'].append(param_guess)
-        
-        #Scale fitted parameters by force
-        param_fit = result.params[param_name].value
-        scaling_factor = (true_params['F'])/(result.params['F'].value)
-        scaled_param_fit = param_fit*scaling_factor
-        
-        #Add fitted parameters to dictionary
-        data[f'{param_name}_recovered'].append(scaled_param_fit)
-        
-        #Calculate systematic error and add to dictionary
-        param_true = true_params[param_name]
-        systematic_error = syserr(scaled_param_fit, param_true)
-        data[f'e_{param_name}'].append(systematic_error)
     
-    #Create fitted y-values (for graphing)
+        #If you planned on fixing F so it cannot be changed
+        if fix_F: 
+            #Add fitted parameters to dictionary
+            param_fit = result.params[param_name].value
+            data[f'{param_name}_recovered'].append(param_fit)
+            
+            #Calculate systematic error and add to dictionary
+            param_true = true_params[param_name]
+            systematic_error = syserr(param_fit, param_true)
+            data[f'e_{param_name}'].append(systematic_error)
+        
+        else:
+            #If you included F in parameters to be varied, you must scale by F
+            #Scale fitted parameters by force
+            param_fit = result.params[param_name].value
+            scaling_factor = (true_params['F'])/(result.params['F'].value)
+            scaled_param_fit = param_fit*scaling_factor
+            
+            #Add fitted parameters to dictionary
+            data[f'{param_name}_recovered'].append(scaled_param_fit)
+        
+            #Calculate systematic error and add to dictionary
+            param_true = true_params[param_name]
+            systematic_error = syserr(scaled_param_fit, param_true)
+            data[f'e_{param_name}'].append(systematic_error)
+    
+    
+    #Create fitted y-values (for rsrd and graphing)
     k1_fit = result.params['k1'].value
     k2_fit = result.params['k2'].value
     k3_fit = result.params['k3'].value
@@ -129,12 +149,26 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     m2_fit = result.params['m2'].value
     m3_fit= result.params['m3'].value
     
-    re1_fitted = re1(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
-    re2_fitted = re2(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
-    re3_fitted = re3(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
-    im1_fitted = im1(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
-    im2_fitted = im2(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
-    im3_fitted = im3(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    X1_fitted = re1(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    X2_fitted = re2(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    X3_fitted = re3(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    Y1_fitted = im1(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    Y2_fitted = im2(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    Y3_fitted = im3(freq, k1_fit, k2_fit, k3_fit, k4_fit, b1_fit, b2_fit, b3_fit, F_fit, m1_fit, m2_fit, m3_fit)
+    
+    #Calculate R^2
+    X1_rsqrd = rsqrd(X1_fitted, X1)
+    X2_rsqrd = rsqrd(X2_fitted, X2)
+    X3_rsqrd = rsqrd(X3_fitted, X3)
+    Y1_rsqrd = rsqrd(Y1_fitted, Y1)
+    Y2_rsqrd = rsqrd(Y2_fitted, Y2)
+    Y3_rsqrd = rsqrd(Y3_fitted, Y3)
+    data['X1_rsqrd'].append(X1_rsqrd)
+    data['X2_rsqrd'].append(X2_rsqrd)
+    data['X3_rsqrd'].append(X3_rsqrd)
+    data['Y1_rsqrd'].append(Y1_rsqrd)
+    data['Y2_rsqrd'].append(Y2_rsqrd)
+    data['Y3_rsqrd'].append(Y3_rsqrd)
     
     #Create intial guessed y-values (for graphing)
     k1_guess = params['k1'].value
@@ -158,7 +192,7 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     
     ## Begin graphing
     fig = plt.figure(figsize=(16,11))
-    gs = fig.add_gridspec(3, 3, hspace=0.35, wspace=0.05)
+    gs = fig.add_gridspec(3, 3, hspace=0.25, wspace=0.05)
     
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1], sharex=ax1, sharey=ax1)
@@ -166,9 +200,9 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax4 = fig.add_subplot(gs[1, 0], sharex=ax1)
     ax5 = fig.add_subplot(gs[1, 1], sharex=ax1, sharey=ax4)
     ax6 = fig.add_subplot(gs[1, 2], sharex=ax1, sharey=ax4)
-    ax7 = fig.add_subplot(gs[2, 0])
-    ax8 = fig.add_subplot(gs[2, 1], sharex=ax7, sharey=ax7)
-    ax9 = fig.add_subplot(gs[2, 2], sharex=ax7, sharey=ax7)
+    ax7 = fig.add_subplot(gs[2, 0], aspect='equal')
+    ax8 = fig.add_subplot(gs[2, 1], sharex=ax7, sharey=ax7, aspect='equal')
+    ax9 = fig.add_subplot(gs[2, 2], sharex=ax7, sharey=ax7, aspect='equal')
     
     #original data
     ax1.plot(freq, X1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
@@ -182,15 +216,15 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax9.plot(X3,Y3,'go', alpha=0.5, markersize=5.5, label = 'Data')
     
     #fitted curves
-    ax1.plot(freq, re1_fitted,'c-', label='Best Fit', lw=2.5)
-    ax2.plot(freq, re2_fitted,'r-', label='Best Fit', lw=2.5)
-    ax3.plot(freq, re3_fitted,'m-', label='Best Fit', lw=2.5)
-    ax4.plot(freq, im1_fitted,'c-', label='Best Fit', lw=2.5)
-    ax5.plot(freq, im2_fitted,'r-', label='Best Fit', lw=2.5)
-    ax6.plot(freq, im3_fitted,'m-', label='Best Fit', lw=2.5)
-    ax7.plot(re1_fitted, im1_fitted, 'c-', label='Best Fit', lw=2.5)
-    ax8.plot(re2_fitted, im2_fitted, 'r-', label='Best Fit', lw=2.5)
-    ax9.plot(re3_fitted, im3_fitted, 'm-', label='Best Fit', lw=2.5)
+    ax1.plot(freq, X1_fitted,'c-', label='Best Fit', lw=2.5)
+    ax2.plot(freq, X2_fitted,'r-', label='Best Fit', lw=2.5)
+    ax3.plot(freq, X3_fitted,'m-', label='Best Fit', lw=2.5)
+    ax4.plot(freq, Y1_fitted,'c-', label='Best Fit', lw=2.5)
+    ax5.plot(freq, Y2_fitted,'r-', label='Best Fit', lw=2.5)
+    ax6.plot(freq, Y3_fitted,'m-', label='Best Fit', lw=2.5)
+    ax7.plot(X1_fitted, Y1_fitted, 'c-', label='Best Fit', lw=2.5)
+    ax8.plot(X2_fitted, Y2_fitted, 'r-', label='Best Fit', lw=2.5)
+    ax9.plot(X3_fitted, Y3_fitted, 'm-', label='Best Fit', lw=2.5)
     
     #inital guess curves
     ax1.plot(freq, re1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
@@ -234,9 +268,9 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all):
     ax4.legend()
     ax5.legend()
     ax6.legend()
-    ax7.legend()
-    ax8.legend()
-    ax9.legend()
+    ax7.legend(fontsize='10')
+    ax8.legend(fontsize='10')
+    ax9.legend(fontsize='10')
     
     plt.show()
         
