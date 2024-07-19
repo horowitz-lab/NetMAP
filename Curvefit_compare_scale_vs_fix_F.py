@@ -3,7 +3,7 @@
 """
 Created on Wed Jul 17 14:25:50 2024
 
-@author: Student
+@author: lydiabullock
 """
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
@@ -17,8 +17,8 @@ guessed_params = [4.023, 3, 1.909, 0.80911, 1.2985, 2, 2.891, 1, 1, 1.11, 1]
 
 starting_row = 0
 
-with pd.ExcelWriter('Curve_Fit_Simultaneously.xlsx', engine='xlsxwriter') as writer:
-    for i in range(3):
+with pd.ExcelWriter('Curve_Fit_Simultaneously_Scale_vs_Fix.xlsx', engine='xlsxwriter') as writer:
+    for i in range(5):
         
         #Create noise
         e = complex_noise(300, 2)
@@ -32,7 +32,7 @@ with pd.ExcelWriter('Curve_Fit_Simultaneously.xlsx', engine='xlsxwriter') as wri
         #Add to excel spreadsheet
     
         dataframe1.to_excel(writer, sheet_name='Amp & Phase - Scaled vs Fixed F', startrow=starting_row, index=False)
-        dataframe1.to_excel(writer, sheet_name='Amp & Phase - Scaled vs Fixed F', startrow=starting_row+2, index=False, header=False)
+        dataframe2.to_excel(writer, sheet_name='Amp & Phase - Scaled vs Fixed F', startrow=starting_row+2, index=False, header=False)
         dataframe3.to_excel(writer, sheet_name='X & Y - Scaled vs Fixed F', startrow=starting_row, index=False)
         dataframe4.to_excel(writer, sheet_name='X & Y - Scaled vs Fixed F', startrow=starting_row+2, index=False, header=False)
        

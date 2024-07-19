@@ -81,7 +81,10 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
         params['F'].vary = False
     
     #Create dictionary for storing data
-    data = {'k1_guess': [], 'k2_guess': [], 'k3_guess': [], 'k4_guess': [],
+    data = {'k1_true': [], 'k2_true': [], 'k3_true': [], 'k4_true': [],
+            'b1_true': [], 'b2_true': [], 'b3_true': [],
+            'm1_true': [], 'm2_true': [], 'm3_true': [],  'F_true': [],
+            'k1_guess': [], 'k2_guess': [], 'k3_guess': [], 'k4_guess': [],
             'b1_guess': [], 'b2_guess': [], 'b3_guess': [],
             'm1_guess': [], 'm2_guess': [], 'm3_guess': [],  'F_guess': [],  
             'k1_recovered': [], 'k2_recovered': [], 'k3_recovered': [], 'k4_recovered': [], 
@@ -98,17 +101,21 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
     result = lmfit.minimize(residuals, params, args = (freq, X1, X2, X3, Y1, Y2, Y3))
     #print(lmfit.fit_report(result))
     
-    #Create dictionary of true parameters from list provided (need for compliting data)
+    #Create dictionary of true parameters from list provided (need for compiling data bc I can't do it with a list)
     true_params = {'k1': params_correct[0], 'k2': params_correct[1], 'k3': params_correct[2], 'k4': params_correct[3],
                    'b1': params_correct[4], 'b2': params_correct[5], 'b3': params_correct[6], 'F': params_correct[7],
                    'm1': params_correct[8], 'm2': params_correct[9], 'm3': params_correct[10]}
     
     #Compling the Data
     for param_name in ['k1','k2','k3','k4','b1','b2','b3','F','m1','m2','m3']:
+        #Add true parameters to dictionary
+        param_true = true_params[param_name]
+        data[f'{param_name}_true'].append(param_true)
+        
         #Add guessed parameters to dictionary
         param_guess = params[param_name].value
         data[f'{param_name}_guess'].append(param_guess)
-    
+        
         #If you planned on fixing F so it cannot be changed
         if fix_F: 
             #Add fitted parameters to dictionary
@@ -116,7 +123,6 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
             data[f'{param_name}_recovered'].append(param_fit)
             
             #Calculate systematic error and add to dictionary
-            param_true = true_params[param_name]
             systematic_error = syserr(param_fit, param_true)
             data[f'e_{param_name}'].append(systematic_error)
         
