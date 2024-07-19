@@ -17,8 +17,8 @@ from resonatorsimulator import complex_noise
 
 #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
 #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
-true_params = [4, 3, 2, 1, 1, 2, 3, 1, 1, 1, 1]
-guessed_params = [4.023, 3, 1.909, 0.80911, 1.2985, 2, 2.891, 1, 1, 1.11, 1]
+true_params = [5, 5, 1, 1, 2, 2, 2, 1, 1.5, 1.5, 6.5]
+guessed_params = [5.23, 4.5, 1.39, 0.47, 1.983, 2.01, 2.76, 1, 2.025, 1.7, 5.739]
 
 starting_row = 0
 
