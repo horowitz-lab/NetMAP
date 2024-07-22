@@ -113,9 +113,12 @@ sys5_guessed_params = [5.23, 4.5, 1.39, 0.47, 1.983, 2.01, 2.76, 1, 2.025, 1.7, 
 
 sys5_avg_e1_list, sys5_avg_e2_list, sys5_avg_e1_bar, sys5_avg_e2_bar = run_trials(sys5_true_params, sys5_guessed_params, 50, 'System_5.xlsx')
 
-plt.hist(sys5_avg_e1_list, bins=30, alpha=0.75, color='blue', edgecolor='black')
-plt.hist(sys5_avg_e2_list, bins=30, alpha=0.75, color='green', edgecolor='black')
+plt.title('Average Across Parameters - Comparing Cartesian and Polar')
+plt.xlabel('<e>')
+plt.ylabel('Counts')
+plt.hist(sys5_avg_e1_list, bins=10, alpha=0.75, color='blue')
+plt.hist(sys5_avg_e2_list, bins=10, alpha=0.75, color='green')
 
-
+plt.show()
 
 
