@@ -7,13 +7,21 @@ Created on Tue Jul 16 11:31:59 2024
 """
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import lmfit
 from Trimer_simulator import re1, re2, re3, im1, im2, im3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3
 from resonatorstats import syserr, rsqrd
 
-#get residuals
+''' 2 functions contained:
+    multiple_fit - Curve fits to multiple Amplitude and Phase Curves at once
+                 - Calculates systematic error and returns a dictionary of info
+                 - Graphs curve fit analysis
+    residuals - calculates residuals of multiple data sets and concatenates them
+              - used in multiple_fit function to minimize the residuals of 
+                multiple graphs at the same time to find the best fit curve
+'''
+
+#Get residuals
 def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
     k1 = params['k1'].value
     k2 = params['k2'].value
@@ -43,8 +51,14 @@ def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
     
     return np.concatenate((residX1, residX2, residX3, residY1, residY2, residY3))
 
+#Takes in a *list* of correct parameters and a *list* of the guessed parameters,
+#as well as error and three booleans (whether you want to apply force to one or all masses,
+#scale by force, or fix the force)
+#
+#Returns a dataframe containing guessed parameters, recovered parameters,
+#and systematic error
 def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
-
+    
     ##Create data - functions from simulator code
     freq = np.linspace(0.001, 5, 300)
     
@@ -56,11 +70,6 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
     
     X3 = realamp3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
     Y3 = imamp3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
-    
-    #make parameters/initial guesses
-    true_params = {'k1': 3, 'k2': 3, 'k3': 3, 'k4': 0.5,
-                   'b1': 2, 'b2': 2, 'b3': 2, 'F': 1,
-                   'm1': 5, 'm2': 5, 'm3': 5}
     
     #Create intial parameters
     params = lmfit.Parameters()
@@ -140,7 +149,6 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
             param_true = true_params[param_name]
             systematic_error = syserr(scaled_param_fit, param_true)
             data[f'e_{param_name}'].append(systematic_error)
-    
     
     #Create fitted y-values (for rsrd and graphing)
     k1_fit = result.params['k1'].value
@@ -279,6 +287,5 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
     ax9.legend(fontsize='10')
     
     plt.show()
-        
-    df = pd.DataFrame(data)
-    return df
+    
+    return data

@@ -40,7 +40,10 @@ with pd.ExcelWriter('Curve_Fit_Simultaneously_Auto_Random_Guess.xlsx', engine='x
         guessed_params = automate_guess(true_params, 2, 0.001)
     
         #Get the data!
-        dataframe1 = multiple_fit_X_Y(guessed_params, true_params, e, False, True) #Fixed
+        dictionary1 = multiple_fit_X_Y(guessed_params, true_params, e, False, True) #Fixed
+        
+        #Convert to dataframe
+        dataframe1 = pd.DataFrame(dictionary1)
     
         #Add to excel spreadsheet
         dataframe1.to_excel(writer, sheet_name='X & Y', startrow=starting_row, index=False, header=(i==0))
