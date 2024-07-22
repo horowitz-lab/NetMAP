@@ -60,7 +60,7 @@ def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
 def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
     
     ##Create data - functions from simulator code
-    freq = np.linspace(0.001, 5, 300)
+    freq = np.linspace(0.001, 4, 300)
     
     X1 = realamp1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
     Y1 = imamp1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) 

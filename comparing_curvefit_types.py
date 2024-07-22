@@ -12,10 +12,13 @@ Created on Thu Jul 18 14:42:41 2024
 
 import pandas as pd
 import math
+import random
+import numpy as np
 import matplotlib.pyplot as plt
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
 from resonatorsimulator import complex_noise
+from Trimer_simulator import curve1, theta1, curve2, theta2, curve3, theta3, c1, t1, c2, t2, c3, t3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3, re1, re2, re3, im1, im2, im3
 
 ''' Functions contained:
     find_avg_e - calculates average across systematic error for each parameter
@@ -103,21 +106,226 @@ def run_trials(true_params, guessed_params, num_trials, file_name):
         
         return avg_e1_list, avg_e2_list, arithmetic_then_logarithmic(avg_e1_list), arithmetic_then_logarithmic(avg_e2_list)
     
+def generate_random_system():
+    system_params = []
+    for i in range(11):
+        if i==7:
+            system_params.append(1)
+        else: 
+            param = random.uniform(0.1,10)
+            round_param = round(param, 3)
+            system_params.append(round_param)
+    return system_params
+
+def make_guess(params_guess, params_correct):
+    ##Create data - this is the same as what I use in the curve fit functions
+    freq = np.linspace(0.001, 4, 300)
+    
+    #Create noise
+    e = complex_noise(300, 2)
+    force_all = False
+    
+    #Original Data
+    X1 = realamp1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Y1 = imamp1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) 
+    
+    X2 = realamp2(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Y2 = imamp2(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) 
+    
+    X3 = realamp3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Y3 = imamp3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    
+    Amp1 = curve1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Phase1 = theta1(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) \
+        + 2 * np.pi
+    Amp2 = curve2(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Phase2 = theta2(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) \
+        + 2 * np.pi
+    Amp3 = curve3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Phase3 = theta3(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all) \
+        + 2 * np.pi
+
+    #Guessed Curve
+    re1_guess = re1(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    re2_guess = re2(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    re3_guess = re3(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    im1_guess = im1(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    im2_guess = im2(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    im3_guess = im3(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    c1_guess = c1(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    c2_guess = c2(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    c3_guess = c3(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    t1_guess = t1(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    t2_guess = t2(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    t3_guess = t3(freq, params_guess[0], params_guess[1], params_guess[2], params_guess[3], params_guess[4], params_guess[5], params_guess[6], params_guess[7], params_guess[8], params_guess[9], params_guess[10])
+    
+    ## Begin graphing
+    fig = plt.figure(figsize=(16,11))
+    gs = fig.add_gridspec(3, 3, hspace=0.25, wspace=0.05)
+    
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1], sharex=ax1, sharey=ax1)
+    ax3 = fig.add_subplot(gs[0, 2], sharex=ax1, sharey=ax1)
+    ax4 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    ax5 = fig.add_subplot(gs[1, 1], sharex=ax1, sharey=ax4)
+    ax6 = fig.add_subplot(gs[1, 2], sharex=ax1, sharey=ax4)
+    ax7 = fig.add_subplot(gs[2, 0], aspect='equal')
+    ax8 = fig.add_subplot(gs[2, 1], sharex=ax7, sharey=ax7, aspect='equal')
+    ax9 = fig.add_subplot(gs[2, 2], sharex=ax7, sharey=ax7, aspect='equal')
+    
+    #original data
+    ax1.plot(freq, X1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax2.plot(freq, X2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax3.plot(freq, X3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    ax4.plot(freq, Y1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax5.plot(freq, Y2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax6.plot(freq, Y3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    ax7.plot(X1,Y1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax8.plot(X2,Y2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax9.plot(X3,Y3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    
+    #inital guess curves
+    ax1.plot(freq, re1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax2.plot(freq, re2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax3.plot(freq, re3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax4.plot(freq, im1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax5.plot(freq, im2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax6.plot(freq, im3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax7.plot(re1_guess, im1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax8.plot(re2_guess, im2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax9.plot(re3_guess, im3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    
+    #Graph parts
+    fig.suptitle('Trimer Resonator: Real and Imaginary', fontsize=16)
+    ax1.set_title('Mass 1', fontsize=14)
+    ax2.set_title('Mass 2', fontsize=14)
+    ax3.set_title('Mass 3', fontsize=14)
+    ax1.set_ylabel('Real')
+    ax4.set_ylabel('Imaginary')
+    ax7.set_ylabel('Imaginary')
+    
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+    ax5.tick_params(labelleft=False)
+    ax6.tick_params(labelleft=False)
+    ax7.label_outer()
+    ax8.label_outer()
+    ax9.label_outer()
+        
+    ax4.set_xlabel('Frequency')
+    ax5.set_xlabel('Frequency')
+    ax6.set_xlabel('Frequency')
+    ax7.set_xlabel('Real')
+    ax8.set_xlabel('Real')
+    ax9.set_xlabel('Real')
+    
+    ax1.legend()
+    ax2.legend()
+    ax3.legend()
+    ax4.legend()
+    ax5.legend()
+    ax6.legend()
+    ax7.legend(fontsize='10')
+    ax8.legend(fontsize='10')
+    ax9.legend(fontsize='10')
+    
+    plt.show()
+    
+    ## Begin graphing
+    fig = plt.figure(figsize=(16,8))
+    gs = fig.add_gridspec(2, 3, hspace=0.1, wspace=0.1)
+    ((ax1, ax2, ax3), (ax4, ax5, ax6)) = gs.subplots(sharex=True, sharey='row')
+    
+    #original data
+    ax1.plot(freq, Amp1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax2.plot(freq, Amp2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax3.plot(freq, Amp3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    ax4.plot(freq, Phase1,'ro', alpha=0.5, markersize=5.5, label = 'Data')
+    ax5.plot(freq, Phase2,'bo', alpha=0.5, markersize=5.5, label = 'Data')
+    ax6.plot(freq, Phase3,'go', alpha=0.5, markersize=5.5, label = 'Data')
+    
+    #inital guess curves
+    ax1.plot(freq, c1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax2.plot(freq, c2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax3.plot(freq, c3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax4.plot(freq, t1_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax5.plot(freq, t2_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    ax6.plot(freq, t3_guess, color='#4682B4', linestyle='dashed', label='Initial Guess')
+    
+    
+    #Graph parts
+    fig.suptitle('Trimer Resonator: Amplitude and Phase', fontsize=16)
+    ax1.set_title('Mass 1', fontsize=14)
+    ax2.set_title('Mass 2', fontsize=14)
+    ax3.set_title('Mass 3', fontsize=14)
+    ax1.set_ylabel('Amplitude')
+    ax4.set_ylabel('Phase')
+    
+    for ax in fig.get_axes():
+        ax.set(xlabel='Frequency')
+        ax.label_outer()
+        ax.legend()
+    
+    print(f"Graphing guessed curve with guessed parameters: {params_guess}")
+    
+    plt.show()
 
 ''' Begin work here. '''
 
 #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
 #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
-sys5_true_params = [5, 5, 1, 1, 2, 2, 2, 1, 1.5, 1.5, 6.5]
-sys5_guessed_params = [5.23, 4.5, 1.39, 0.47, 1.983, 2.01, 2.76, 1, 2.025, 1.7, 5.739]
+true_params = generate_random_system()
+guessed_params = [1,1,1,1,1,1,1,1,1,1,1]
 
-sys5_avg_e1_list, sys5_avg_e2_list, sys5_avg_e1_bar, sys5_avg_e2_bar = run_trials(sys5_true_params, sys5_guessed_params, 50, 'System_5.xlsx')
+# Start the loop
+while True:
+    # Graph
+    make_guess(guessed_params, true_params) 
+    
+    # Ask the user for the new list of guessed parameters
+    print(f'Current list of parameter guesses is {guessed_params}')
+    indices = input("Enter the indices of the elements you want to update (comma-separated, or 'q' to quit): ")
+    
+    # Check if the user wants to quit
+    if indices.lower() == 'q':
+        break
+    
+    # Parse and validate the indices
+    try:
+        index_list = [int(idx.strip()) for idx in indices.split(',')]
+        if any(index < 0 or index >= len(guessed_params) for index in index_list):
+            print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid indices or 'q' to quit.")
+        continue
+    
+    # Ask the user for the new values
+    values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
+    
+    # Parse and validate the new values
+    try:
+        value_list = [float(value.strip()) for value in values.split(',')]
+        if len(value_list) != len(index_list):
+            print("The number of values must match the number of indices.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid numbers.")
+        continue
+    
+    # Update the list with the new values
+    for index, new_value in zip(index_list, value_list):
+        guessed_params[index] = new_value
+    
+
+avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'System_5.xlsx')
 
 plt.title('Average Across Parameters - Comparing Cartesian and Polar')
 plt.xlabel('<e>')
 plt.ylabel('Counts')
-plt.hist(sys5_avg_e1_list, bins=10, alpha=0.75, color='blue')
-plt.hist(sys5_avg_e2_list, bins=10, alpha=0.75, color='green')
+plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue')
+plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green')
 
 plt.show()
 
