@@ -7,28 +7,36 @@ Created on Thu Jul 18 14:42:41 2024
 """
 
 ''' Which has more accurated recovered parameters: Amp & Phase or X & Y? 
-    Same system, different noise - this replicates doing experiment many times.
     Using method of fixing F. '''
 
+import os
 import pandas as pd
 import math
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 from brokenaxes import brokenaxes
+import matplotlib.ticker as ticker
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
 from resonatorsimulator import complex_noise
 from Trimer_simulator import curve1, theta1, curve2, theta2, curve3, theta3, c1, t1, c2, t2, c3, t3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3, re1, re2, re3, im1, im2, im3
 
 ''' Functions contained:
-    find_avg_e - calculates average across systematic error for each parameter
+    find_avg_e - Calculates average across systematic error for each parameter
                  for one trial of the same system
-    artithmetic_then_logarithmic - calculates arithmetic average across parameters first, 
+    artithmetic_then_logarithmic - Calculates arithmetic average across parameters first, 
                                    then logarithmic average across trials 
     run_trials - Runs a set number of trials for one system, graphs curvefit result,
                  puts data and averages into spreadsheet, returns <e>_bar for both types of curves
                - Must include number of trials to run and name of excel sheet  
+    generate_random_system - Randomly generates parameters for system. All parameter values btw 0.1 and 10
+    plot_guess - Used for the Case Study. Plots just the data and the guessed parameters curve. No curve fitting.
+    automate_guess - Randomly generates guess parameters within a certain percent of the true parameters
+    save_figure - Saves figures to a folder of your naming choice. Also allows you to name the figure whatever.
+    
+    This file also imports multiple_fit_amp_phase, which performs curve fitting on Amp vs Freq and Phase vs Freq curves for all 3 masses simultaneously,
+    and multiple_fit_X_Y, which performs curve fitting on X vs Freq and Y vs Freq curves for all 3 masses simulatenously.
 '''
 
 #Calculate <e> for one trial of the same system
@@ -48,32 +56,32 @@ def find_avg_e(dictionary):
     return avg_e
 
 #Calculate <e>_bar
-def arithmetic_then_logarithmic(avg_e_list):
+def arithmetic_then_logarithmic(avg_e_list, num_trials):
     ln_avg_e = []
     for item in avg_e_list:
         ln_avg_e.append(math.log(item))
-    sum_ln_avg_e = sum(ln_avg_e)
-    e_raised_to_sum = math.exp(sum_ln_avg_e)
+    avg_ln_avg_e = sum(ln_avg_e)/num_trials
+    e_raised_to_sum = math.exp(avg_ln_avg_e)
     return e_raised_to_sum
 
 #Runs a set number of trials for one system, graphs curvefit result,
 # puts data and averages into spreadsheet, returns <e>_bar for both types of curves
-def run_trials(true_params, guessed_params, num_trials, file_name):
+def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_folder_name):
     
     starting_row = 0
     avg_e1_list = []
     avg_e2_list = []
     
     #Put data into excel spreadsheet
-    with pd.ExcelWriter(file_name, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(excel_file_name, engine='xlsxwriter') as writer:
         for i in range(num_trials):
             
             #Create noise
             e = complex_noise(300, 2)
         
             #Get the data!
-            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True) #Polar, Fixed force
-            dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True) #Cartesian, Fixed force
+            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
+            dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
         
             #Find <e> (average across parameters) for each trial and add to dictionary
             avg_e1 = find_avg_e(dictionary1)
@@ -96,8 +104,8 @@ def run_trials(true_params, guessed_params, num_trials, file_name):
         
             starting_row += len(dataframe1) + (1 if i==0 else 0)
         
-        avg_e1_bar = arithmetic_then_logarithmic(avg_e1_list) 
-        avg_e2_bar = arithmetic_then_logarithmic(avg_e2_list)
+        avg_e1_bar = arithmetic_then_logarithmic(avg_e1_list, num_trials) 
+        avg_e2_bar = arithmetic_then_logarithmic(avg_e2_list, num_trials)
         
         dataframe1.at[0,'<e>_bar'] = avg_e1_bar
         dataframe2.at[0,'<e>_bar'] = avg_e2_bar
@@ -105,8 +113,9 @@ def run_trials(true_params, guessed_params, num_trials, file_name):
         dataframe1.to_excel(writer, sheet_name='Amp & Phase', index=False)
         dataframe2.to_excel(writer, sheet_name='X & Y', index=False)
         
-        return avg_e1_list, avg_e2_list, arithmetic_then_logarithmic(avg_e1_list), arithmetic_then_logarithmic(avg_e2_list)
+        return avg_e1_list, avg_e2_list, arithmetic_then_logarithmic(avg_e1_list, num_trials), arithmetic_then_logarithmic(avg_e2_list, num_trials)
     
+#Randomly generates parameters of a system. All parameters between 0.1 and 10
 def generate_random_system():
     system_params = []
     for i in range(11):
@@ -118,7 +127,8 @@ def generate_random_system():
             system_params.append(round_param)
     return system_params
 
-def make_guess(params_guess, params_correct):
+#Plots data and guessed parameters curve
+def plot_guess(params_guess, params_correct):
     ##Create data - this is the same as what I use in the curve fit functions
     freq = np.linspace(0.001, 4, 300)
     
@@ -272,64 +282,180 @@ def make_guess(params_guess, params_correct):
     
     plt.show()
 
+#Generates random guess parameters that are within a certain percent of the true parameters
+def automate_guess(true_params, percent_threshold):
+    params_guess = []
+    for index, value in enumerate(true_params):
+        if index == 7: #Doing this because we must know what Force is going in
+            params_guess.append(value)
+        else:
+            threshold = value * (percent_threshold / 100)
+            num = random.uniform(value-threshold, value+threshold)
+            rounded_num = round(num, 4) # Round to 4 decimal places
+            params_guess.append(rounded_num)
+    return params_guess
+
+#Saves graphs
+def save_figure(figure, folder_name, file_name):
+    # Create the folder if it does not exist
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    
+    # Save the figure to the folder
+    file_path = os.path.join(folder_name, file_name)
+    figure.savefig(file_path)
+    plt.close(figure)
+
 ''' Begin work here. Case Study. '''
 
-#Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
-#Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
-true_params = generate_random_system()
-guessed_params = [1,1,1,1,1,1,1,1,1,1,1]
+# #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
+# #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
+# true_params = generate_random_system()
+# guessed_params = [1,1,1,1,1,1,1,1,1,1,1]
 
-# Start the loop
-while True:
-    # Graph
-    make_guess(guessed_params, true_params) 
+# # Start the loop
+# while True:
+#     # Graph
+#     plot_guess(guessed_params, true_params) 
     
-    # Ask the user for the new list of guessed parameters
-    print(f'Current list of parameter guesses is {guessed_params}')
-    indices = input("Enter the indices of the elements you want to update (comma-separated, or 'q' to quit): ")
+#     # Ask the user for the new list of guessed parameters
+#     print(f'Current list of parameter guesses is {guessed_params}')
+#     indices = input("Enter the indices of the elements you want to update (comma-separated, or 'c' to continue to curve fit): ")
     
-    # Check if the user wants to quit
-    if indices.lower() == 'q':
-        break
+#     # Check if the user wants to quit
+#     if indices.lower() == 'c':
+#         break
     
-    # Parse and validate the indices
-    try:
-        index_list = [int(idx.strip()) for idx in indices.split(',')]
-        if any(index < 0 or index >= len(guessed_params) for index in index_list):
-            print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
-            continue
-    except ValueError:
-        print("Invalid input. Please enter valid indices or 'q' to quit.")
-        continue
+#     # Parse and validate the indices
+#     try:
+#         index_list = [int(idx.strip()) for idx in indices.split(',')]
+#         if any(index < 0 or index >= len(guessed_params) for index in index_list):
+#             print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
+#             continue
+#     except ValueError:
+#         print("Invalid input. Please enter valid indices or 'c' to continue to curve fit.")
+#         continue
     
-    # Ask the user for the new values
-    values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
+#     # Ask the user for the new values
+#     values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
     
-    # Parse and validate the new values
-    try:
-        value_list = [float(value.strip()) for value in values.split(',')]
-        if len(value_list) != len(index_list):
-            print("The number of values must match the number of indices.")
-            continue
-    except ValueError:
-        print("Invalid input. Please enter valid numbers.")
-        continue
+#     # Parse and validate the new values
+#     try:
+#         value_list = [float(value.strip()) for value in values.split(',')]
+#         if len(value_list) != len(index_list):
+#             print("The number of values must match the number of indices.")
+#             continue
+#     except ValueError:
+#         print("Invalid input. Please enter valid numbers.")
+#         continue
     
-    # Update the list with the new values
-    for index, new_value in zip(index_list, value_list):
-        guessed_params[index] = new_value
+#     # Update the list with the new values
+#     for index, new_value in zip(index_list, value_list):
+#         guessed_params[index] = new_value
     
+# #Curve fit with the guess made above
+# avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx')
 
-avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx')
+# #Graph histogram of <e> for both curve fits
+# bax = brokenaxes(xlims=((0, max(avg_e2_list)+0.5), (min(avg_e1_list)-0.5, max(avg_e1_list)+0.5)))
+# bax.set_title('Average Systematic Error Across Parameters')
+# bax.set_xlabel('<e>')
+# bax.set_ylabel('Counts')
+# bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)')
+# bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)')
+# bax.legend(loc='upper center')
 
+# plt.show()
 
-bax = brokenaxes(xlims=((0, max(avg_e2_list)+0.5), (min(avg_e1_list)-0.5, max(avg_e1_list)+0.5)))
-bax.set_title('Average Systematic Error Across Parameters')
-bax.set_xlabel('<e>')
-bax.set_ylabel('Counts')
-bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)')
-bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)')
-bax.legend(loc='upper center')
+''' Begin work here. Automated guesses. '''
+
+avg_e1_bar_list = [] 
+avg_e2_bar_list = []
+
+for i in range(15):
+    
+    #Generate system and guess parameters
+    true_params = generate_random_system()
+    guessed_params = automate_guess(true_params, 20)
+    
+    #Curve fit with the guess made above
+    avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+    
+    #Add <e>_bar to lists to make one graph at the end
+    avg_e1_bar_list.append(avg_e1_bar) #Polar
+    avg_e2_bar_list.append(avg_e2_bar) #Cartesian
+    
+    #Graph histogram of <e> for both curve fits
+    fig = plt.figure(figsize=(10, 6))
+    
+    if max(avg_e2_list) >= min(avg_e1_list):
+        plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+        plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+        plt.title('Average Systematic Error Across Parameters')
+        plt.xlabel('<e> (%)')
+        plt.ylabel('Counts')
+        plt.legend(loc='upper center')
+    
+    else:
+        spread1 = (max(avg_e1_list)-min(avg_e1_list)) #Polar
+        spread2 = (max(avg_e2_list)-min(avg_e2_list)) #Cartesian
+        
+        bax = brokenaxes(xlims=((min(avg_e2_list)-min(avg_e2_list)*0.1, max(avg_e2_list)+max(avg_e2_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
+        bax.set_title('Average Systematic Error Across Parameters')
+        bax.set_xlabel('<e> (%)')
+        bax.set_ylabel('Counts')
+        bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+        bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+        bax.legend(loc='upper center')
+    
+        # Adjust the scales
+    
+        bax.axs[0].set_xlim(min(avg_e2_list)-spread2*0.1,  max(avg_e2_list)+spread2*0.1) #Cartesian 
+        bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #Polar
+    
+        bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+        bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+    
+    plt.show()
+    save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
+
+#Graph histogram of <e>_bar for both curve fits
+fig = plt.figure(figsize=(10, 6))
+
+if max(avg_e2_bar_list) >= min(avg_e1_bar_list):
+    plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+    plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+    plt.title('Average Systematic Error Across Parameters')
+    plt.xlabel('<e> (%)')
+    plt.ylabel('Counts')
+    plt.legend(loc='upper center')
+
+else:
+    spread1 = (max(avg_e1_bar_list)-min(avg_e1_bar_list)) #Polar
+    spread2 = (max(avg_e2_bar_list)-min(avg_e2_bar_list)) #Cartesian
+    
+    bax = brokenaxes(xlims=((min(avg_e2_bar_list)-min(avg_e2_list)*0.1, max(avg_e2_bar_list)+max(avg_e2_bar_list)*0.1), (min(avg_e1_bar_list)-min(avg_e1_bar_list)*0.1, max(avg_e1_bar_list)+max(avg_e1_bar_list)*0.1)), hspace=.05)
+    bax.set_title('Average Systematic Error Across Parameters')
+    bax.set_xlabel('<e> (%)')
+    bax.set_ylabel('Counts')
+    bax.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+    bax.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+    bax.legend(loc='upper center')
+
+    # Adjust the scales
+
+    bax.axs[0].set_xlim(min(avg_e2_bar_list)-spread2*0.1,  max(avg_e2_bar_list)+spread2*0.1) #Cartesian 
+    bax.axs[1].set_xlim(min(avg_e1_bar_list)-spread1*0.1, max(avg_e1_bar_list)+spread1*0.1)  #Polar
+
+    bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
+    bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+    bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+    bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
 
 plt.show()
+fig.savefig('Histogram_<e>_bar.png')  
+
+
 

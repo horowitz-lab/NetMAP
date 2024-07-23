@@ -5,20 +5,21 @@ Created on Tue Jul 16 11:31:59 2024
 
 @author: lydiabullock
 """
-
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
 from Trimer_simulator import re1, re2, re3, im1, im2, im3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3
 from resonatorstats import syserr, rsqrd
 
-''' 2 functions contained:
+''' 3 functions contained:
     multiple_fit - Curve fits to multiple Amplitude and Phase Curves at once
                  - Calculates systematic error and returns a dictionary of info
                  - Graphs curve fit analysis
     residuals - calculates residuals of multiple data sets and concatenates them
               - used in multiple_fit function to minimize the residuals of 
                 multiple graphs at the same time to find the best fit curve
+    save_figure - saves the curve fit graph created to a named folder
 '''
 
 #Get residuals
@@ -51,13 +52,23 @@ def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
     
     return np.concatenate((residX1, residX2, residX3, residY1, residY2, residY3))
 
+def save_figure(figure, folder_name, file_name):
+    # Create the folder if it does not exist
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    
+    # Save the figure to the folder
+    file_path = os.path.join(folder_name, file_name)
+    figure.savefig(file_path)
+    plt.close(figure)
+
 #Takes in a *list* of correct parameters and a *list* of the guessed parameters,
 #as well as error and three booleans (whether you want to apply force to one or all masses,
 #scale by force, or fix the force)
 #
 #Returns a dataframe containing guessed parameters, recovered parameters,
 #and systematic error
-def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
+def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F, graph_folder_name, graph_name):
     
     ##Create data - functions from simulator code
     freq = np.linspace(0.001, 4, 300)
@@ -287,5 +298,6 @@ def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F):
     ax9.legend(fontsize='10')
     
     plt.show()
+    save_figure(fig, graph_folder_name, graph_name)
     
     return data
