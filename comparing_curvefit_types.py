@@ -15,6 +15,7 @@ import math
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from brokenaxes import brokenaxes
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
 from resonatorsimulator import complex_noise
@@ -271,7 +272,7 @@ def make_guess(params_guess, params_correct):
     
     plt.show()
 
-''' Begin work here. '''
+''' Begin work here. Case Study. '''
 
 #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
 #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
@@ -319,14 +320,16 @@ while True:
         guessed_params[index] = new_value
     
 
-avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'System_5.xlsx')
+avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx')
 
-plt.title('Average Across Parameters - Comparing Cartesian and Polar')
-plt.xlabel('<e>')
-plt.ylabel('Counts')
-plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue')
-plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green')
+
+bax = brokenaxes(xlims=((0, max(avg_e2_list)+0.5), (min(avg_e1_list)-0.5, max(avg_e1_list)+0.5)))
+bax.set_title('Average Systematic Error Across Parameters')
+bax.set_xlabel('<e>')
+bax.set_ylabel('Counts')
+bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)')
+bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)')
+bax.legend(loc='upper center')
 
 plt.show()
-
 
