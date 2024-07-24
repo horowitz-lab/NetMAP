@@ -3,16 +3,15 @@
 """
 Created on Fri Mar 22 15:57:10 2024
 
-@author: samfeldman
+@author: samfeldman & lydiabullock
 """
 import numpy as np
 #     return amp(Z.real, Z.imag)
 from Trimer_simulator import calculate_spectra
 
-''' THIS IS THE NETMAP PART 
-    Note that we do not deal with noise in any way '''
+''' THIS IS THE NETMAP PART '''
 
-def Zmatrix(force_all, freq, complexamp1, complexamp2, complexamp3):
+def Zmatrix(freq, complexamp1, complexamp2, complexamp3, force_all):
     Zmatrix = []
     for rowindex in range(len(freq)):
         w = freq[rowindex]
@@ -21,29 +20,29 @@ def Zmatrix(force_all, freq, complexamp1, complexamp2, complexamp3):
         Z3 = complexamp3[rowindex]
         
         Zmatrix.append([-w**2*np.real(Z1), 0, 0, -w*np.imag(Z1), 0, 0, np.real(Z1), 
-                        np.real(Z1)-np.real(Z2), 0, -1])
+                        np.real(Z1)-np.real(Z2), 0, 0, -1])
         Zmatrix.append([-w**2*np.imag(Z1), 0, 0, w*np.real(Z1), 0, 0, np.imag(Z1), 
-                          np.imag(Z1) - np.imag(Z2), 0, 0])
+                          np.imag(Z1) - np.imag(Z2), 0, 0, 0])
 
         if force_all:
             Zmatrix.append([0, -w**2*np.real(Z2), 0, 0, -w*np.imag(Z2), 0, 0, 
-                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), -1])
+                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0, -1])
         else:
             Zmatrix.append([0, -w**2*np.real(Z2), 0, 0, -w*np.imag(Z2), 0, 0, 
-                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0])
+                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0, 0])
             
         Zmatrix.append([0, -w**2*np.imag(Z2), 0, 0, w*np.real(Z2), 0, 0, 
-                        np.imag(Z2)-np.imag(Z1), np.imag(Z2) - np.imag(Z3), 0])
+                        np.imag(Z2)-np.imag(Z1), np.imag(Z2) - np.imag(Z3), 0, 0])
         
         if force_all:
             Zmatrix.append([0, 0, -w**2*np.real(Z3), 0, 0, -w*np.imag(Z3), 0, 0, 
-                            np.real(Z3)-np.real(Z2), -1])     
+                            np.real(Z3)-np.real(Z2), np.real(Z3), -1])     
         else:
             Zmatrix.append([0, 0, -w**2*np.real(Z3), 0, 0, -w*np.imag(Z3), 0, 0, 
-                            np.real(Z3)-np.real(Z2), 0])
+                            np.real(Z3)-np.real(Z2), np.real(Z3), 0])
         
         Zmatrix.append([0, 0, -w**2*np.imag(Z3), 0, 0, w*np.real(Z3), 0, 0, 
-                        np.imag(Z3)-np.imag(Z2), 0])
+                        np.imag(Z3)-np.imag(Z2), np.imag(Z3), 0])
         
     return np.array(Zmatrix)
 
@@ -53,13 +52,15 @@ def unnormalizedparameters(Zmatrix):
     return V[:,-1] #Will it always be the last column of V??
 
 def normalize_parameters_1d_by_force(unnormalizedparameters, F_set):
-    # parameters vector: 'm1', 'm2', 'b1', 'b2', 'k1', 'k2','k12', 'Driving Force'
+    # parameters vector: 'm1', 'm2', 'm3', 'b1', 'b2', 'b3', 'k1', 'k2', 'k3', 'k4', 'Driving Force'
     c = F_set / unnormalizedparameters[-1]
     parameters = [c*unnormalizedparameters[k] for k in range(len(unnormalizedparameters)) ]
     return parameters
 
-#This is the data for NetMAP to work with. Using the same data as Sam in thesis
 
+''' Example work begins here. '''
+
+#This is the data for NetMAP to work with. Using the same data as Sam in thesis
 f1 = 1.7
 f2 = 2.3
 m1 = 3
@@ -71,21 +72,20 @@ b3 = 0.1
 k1 = 5
 k2 = 5
 k3 = 5
-k4 = 0 #no fourth spring connecting mass 4 to wall in this
+k4 = 1 #no fourth spring connecting mass 4 to wall in this
 F = 1
 
-# getting the complex amplitudes with a function from Trimer_simulator
-Z11, Z21, Z31 = calculate_spectra(f1, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3, 0, False)
-Z12, Z22, Z32 = calculate_spectra(f2, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3, 0, False)
-
+#create some noise
+from resonatorsimulator import complex_noise
+e = complex_noise(2, 2) #number of frequencies, noise level
 frequencies = [f1, f2]
-comamps1 = [Z11, Z12]
-comamps2 = [Z21, Z22]
-comamps3 = [Z31, Z32]
-#these are good
+
+# getting the complex amplitudes with a function from Trimer_simulator
+comamps1, comamps2, comamps3 = calculate_spectra(frequencies, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3, e, False)
+
 
 #Create the Zmatrix:
-trizmatrix = Zmatrix(False, frequencies, comamps1, comamps2, comamps3)
+trizmatrix = Zmatrix(frequencies, comamps1, comamps2, comamps3, False)
 
 #Get the unnormalized parameters:
 notnormparam_tri = unnormalizedparameters(trizmatrix)

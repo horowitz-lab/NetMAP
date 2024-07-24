@@ -307,9 +307,9 @@ def A_from_Z(Z): # calculate amplitude of complex number
 #Complex amps at a frequency
 #Can call this function in other code :)
 def calculate_spectra(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all):
-    Z1 = (complexamp(curve1(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta1(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all)))
-    Z2 = (complexamp(curve2(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta2(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all))) 
-    Z3 = (complexamp(curve3(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta3(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all)))
+    Z1 = list(complexamp(curve1(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta1(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all)))
+    Z2 = list(complexamp(curve2(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta2(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all))) 
+    Z3 = list(complexamp(curve3(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all), theta3(drive, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, e, force_all)))
 
     return Z1, Z2, Z3
 

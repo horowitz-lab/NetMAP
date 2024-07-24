@@ -20,7 +20,10 @@ import matplotlib.ticker as ticker
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
 from resonatorsimulator import complex_noise
-from Trimer_simulator import curve1, theta1, curve2, theta2, curve3, theta3, c1, t1, c2, t2, c3, t3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3, re1, re2, re3, im1, im2, im3
+from Trimer_simulator import calculate_spectra, curve1, theta1, curve2, theta2, curve3, theta3, c1, t1, c2, t2, c3, t3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3, re1, re2, re3, im1, im2, im3
+from Trimer_NetMAP import Zmatrix, unnormalizedparameters, normalize_parameters_1d_by_force
+from scipy.signal import find_peaks
+from resonatorstats import syserr
 
 ''' Functions contained:
     find_avg_e - Calculates average across systematic error for each parameter
@@ -64,62 +67,11 @@ def arithmetic_then_logarithmic(avg_e_list, num_trials):
     e_raised_to_sum = math.exp(avg_ln_avg_e)
     return e_raised_to_sum
 
-#Runs a set number of trials for one system, graphs curvefit result,
-# puts data and averages into spreadsheet, returns <e>_bar for both types of curves
-def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_folder_name):
-    
-    starting_row = 0
-    avg_e1_list = []
-    avg_e2_list = []
-    
-    #Put data into excel spreadsheet
-    with pd.ExcelWriter(excel_file_name, engine='xlsxwriter') as writer:
-        for i in range(num_trials):
-            
-            #Create noise
-            e = complex_noise(300, 2)
-        
-            #Get the data!
-            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
-            dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
-        
-            #Find <e> (average across parameters) for each trial and add to dictionary
-            avg_e1 = find_avg_e(dictionary1)
-            dictionary1['<e>'] = avg_e1
-            
-            avg_e2 = find_avg_e(dictionary2)
-            dictionary2['<e>'] = avg_e2
-            
-            #Append to list for later graphing
-            avg_e1_list.append(avg_e1)
-            avg_e2_list.append(avg_e2)
-        
-            #Turn data into dataframe for excel
-            dataframe1 = pd.DataFrame(dictionary1)
-            dataframe2 = pd.DataFrame(dictionary2)
-            
-            #Add to excel spreadsheet
-            dataframe1.to_excel(writer, sheet_name='Amp & Phase', startrow=starting_row, index=False, header=(i==0))
-            dataframe2.to_excel(writer, sheet_name='X & Y', startrow=starting_row, index=False, header=(i==0))
-        
-            starting_row += len(dataframe1) + (1 if i==0 else 0)
-        
-        avg_e1_bar = arithmetic_then_logarithmic(avg_e1_list, num_trials) 
-        avg_e2_bar = arithmetic_then_logarithmic(avg_e2_list, num_trials)
-        
-        dataframe1.at[0,'<e>_bar'] = avg_e1_bar
-        dataframe2.at[0,'<e>_bar'] = avg_e2_bar
-        
-        dataframe1.to_excel(writer, sheet_name='Amp & Phase', index=False)
-        dataframe2.to_excel(writer, sheet_name='X & Y', index=False)
-        
-        return avg_e1_list, avg_e2_list, arithmetic_then_logarithmic(avg_e1_list, num_trials), arithmetic_then_logarithmic(avg_e2_list, num_trials)
-    
 #Randomly generates parameters of a system. All parameters between 0.1 and 10
 def generate_random_system():
     system_params = []
     for i in range(11):
-        if i==7:
+        if i==7: #Doing this because we must keep force the same throughout
             system_params.append(1)
         else: 
             param = random.uniform(0.1,10)
@@ -306,156 +258,343 @@ def save_figure(figure, folder_name, file_name):
     figure.savefig(file_path)
     plt.close(figure)
 
+def get_parameters_NetMAP(params_guess, params_correct, e, force_all):
+
+    # #Get frequencies
+    # freq = np.linspace(0.001, 4, 300)
+    
+    # # getting the complex amplitudes with a function from Trimer_simulator
+    # complex_amps1 = []
+    # complex_amps2 = []
+    # complex_amps3 = []
+    # for f in range(len(freq)):
+    #     Z1, Z2, Z3 = calculate_spectra(f, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    #     complex_amps1.append(Z1)
+    #     complex_amps2.append(Z2)
+    #     complex_amps3.append(Z3)
+
+    #Choosing 2 frequencies for now
+    freq = [1, 3]
+    
+    # getting the complex amplitudes with a function from Trimer_simulator
+    Z1, Z2, Z3 = calculate_spectra(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+        
+    #Create the Zmatrix:
+    trizmatrix = Zmatrix(freq, Z1, Z2, Z3, False)
+
+    #Get the unnormalized parameters:
+    notnormparam_tri = unnormalizedparameters(trizmatrix)
+
+    #Normalize the parameters
+    final_tri = normalize_parameters_1d_by_force(notnormparam_tri, 1)
+    # parameters vector: 'm1', 'm2', 'm3', 'b1', 'b2', 'b3', 'k1', 'k2', 'k3', 'k4', 'Driving Force'
+
+    #Put everything into dictionary
+    data = {'k1_true': [params_correct[0]], 'k2_true': [params_correct[1]], 'k3_true': [params_correct[2]], 'k4_true': [params_correct[3]],
+            'b1_true': [params_correct[4]], 'b2_true': [params_correct[5]], 'b3_true': [params_correct[6]],
+            'm1_true': [params_correct[8]], 'm2_true': [params_correct[9]], 'm3_true': [params_correct[10]],  'F_true': [params_correct[7]],
+            'k1_guess': [params_guess[0]], 'k2_guess': [params_guess[1]], 'k3_guess': [params_guess[2]], 'k4_guess': [params_guess[3]],
+            'b1_guess': [params_guess[4]], 'b2_guess': [params_guess[5]], 'b3_guess': [params_guess[6]],
+            'm1_guess': [params_guess[8]], 'm2_guess': [params_guess[9]], 'm3_guess': [params_guess[10]],  'F_guess': [params_guess[7]],  
+            'k1_recovered': [final_tri[6]], 'k2_recovered': [final_tri[7]], 'k3_recovered': [final_tri[8]], 'k4_recovered': [final_tri[9]], 
+            'b1_recovered': [final_tri[3]], 'b2_recovered': [final_tri[4]], 'b3_recovered': [final_tri[5]], 
+            'm1_recovered': [final_tri[0]], 'm2_recovered': [final_tri[1]], 'm3_recovered': [final_tri[2]], 'F_recovered': [final_tri[10]], 
+            'e_k1': [], 'e_k2': [], 'e_k3': [], 'e_k4': [],
+            'e_b1': [], 'e_b2': [], 'e_b3': [], 'e_F': [], 
+            'e_m1': [], 'e_m2': [], 'e_m3': []}
+    
+    #Calculate systematic error and add to data dictionary
+    for param_name in ['k1','k2','k3','k4','b1','b2','b3','F','m1','m2','m3']:
+        param_true = data[f'{param_name}_true'][0]
+        param_fit = data[f'{param_name}_recovered'][0]
+        systematic_error = syserr(param_fit, param_true)
+        data[f'e_{param_name}'].append(systematic_error)
+    
+    return data
+
+#Runs a set number of trials for one system, graphs curvefit result,
+# puts data and averages into spreadsheet, returns <e>_bar for both types of curves
+def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_folder_name):
+    
+    starting_row = 0
+    avg_e1_list = [] #Polar
+    avg_e2_list = [] #Cartesian
+    avg_e3_list = [] #NetMAP
+    
+    #Put data into excel spreadsheet
+    with pd.ExcelWriter(excel_file_name, engine='xlsxwriter') as writer:
+        for i in range(num_trials):
+            
+            #Create noise
+            e = complex_noise(300, 2)
+            e_special = complex_noise(2,2)
+        
+            #Get the data!
+            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
+            dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
+            dictionary3 = get_parameters_NetMAP(guessed_params, true_params, e_special, False) #NetMAP
+        
+            #Find <e> (average across parameters) for each trial and add to dictionary
+            avg_e1 = find_avg_e(dictionary1) #Polar
+            dictionary1['<e>'] = avg_e1
+            
+            avg_e2 = find_avg_e(dictionary2) #Cartesian
+            dictionary2['<e>'] = avg_e2
+            
+            avg_e3 = find_avg_e(dictionary3) #NetMAP
+            dictionary3['<e>'] = avg_e3
+            
+            #Append to list for later graphing
+            avg_e1_list.append(avg_e1)
+            avg_e2_list.append(avg_e2)
+            avg_e3_list.append(avg_e3)
+        
+            #Turn data into dataframe for excel
+            dataframe1 = pd.DataFrame(dictionary1)
+            dataframe2 = pd.DataFrame(dictionary2)
+            dataframe3 = pd.DataFrame(dictionary3)
+            
+            #Add to excel spreadsheet
+            dataframe1.to_excel(writer, sheet_name='Amp & Phase', startrow=starting_row, index=False, header=(i==0))
+            dataframe2.to_excel(writer, sheet_name='X & Y', startrow=starting_row, index=False, header=(i==0))
+            dataframe3.to_excel(writer, sheet_name='NetMAP', startrow=starting_row, index=False, header=(i==0))
+            
+            starting_row += len(dataframe1) + (1 if i==0 else 0)
+        
+        avg_e1_bar = arithmetic_then_logarithmic(avg_e1_list, num_trials) 
+        avg_e2_bar = arithmetic_then_logarithmic(avg_e2_list, num_trials)
+        avg_e3_bar = arithmetic_then_logarithmic(avg_e3_list, num_trials)
+        
+        dataframe1.at[0,'<e>_bar'] = avg_e1_bar
+        dataframe2.at[0,'<e>_bar'] = avg_e2_bar
+        dataframe3.at[0,'<e>_bar'] = avg_e3_bar
+        
+        dataframe1.to_excel(writer, sheet_name='Amp & Phase', index=False)
+        dataframe2.to_excel(writer, sheet_name='X & Y', index=False)
+        dataframe3.to_excel(writer, sheet_name='NetMAP', index=False)
+        
+        return avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar
+    
+
+
 ''' Begin work here. Case Study. '''
 
-# #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
-# #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
-# true_params = generate_random_system()
-# guessed_params = [1,1,1,1,1,1,1,1,1,1,1]
+#Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
+#Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
+true_params = generate_random_system()
+guessed_params = [1,1,1,1,1,1,1,1,1,1,1]
 
-# # Start the loop
-# while True:
-#     # Graph
-#     plot_guess(guessed_params, true_params) 
+# Start the loop
+while True:
+    # Graph
+    plot_guess(guessed_params, true_params) 
     
-#     # Ask the user for the new list of guessed parameters
-#     print(f'Current list of parameter guesses is {guessed_params}')
-#     indices = input("Enter the indices of the elements you want to update (comma-separated, or 'c' to continue to curve fit): ")
+    # Ask the user for the new list of guessed parameters
+    print(f'Current list of parameter guesses is {guessed_params}')
+    indices = input("Enter the indices of the elements you want to update (comma-separated, or 'c' to continue to curve fit): ")
     
-#     # Check if the user wants to quit
-#     if indices.lower() == 'c':
-#         break
+    # Check if the user wants to quit
+    if indices.lower() == 'c':
+        break
     
-#     # Parse and validate the indices
-#     try:
-#         index_list = [int(idx.strip()) for idx in indices.split(',')]
-#         if any(index < 0 or index >= len(guessed_params) for index in index_list):
-#             print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
-#             continue
-#     except ValueError:
-#         print("Invalid input. Please enter valid indices or 'c' to continue to curve fit.")
-#         continue
+    # Parse and validate the indices
+    try:
+        index_list = [int(idx.strip()) for idx in indices.split(',')]
+        if any(index < 0 or index >= len(guessed_params) for index in index_list):
+            print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid indices or 'c' to continue to curve fit.")
+        continue
     
-#     # Ask the user for the new values
-#     values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
+    # Ask the user for the new values
+    values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
     
-#     # Parse and validate the new values
-#     try:
-#         value_list = [float(value.strip()) for value in values.split(',')]
-#         if len(value_list) != len(index_list):
-#             print("The number of values must match the number of indices.")
-#             continue
-#     except ValueError:
-#         print("Invalid input. Please enter valid numbers.")
-#         continue
+    # Parse and validate the new values
+    try:
+        value_list = [float(value.strip()) for value in values.split(',')]
+        if len(value_list) != len(index_list):
+            print("The number of values must match the number of indices.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid numbers.")
+        continue
     
-#     # Update the list with the new values
-#     for index, new_value in zip(index_list, value_list):
-#         guessed_params[index] = new_value
+    # Update the list with the new values
+    for index, new_value in zip(index_list, value_list):
+        guessed_params[index] = new_value
+    # Graph
+    plot_guess(guessed_params, true_params) 
     
-# #Curve fit with the guess made above
-# avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx')
+    # Ask the user for the new list of guessed parameters
+    print(f'Current list of parameter guesses is {guessed_params}')
+    indices = input("Enter the indices of the elements you want to update (comma-separated, or 'c' to continue to curve fit): ")
+    
+    # Check if the user wants to quit
+    if indices.lower() == 'c':
+        break
+    
+    # Parse and validate the indices
+    try:
+        index_list = [int(idx.strip()) for idx in indices.split(',')]
+        if any(index < 0 or index >= len(guessed_params) for index in index_list):
+            print(f"Invalid indices. Please enter values between 0 and {len(guessed_params)-1}.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid indices or 'c' to continue to curve fit.")
+        continue
+    
+    # Ask the user for the new values
+    values = input(f"Enter the new values for indices {index_list} (comma-separated): ")
+    
+    # Parse and validate the new values
+    try:
+        value_list = [float(value.strip()) for value in values.split(',')]
+        if len(value_list) != len(index_list):
+            print("The number of values must match the number of indices.")
+            continue
+    except ValueError:
+        print("Invalid input. Please enter valid numbers.")
+        continue
+    
+    # Update the list with the new values
+    for index, new_value in zip(index_list, value_list):
+        guessed_params[index] = new_value
+        
+#Curve fit with the guess made above
+avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx', 'Case Study Plots')
 
-# #Graph histogram of <e> for both curve fits
-# bax = brokenaxes(xlims=((0, max(avg_e2_list)+0.5), (min(avg_e1_list)-0.5, max(avg_e1_list)+0.5)))
-# bax.set_title('Average Systematic Error Across Parameters')
-# bax.set_xlabel('<e>')
-# bax.set_ylabel('Counts')
-# bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)')
-# bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)')
-# bax.legend(loc='upper center')
+#Graph histogram of <e> for both curve fits
+bax = brokenaxes(xlims=((0, max(avg_e2_list)+0.5), (min(avg_e1_list)-0.5, max(avg_e1_list)+0.5)))
+bax.set_title('Average Systematic Error Across Parameters')
+bax.set_xlabel('<e>')
+bax.set_ylabel('Counts')
+bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)')
+bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)')
+bax.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP')
+bax.legend(loc='upper center')
 
-# plt.show()
+plt.show()
 
 ''' Begin work here. Automated guesses. '''
 
-avg_e1_bar_list = [] 
-avg_e2_bar_list = []
+# avg_e1_bar_list = [] 
+# avg_e2_bar_list = []
+# avg_e3_bar_list = []
 
-for i in range(15):
+# for i in range(1):
     
-    #Generate system and guess parameters
-    true_params = generate_random_system()
-    guessed_params = automate_guess(true_params, 20)
+#     #Generate system and guess parameters
+#     true_params = generate_random_system()
+#     guessed_params = automate_guess(true_params, 20)
     
-    #Curve fit with the guess made above
-    avg_e1_list, avg_e2_list, avg_e1_bar, avg_e2_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+#     #Curve fit with the guess made above
+#     avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
     
-    #Add <e>_bar to lists to make one graph at the end
-    avg_e1_bar_list.append(avg_e1_bar) #Polar
-    avg_e2_bar_list.append(avg_e2_bar) #Cartesian
+#     #Add <e>_bar to lists to make one graph at the end
+#     avg_e1_bar_list.append(avg_e1_bar) #Polar
+#     avg_e2_bar_list.append(avg_e2_bar) #Cartesian
+#     avg_e3_bar_list.append(avg_e3_bar) #NetMAP
     
-    #Graph histogram of <e> for both curve fits
-    fig = plt.figure(figsize=(10, 6))
+#     #Graph histogram of <e> for both curve fits
+#     fig = plt.figure(figsize=(10, 6))
+#     spread1 = (max(avg_e1_list)-min(avg_e1_list)) #Polar
+#     spread2 = (max(avg_e2_list)-min(avg_e2_list)) #Cartesian
+#     spread3 = (max(avg_e3_list)-min(avg_e3_list)) #NetMAP
     
-    if max(avg_e2_list) >= min(avg_e1_list):
-        plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-        plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-        plt.title('Average Systematic Error Across Parameters')
-        plt.xlabel('<e> (%)')
-        plt.ylabel('Counts')
-        plt.legend(loc='upper center')
-    
-    else:
-        spread1 = (max(avg_e1_list)-min(avg_e1_list)) #Polar
-        spread2 = (max(avg_e2_list)-min(avg_e2_list)) #Cartesian
+#     #If NetMAP and X&Y overlap but no overlap with Polar
+#     if max(avg_e2_list) < min(avg_e1_list) and max(avg_e3_list) <= min(avg_e1_list) and (max(avg_e2_list) >= min(avg_e3_list) or max(avg_e3_list) >= min(avg_e2_list)):
         
-        bax = brokenaxes(xlims=((min(avg_e2_list)-min(avg_e2_list)*0.1, max(avg_e2_list)+max(avg_e2_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
-        bax.set_title('Average Systematic Error Across Parameters')
-        bax.set_xlabel('<e> (%)')
-        bax.set_ylabel('Counts')
-        bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-        bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-        bax.legend(loc='upper center')
+#         #If NetMAP is greater than X&Y
+#         if max(avg_e2_list) >= min(avg_e3_list):
+#             bax = brokenaxes(xlims=((min(avg_e2_list)-min(avg_e2_list)*0.1, max(avg_e3_list)+max(avg_e3_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
+#             bax.set_title('Average Systematic Error Across Parameters')
+#             bax.set_xlabel('<e> (%)')
+#             bax.set_ylabel('Counts')
+#             bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+#             bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+#             bax.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
+#             bax.legend(loc='upper center')
+            
+#             # Adjust the scales
+#             bax.axs[0].set_xlim(min(avg_e2_list)-spread2*0.1,  max(avg_e3_list)+spread3*0.1) #left
+#             bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #right
+        
+#             bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
+#             bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+#             bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+#             bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+            
+#         #If X&Y is greater than NetMAP
+#         else:
+#             bax = brokenaxes(xlims=((min(avg_e3_list)-min(avg_e3_list)*0.1, max(avg_e2_list)+max(avg_e2_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
+#             bax.set_title('Average Systematic Error Across Parameters')
+#             bax.set_xlabel('<e> (%)')
+#             bax.set_ylabel('Counts')
+#             bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+#             bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+#             bax.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
+#             bax.legend(loc='upper center')
+            
+#             # Adjust the scales
+#             bax.axs[0].set_xlim(min(avg_e3_list)-spread3*0.1,  max(avg_e2_list)+spread2*0.1) #left
+#             bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #right
+        
+#             bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
+#             bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+#             bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+#             bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
     
-        # Adjust the scales
+#     #If Polar overlaps with either X&Y or NetMAP
+#     #Or, for now, there is no overlap
+#     else:
+#         plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+#         plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+#         plt.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
+#         plt.title('Average Systematic Error Across Parameters')
+#         plt.xlabel('<e> (%)')
+#         plt.ylabel('Counts')
+#         plt.legend(loc='upper center')
     
-        bax.axs[0].set_xlim(min(avg_e2_list)-spread2*0.1,  max(avg_e2_list)+spread2*0.1) #Cartesian 
-        bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #Polar
+#     plt.show()
+#     save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
+
+# #Graph histogram of <e>_bar for both curve fits
+# fig = plt.figure(figsize=(10, 6))
+
+# # if max(avg_e2_bar_list) >= min(avg_e1_bar_list):
+# plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+# plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+# plt.hist(avg_e3_bar_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
+# plt.title('Average Systematic Error Across Parameters')
+# plt.xlabel('<e> (%)')
+# plt.ylabel('Counts')
+# plt.legend(loc='upper center')
+
+# # else:
+# #     spread1 = (max(avg_e1_bar_list)-min(avg_e1_bar_list)) #Polar
+# #     spread2 = (max(avg_e2_bar_list)-min(avg_e2_bar_list)) #Cartesian
     
-        bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
-        bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-        bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
-        bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-    
-    plt.show()
-    save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
+# #     bax = brokenaxes(xlims=((min(avg_e2_bar_list)-min(avg_e2_list)*0.1, max(avg_e2_bar_list)+max(avg_e2_bar_list)*0.1), (min(avg_e1_bar_list)-min(avg_e1_bar_list)*0.1, max(avg_e1_bar_list)+max(avg_e1_bar_list)*0.1)), hspace=.05)
+# #     bax.set_title('Average Systematic Error Across Parameters, Then Average Logarithmic Error Across Trials')
+# #     bax.set_xlabel('<e> (%)')
+# #     bax.set_ylabel('Counts')
+# #     bax.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+# #     bax.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+# #     bax.legend(loc='upper center')
 
-#Graph histogram of <e>_bar for both curve fits
-fig = plt.figure(figsize=(10, 6))
+# #     # Adjust the scales
 
-if max(avg_e2_bar_list) >= min(avg_e1_bar_list):
-    plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    plt.title('Average Systematic Error Across Parameters')
-    plt.xlabel('<e> (%)')
-    plt.ylabel('Counts')
-    plt.legend(loc='upper center')
+# #     bax.axs[0].set_xlim(min(avg_e2_bar_list)-spread2*0.1,  max(avg_e2_bar_list)+spread2*0.1) #Cartesian 
+# #     bax.axs[1].set_xlim(min(avg_e1_bar_list)-spread1*0.1, max(avg_e1_bar_list)+spread1*0.1)  #Polar
 
-else:
-    spread1 = (max(avg_e1_bar_list)-min(avg_e1_bar_list)) #Polar
-    spread2 = (max(avg_e2_bar_list)-min(avg_e2_bar_list)) #Cartesian
-    
-    bax = brokenaxes(xlims=((min(avg_e2_bar_list)-min(avg_e2_list)*0.1, max(avg_e2_bar_list)+max(avg_e2_bar_list)*0.1), (min(avg_e1_bar_list)-min(avg_e1_bar_list)*0.1, max(avg_e1_bar_list)+max(avg_e1_bar_list)*0.1)), hspace=.05)
-    bax.set_title('Average Systematic Error Across Parameters')
-    bax.set_xlabel('<e> (%)')
-    bax.set_ylabel('Counts')
-    bax.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    bax.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    bax.legend(loc='upper center')
+# #     bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
+# #     bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
+# #     bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
+# #     bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
 
-    # Adjust the scales
-
-    bax.axs[0].set_xlim(min(avg_e2_bar_list)-spread2*0.1,  max(avg_e2_bar_list)+spread2*0.1) #Cartesian 
-    bax.axs[1].set_xlim(min(avg_e1_bar_list)-spread1*0.1, max(avg_e1_bar_list)+spread1*0.1)  #Polar
-
-    bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-    bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-
-plt.show()
-fig.savefig('Histogram_<e>_bar.png')  
+# plt.show()
+# fig.savefig('Histogram_<e>_bar.png')  
 
 
 
