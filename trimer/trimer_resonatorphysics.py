@@ -8,7 +8,7 @@ Created on Tue Aug  9 16:07:09 2022
 ''' Changes by lydiabullock. Adapting resonatorphysics to work for the Trimer functions and parameters.
     I believe I only changed line 49 for now. '''
 
-from helperfunctions import read_params
+from trimer_helperfunctions import read_params
 import numpy as np
 import math
 
@@ -46,7 +46,7 @@ def approx_width(k, m, b):
     return res_freq_weak_coupling(k, m, b) / approx_Q(k, m, b)
 
 def calcnarrowerW(vals_set, MONOMER):
-    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     W1=approx_width(k1_set, m1_set, b1_set)
     if MONOMER:
         narrowerW = W1

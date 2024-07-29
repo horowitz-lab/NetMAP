@@ -6,7 +6,6 @@ Created on Fri Mar 22 15:57:10 2024
 @author: samfeldman & lydiabullock
 """
 import numpy as np
-#     return amp(Z.real, Z.imag)
 from Trimer_simulator import calculate_spectra
 
 ''' THIS IS THE NETMAP PART '''
@@ -57,6 +56,10 @@ def normalize_parameters_1d_by_force(unnormalizedparameters, F_set):
     parameters = [c*unnormalizedparameters[k] for k in range(len(unnormalizedparameters)) ]
     return parameters
 
+def complex_noise(n, noiselevel):
+    global complexamplitudenoisefactor
+    complexamplitudenoisefactor = 0.0005
+    return noiselevel* complexamplitudenoisefactor * np.random.randn(n,)
 
 ''' Example work begins here. '''
 
@@ -76,7 +79,6 @@ k4 = 1 #no fourth spring connecting mass 4 to wall in this
 F = 1
 
 #create some noise
-from resonatorsimulator import complex_noise
 e = complex_noise(2, 2) #number of frequencies, noise level
 frequencies = [f1, f2]
 

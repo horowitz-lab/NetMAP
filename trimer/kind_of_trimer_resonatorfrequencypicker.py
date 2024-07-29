@@ -70,7 +70,7 @@ def find_freq_from_angle(drive, phase, angleswanted = [-np.pi/4], returnindex = 
 def makemorefrequencies(vals_set, minfreq, maxfreq, MONOMER, forceall,
                         res1 = None, res2 = None, 
                         includefreqs = None, n=n, staywithinlims = False):
-    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     
     if res1 is None:
         res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
@@ -124,7 +124,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
     if verbose:
         print('Running create_drive_arrays()')
         
-    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     
     if morefrequencies is None:
         if minfreq is None:
@@ -295,7 +295,7 @@ def res_freq_numeric(vals_set, MONOMER, forceall,
         print('\nRunning res_freq_numeric() with mode ' + mode)
         if plottitle is not None:
             print(plottitle)
-    k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set = read_params(vals_set, MONOMER)
+    k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set = read_params(vals_set)
     
     # Never Monomer in this case
     if MONOMER and numtoreturn != 2:   # 2 is a tricky case... just use the rest of the algorithm    
@@ -772,7 +772,7 @@ def allmeasfreq_two_res(res1, res2, max_num_p, freqdiff):
 
 
 def best_choice_freq_set(vals_set, MONOMER, forceboth, reslist, num_p = 10):
-    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     narrowerW = calcnarrowerW(vals_set, MONOMER)
     freqdiff = round(narrowerW/6,4)
     if MONOMER:
