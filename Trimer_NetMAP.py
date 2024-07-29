@@ -83,8 +83,7 @@ frequencies = [f1, f2]
 # getting the complex amplitudes with a function from Trimer_simulator
 comamps1, comamps2, comamps3 = calculate_spectra(frequencies, k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3, e, False)
 
-
-#Create the Zmatrix:
+#Now that we have the data, create the Zmatrix:
 trizmatrix = Zmatrix(frequencies, comamps1, comamps2, comamps3, False)
 
 #Get the unnormalized parameters:

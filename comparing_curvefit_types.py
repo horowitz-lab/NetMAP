@@ -33,11 +33,11 @@ from resonatorstats import syserr
     plot_guess - Used for the Case Study. Plots just the data and the guessed parameters curve. No curve fitting.
     automate_guess - Randomly generates guess parameters within a certain percent of the true parameters
     save_figure - Saves figures to a folder of your naming choice. Also allows you to name the figure whatever.
-    get_parameters_NetMAP - 
+    get_parameters_NetMAP - Recovers parameters for a system given the guessed parameters
     run_trials - Runs a set number of trials for one system, graphs curvefit result,
                  puts data and averages into spreadsheet, returns <e>_bar for both types of curves
                - Must include number of trials to run and name of excel sheet  
-    histogram_3_data_sets - 
+    histogram_3_data_sets - incomplete but tries to graph histograms better
     
     This file also imports multiple_fit_amp_phase, which performs curve fitting on Amp vs Freq and Phase vs Freq curves for all 3 masses simultaneously,
     and multiple_fit_X_Y, which performs curve fitting on X vs Freq and Y vs Freq curves for all 3 masses simulatenously.
@@ -259,19 +259,15 @@ def save_figure(figure, folder_name, file_name):
     figure.savefig(file_path)
     plt.close(figure)
 
-def get_parameters_NetMAP(params_guess, params_correct, force_all):
-
-    #creat error
-    e = complex_noise(10,2)
+def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_all):
     
-    #Get frequencies
-    freq = np.linspace(0.001, 4, 10)
-    
-    # getting the complex amplitudes with a function from Trimer_simulator
-    Z1, Z2, Z3 = calculate_spectra(freq, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    #Getting the complex amplitudes (data) with a function from Trimer_simulator
+    #Still part of the simulation
+    Z1, Z2, Z3 = calculate_spectra(frequencies, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
         
     #Create the Zmatrix:
-    trizmatrix = Zmatrix(freq, Z1, Z2, Z3, False)
+    #This is where we begin NetMAP
+    trizmatrix = Zmatrix(frequencies, Z1, Z2, Z3, False)
 
     #Get the unnormalized parameters:
     notnormparam_tri = unnormalizedparameters(trizmatrix)
@@ -318,11 +314,17 @@ def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_f
             
             #Create noise
             e = complex_noise(300, 2)
+            
+            ##For NetMAP
+            #Get frequencies
+            freqs_NetMAP = np.linspace(0.001, 4, 10)
+            #create error
+            e_NetMAP = complex_noise(10,2)
         
             #Get the data!
             dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
             dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
-            dictionary3 = get_parameters_NetMAP(guessed_params, true_params, False) #NetMAP
+            dictionary3 = get_parameters_NetMAP(freqs_NetMAP, guessed_params, true_params, e_NetMAP, False) #NetMAP
         
             #Find <e> (average across parameters) for each trial and add to dictionary
             avg_e1 = find_avg_e(dictionary1) #Polar
@@ -528,135 +530,72 @@ def histogram_3_data_sets(data1, data2, data3, data1_name, data2_name, data3_nam
 
 ''' Begin work here. Automated guesses. '''
 
-avg_e1_bar_list = [] 
-avg_e2_bar_list = []
-avg_e3_bar_list = []
+# avg_e1_bar_list = [] 
+# avg_e2_bar_list = []
+# avg_e3_bar_list = []
 
-for i in range(15):
+# for i in range(15):
     
-    #Generate system and guess parameters
-    true_params = generate_random_system()
-    guessed_params = automate_guess(true_params, 20)
+#     #Generate system and guess parameters
+#     true_params = generate_random_system()
+#     guessed_params = automate_guess(true_params, 20)
     
-    #Curve fit with the guess made above
-    avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+#     #Curve fit with the guess made above
+#     avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
     
-    #Add <e>_bar to lists to make one graph at the end
-    avg_e1_bar_list.append(avg_e1_bar) #Polar
-    avg_e2_bar_list.append(avg_e2_bar) #Cartesian
-    avg_e3_bar_list.append(avg_e3_bar) #NetMAP
+#     #Add <e>_bar to lists to make one graph at the end
+#     avg_e1_bar_list.append(avg_e1_bar) #Polar
+#     avg_e2_bar_list.append(avg_e2_bar) #Cartesian
+#     avg_e3_bar_list.append(avg_e3_bar) #NetMAP
     
-    #Graph histogram of <e> for curve fits
-    fig = plt.figure(figsize=(10, 6))
-    plt.title('Average Systematic Error Across Parameters')
-    plt.xlabel('<e>')
-    plt.ylabel('Counts')
-    plt.hist(avg_e2_list, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    plt.hist(avg_e1_list, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    plt.hist(avg_e3_list, bins=50, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
-    plt.legend(loc='upper center')
+#     #Graph histogram of <e> for curve fits
+#     fig = plt.figure(figsize=(10, 6))
+#     plt.title('Average Systematic Error Across Parameters')
+#     plt.xlabel('<e>')
+#     plt.ylabel('Counts')
+#     plt.hist(avg_e2_list, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
+#     plt.hist(avg_e1_list, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+#     plt.hist(avg_e3_list, bins=50, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
+#     plt.legend(loc='upper center')
 
-    plt.show()
-    save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
+#     plt.show()
+#     save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
     
-    # fig = plt.figure(figsize=(10, 6))
-    # spread1 = (max(avg_e1_list)-min(avg_e1_list)) #Polar
-    # spread2 = (max(avg_e2_list)-min(avg_e2_list)) #Cartesian
-    # spread3 = (max(avg_e3_list)-min(avg_e3_list)) #NetMAP
-    
-    # #If NetMAP and X&Y overlap but no overlap with Polar
-    # if max(avg_e2_list) < min(avg_e1_list) and max(avg_e3_list) <= min(avg_e1_list) and (max(avg_e2_list) >= min(avg_e3_list) or max(avg_e3_list) >= min(avg_e2_list)):
-        
-    #     #If NetMAP is greater than X&Y
-    #     if max(avg_e2_list) >= min(avg_e3_list):
-    #         bax = brokenaxes(xlims=((min(avg_e2_list)-min(avg_e2_list)*0.1, max(avg_e3_list)+max(avg_e3_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
-    #         bax.set_title('Average Systematic Error Across Parameters')
-    #         bax.set_xlabel('<e> (%)')
-    #         bax.set_ylabel('Counts')
-    #         bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    #         bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    #         bax.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
-    #         bax.legend(loc='upper center')
-            
-    #         # Adjust the scales
-    #         bax.axs[0].set_xlim(min(avg_e2_list)-spread2*0.1,  max(avg_e3_list)+spread3*0.1) #left
-    #         bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #right
-        
-    #         bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    #         bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-    #         bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    #         bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-            
-    #     #If X&Y is greater than NetMAP
-    #     else:
-    #         bax = brokenaxes(xlims=((min(avg_e3_list)-min(avg_e3_list)*0.1, max(avg_e2_list)+max(avg_e2_list)*0.1), (min(avg_e1_list)-min(avg_e1_list)*0.1, max(avg_e1_list)+max(avg_e1_list)*0.1)), hspace=.05)
-    #         bax.set_title('Average Systematic Error Across Parameters')
-    #         bax.set_xlabel('<e> (%)')
-    #         bax.set_ylabel('Counts')
-    #         bax.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    #         bax.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    #         bax.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
-    #         bax.legend(loc='upper center')
-            
-    #         # Adjust the scales
-    #         bax.axs[0].set_xlim(min(avg_e3_list)-spread3*0.1,  max(avg_e2_list)+spread2*0.1) #left
-    #         bax.axs[1].set_xlim(min(avg_e1_list)-spread1*0.1, max(avg_e1_list)+spread1*0.1)  #right
-        
-    #         bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    #         bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-    #         bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
-    #         bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-    
-    # #If Polar overlaps with either X&Y or NetMAP
-    # #Or, for now, there is no overlap
-    # else:
-    #     plt.hist(avg_e2_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    #     plt.hist(avg_e1_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    #     plt.hist(avg_e3_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
-    #     plt.title('Average Systematic Error Across Parameters')
-    #     plt.xlabel('<e> (%)')
-    #     plt.ylabel('Counts')
-    #     plt.legend(loc='upper center')
-    
-    # plt.show()
-    # save_figure(fig, f'Sys {i} - Rand Auto Guess Plots', '<e> Histogram ' )
+# #Graph histogram of <e>_bar for both curve fits
+# fig = plt.figure(figsize=(10, 6))
 
-#Graph histogram of <e>_bar for both curve fits
-fig = plt.figure(figsize=(10, 6))
+# # if max(avg_e2_bar_list) >= min(avg_e1_bar_list):
+# plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
+# plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+# plt.hist(avg_e3_bar_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
+# plt.title('Average Systematic Error Across Parameters')
+# plt.xlabel('<e> (%)')
+# plt.ylabel('Counts')
+# plt.legend(loc='upper center')
 
-# if max(avg_e2_bar_list) >= min(avg_e1_bar_list):
-plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-plt.hist(avg_e3_bar_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
-plt.title('Average Systematic Error Across Parameters')
-plt.xlabel('<e> (%)')
-plt.ylabel('Counts')
-plt.legend(loc='upper center')
+# plt.show()
+# fig.savefig('<e>_bar_Histogram.png')  
 
-# else:
-#     spread1 = (max(avg_e1_bar_list)-min(avg_e1_bar_list)) #Polar
-#     spread2 = (max(avg_e2_bar_list)-min(avg_e2_bar_list)) #Cartesian
-    
-#     bax = brokenaxes(xlims=((min(avg_e2_bar_list)-min(avg_e2_list)*0.1, max(avg_e2_bar_list)+max(avg_e2_bar_list)*0.1), (min(avg_e1_bar_list)-min(avg_e1_bar_list)*0.1, max(avg_e1_bar_list)+max(avg_e1_bar_list)*0.1)), hspace=.05)
-#     bax.set_title('Average Systematic Error Across Parameters, Then Average Logarithmic Error Across Trials')
-#     bax.set_xlabel('<e> (%)')
-#     bax.set_ylabel('Counts')
-#     bax.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
-#     bax.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-#     bax.legend(loc='upper center')
+''' Begin work here. Checking Worst System. '''
 
-#     # Adjust the scales
+## System 0 from 15 Systems - 10 Freqs NetMAP
+## Expecting there to be no error in recovery for everything
+# true_parameters = [1.045, 0.179, 3.852, 1.877, 5.542, 1.956, 3.71, 1, 3.976, 0.656, 3.198]
+# guessed_parameters = [1.2379, 0.1764, 3.7327, 1.8628, 5.93, 2.1793, 4.2198, 1, 4.3335, 0.7016, 3.0719]
 
-#     bax.axs[0].set_xlim(min(avg_e2_bar_list)-spread2*0.1,  max(avg_e2_bar_list)+spread2*0.1) #Cartesian 
-#     bax.axs[1].set_xlim(min(avg_e1_bar_list)-spread1*0.1, max(avg_e1_bar_list)+spread1*0.1)  #Polar
+# #Run the trials with 0 error 
+# # MUST CHANGE ERROR IN run_trials AND IN get_parameters_NetMAP
+# avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_parameters, guessed_parameters, 50, 'Sys0_No_Error.xlsx', 'Sys0_No_Error - Plots')
 
-#     bax.axs[0].xaxis.set_major_locator(ticker.MaxNLocator(5))
-#     bax.axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-#     bax.axs[1].xaxis.set_major_locator(ticker.MaxNLocator(5))
-#     bax.axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%1.3f'))
-
-plt.show()
-fig.savefig('<e>_bar_Histogram.png')  
-
+# #Plot histogram
+# plt.title('Average Systematic Error Across Parameters')
+# plt.xlabel('<e>')
+# plt.ylabel('Counts')
+# plt.hist(avg_e2_list, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
+# plt.hist(avg_e1_list, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+# plt.hist(avg_e3_list, bins=50, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
+# plt.legend(loc='upper center')
+# plt.show()
+# plt.savefig('<e>_Histogram_Sys0_no_error.png')
 
 
