@@ -19,12 +19,13 @@ from brokenaxes import brokenaxes
 import matplotlib.ticker as ticker
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
-from resonatorsimulator import complex_noise
 from Trimer_simulator import calculate_spectra, curve1, theta1, curve2, theta2, curve3, theta3, c1, t1, c2, t2, c3, t3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3, re1, re2, re3, im1, im2, im3
 from Trimer_NetMAP import Zmatrix, unnormalizedparameters, normalize_parameters_1d_by_force
-from resonatorstats import syserr
+import warnings
 
 ''' Functions contained:
+    complex_noise - creates noise, e
+    syserr - Calculates systematic error
     find_avg_e - Calculates average across systematic error for each parameter
                  for one trial of the same system
     artithmetic_then_logarithmic - Calculates arithmetic average across parameters first, 
@@ -42,6 +43,20 @@ from resonatorstats import syserr
     This file also imports multiple_fit_amp_phase, which performs curve fitting on Amp vs Freq and Phase vs Freq curves for all 3 masses simultaneously,
     and multiple_fit_X_Y, which performs curve fitting on X vs Freq and Y vs Freq curves for all 3 masses simulatenously.
 '''
+
+def complex_noise(n, noiselevel):
+    global complexamplitudenoisefactor
+    complexamplitudenoisefactor = 0.0005
+    return noiselevel* complexamplitudenoisefactor * np.random.randn(n,)
+
+def syserr(x_found,x_set, absval = True):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        se = 100*(x_found-x_set)/x_set
+    if absval:
+        return abs(se)
+    else:
+        return se
 
 #Calculate <e> for one trial of the same system
 def find_avg_e(dictionary):

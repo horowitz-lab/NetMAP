@@ -8,7 +8,12 @@ Created on Wed Jul 17 14:25:50 2024
 from curve_fitting_amp_phase_all import multiple_fit_amp_phase
 from curve_fitting_X_Y_all import multiple_fit_X_Y
 import pandas as pd
-from resonatorsimulator import complex_noise
+import numpy as np
+
+def complex_noise(n, noiselevel):
+    global complexamplitudenoisefactor
+    complexamplitudenoisefactor = 0.0005
+    return noiselevel* complexamplitudenoisefactor * np.random.randn(n,)
 
 #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
 #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses

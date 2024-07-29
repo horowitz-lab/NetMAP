@@ -9,9 +9,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
+import warnings
 from Trimer_simulator import re1, re2, re3, im1, im2, im3, realamp1, realamp2, realamp3, imamp1, imamp2, imamp3
-from resonatorstats import syserr, rsqrd
-
 ''' 3 functions contained:
     multiple_fit - Curve fits to multiple Amplitude and Phase Curves at once
                  - Calculates systematic error and returns a dictionary of info
@@ -20,7 +19,35 @@ from resonatorstats import syserr, rsqrd
               - used in multiple_fit function to minimize the residuals of 
                 multiple graphs at the same time to find the best fit curve
     save_figure - saves the curve fit graph created to a named folder
+    syserr - calculates systematic error
+    rsqrd - calculates R^2
 '''
+
+def syserr(x_found,x_set, absval = True):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        se = 100*(x_found-x_set)/x_set
+    if absval:
+        return abs(se)
+    else:
+        return se
+
+"""
+This definition of R^2 can come out negative.
+Negative means that a flat line would fit the data better than the curve.
+"""
+def rsqrd(model, data, plot=False, x=None, newfigure = True):
+    SSres = sum((data - model)**2)
+    SStot = sum((data - np.mean(data))**2)
+    rsqrd = 1 - (SSres/ SStot)
+    
+    if plot:
+        if newfigure:
+            plt.figure()
+        plt.plot(x,data, 'o')
+        plt.plot(x, model, '--')
+    
+    return rsqrd
 
 #Get residuals
 def residuals(params, wd, X1_data, X2_data, X3_data, Y1_data, Y2_data, Y3_data):
