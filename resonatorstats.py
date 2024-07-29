@@ -45,6 +45,10 @@ def combinedsyserr(syserrs, notdof): # notdof = not degrees of freedom, meaning 
    
     return avg, rms, max(abssyserrs), Lavg
 
+"""
+This definition of R^2 can come out negative.
+Negative means that a flat line would fit the data better than the curve.
+"""
 def rsqrd(model, data, plot=False, x=None, newfigure = True):
     SSres = sum((data - model)**2)
     SStot = sum((data - np.mean(data))**2)
