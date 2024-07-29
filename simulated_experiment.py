@@ -14,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from helperfunctions import \
     read_params, store_params, make_real_iff_real, flatten
-from resonatorSVDanalysis import Zmat, \
+from NetMAP import Zmat, \
     normalize_parameters_1d_by_force, normalize_parameters_assuming_3d, \
     normalize_parameters_to_m1_F_set_assuming_2d
 from resonatorstats import syserr, combinedsyserr
