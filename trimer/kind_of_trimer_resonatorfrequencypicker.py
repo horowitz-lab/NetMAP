@@ -287,7 +287,7 @@ def res_freq_numeric(vals_set, MONOMER, forceall,
                      mode = 'all',
                      minfreq=.1, maxfreq=5, morefrequencies=None, includefreqs = [],
                      unique = True, veryunique = True, numtoreturn = None, 
-                     verboseplot = False, plottitle = None, verbose=verbose, iterations = 1,
+                     verboseplot = True, plottitle = None, verbose=verbose, iterations = 1,
                      use_R2_only = False,
                      returnoptions = False):
     
@@ -576,7 +576,7 @@ def res_freq_numeric(vals_set, MONOMER, forceall,
                     # if the 10th element of indexlist is indexlist[10]=200, then tempfreqlist[10] = morefrequencies[200]
             except:
                 print('indexlist:', indexlist)
-            A2 = curve2(tempfreqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,)
+            A2 = curve2(tempfreqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, 0, forceall)
                 # and then A2[10] is the amplitude of R2 at the frequency morefrequencies[200]
                 # and then the number 10 is the sort of number we will add to a removeindex list
             for i in range(len(indexlist)-1):

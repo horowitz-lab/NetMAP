@@ -89,8 +89,12 @@ def generate_random_system():
     for i in range(11):
         if i==7: #Doing this because we must keep force the same throughout
             system_params.append(1)
+        elif i==4 or i==5 or i==6:
+            param = random.uniform(0.01,1)
+            round_param = round(param, 3)
+            system_params.append(round_param)
         else: 
-            param = random.uniform(0.1,10)
+            param = random.uniform(1,10)
             round_param = round(param, 3)
             system_params.append(round_param)
     return system_params
@@ -316,7 +320,7 @@ def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_al
 
 #Runs a set number of trials for one system, graphs curvefit result,
 # puts data and averages into spreadsheet, returns <e>_bar for both types of curves
-def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_folder_name):
+def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, num_trials, excel_file_name, graph_folder_name):
     
     starting_row = 0
     avg_e1_list = [] #Polar
@@ -331,10 +335,8 @@ def run_trials(true_params, guessed_params, num_trials, excel_file_name, graph_f
             e = complex_noise(300, 2)
             
             ##For NetMAP
-            #Get frequencies
-            freqs_NetMAP = np.linspace(0.001, 4, 10)
             #create error
-            e_NetMAP = complex_noise(10,2)
+            e_NetMAP = complex_noise(length_noise_NetMAP,2)
         
             #Get the data!
             dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
@@ -529,7 +531,9 @@ def histogram_3_data_sets(data1, data2, data3, data1_name, data2_name, data3_nam
         
 # #Curve fit with the guess made above and get average lists
 # #Will not do anything with <e>_bar for a single case study
-# avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, 'Case_Study.xlsx', 'Case Study Plots')
+# freqs_NetMAP = np.linspace(0.001, 4, 10)
+# length_noise = 10
+# avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 50, 'Case_Study.xlsx', 'Case Study Plots')
 
 # #Graph histogram of <e> for curve fits
 
@@ -556,7 +560,9 @@ def histogram_3_data_sets(data1, data2, data3, data1_name, data2_name, data3_nam
 #     guessed_params = automate_guess(true_params, 20)
     
 #     #Curve fit with the guess made above
-#     avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+#     freqs_NetMAP = np.linspace(0.001, 4, 10)
+#     length_noise = 10
+#     avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 50, f'Random_Automated_Guess_{i}.xlsx', f'Sys {i} - Rand Auto Guess Plots')
     
 #     #Add <e>_bar to lists to make one graph at the end
 #     avg_e1_bar_list.append(avg_e1_bar) #Polar
@@ -583,7 +589,7 @@ def histogram_3_data_sets(data1, data2, data3, data1_name, data2_name, data3_nam
 # plt.hist(avg_e2_bar_list, bins=10, alpha=0.75, color='green', label='Cartesian (X & Y)', edgecolor='black')
 # plt.hist(avg_e1_bar_list, bins=10, alpha=0.75, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
 # plt.hist(avg_e3_bar_list, bins=10, alpha=0.75, color='red', label='NetMAP', edgecolor='black')
-# plt.title('Average Systematic Error Across Parameters')
+# plt.title('Average Error Across Parameters Then Across Trials')
 # plt.xlabel('<e> (%)')
 # plt.ylabel('Counts')
 # plt.legend(loc='upper center')
@@ -600,7 +606,9 @@ def histogram_3_data_sets(data1, data2, data3, data1_name, data2_name, data3_nam
 
 # #Run the trials with 0 error 
 # # MUST CHANGE ERROR IN run_trials AND IN get_parameters_NetMAP
-# avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_parameters, guessed_parameters, 50, 'Sys0_No_Error.xlsx', 'Sys0_No_Error - Plots')
+# freqs_NetMAP = np.linspace(0.001, 4, 10)
+# length_noise = 0
+# avg_e1_list, avg_e2_list, avg_e3_list, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_parameters, guessed_parameters, freqs_NetMAP, length_noise, 50, 'Sys0_No_Error.xlsx', 'Sys0_No_Error - Plots')
 
 # #Plot histogram
 # plt.title('Average Systematic Error Across Parameters')

@@ -94,5 +94,5 @@ notnormparam_tri = unnormalizedparameters(trizmatrix)
 #Normalize the parameters
 final_tri = normalize_parameters_1d_by_force(notnormparam_tri, 1)
 
-print(final_tri)
+# print(final_tri)
 # it works! finally!
