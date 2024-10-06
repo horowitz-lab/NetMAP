@@ -81,9 +81,10 @@ def plot_callback(params, iter, resid, *args, **kws):
         # sns.set_context("talk")
         # sns.scatterplot(freq, Amp1, 'bo', label='Data')
         # sns.scatterplot(freq, modelc1, 'r-', label='Model')
-        plt.plot(freq, Amp1, 'bo', label='Data')         #Plot the data
-        plt.plot(freq, modelc1, 'r-', label='Model')  #Plot the model
-        plt.title(f"Trimer System - Iteration: {iter}", fontsize=18)
+        plt.plot(freq, Amp1, 'bo', label='Data')
+        plt.plot(freq, modelc1, 'r-', label='Model')
+        plt.ylim(ymax=0.6)
+        plt.title(f"Trimer Resonator System - Iteration: {iter}", fontsize=18)
         plt.ylabel('Amplitude (m)', fontsize=16)
         plt.xlabel('Frequency (Hz)', fontsize=16)
         plt.legend(fontsize=14)
