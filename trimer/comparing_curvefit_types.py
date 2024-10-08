@@ -339,7 +339,7 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
             e_NetMAP = complex_noise(length_noise_NetMAP,2)
         
             #Get the data!
-            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
+            dictionary1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, False, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
             dictionary2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
             dictionary3 = get_parameters_NetMAP(freqs_NetMAP, guessed_params, true_params, e_NetMAP, False) #NetMAP
         
