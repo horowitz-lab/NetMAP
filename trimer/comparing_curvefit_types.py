@@ -533,7 +533,7 @@ avg_e_bar_list_polar = []
 avg_e_bar_list_cartesian = []
 avg_e_bar_list_NetMAP = []
 
-for i in range(100):
+for i in range(1):
     
     # Check if the time limit has been exceeded
     elapsed_time = time.time() - start_time
@@ -546,13 +546,11 @@ for i in range(100):
     #Generate system and guess parameters
     true_params = generate_random_system()
     guessed_params = automate_guess(true_params, 20)
-    print(true_params)
-    print(guessed_params)
     
     #Curve fit with the guess made above
     freqs_NetMAP = np.linspace(0.001, 4, 10)
     length_noise = 10
-    avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 250, f'System_{i}_500.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+    avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 10, f'System_{i}_500.xlsx', f'Sys {i} - Rand Auto Guess Plots')
     
     #Add <e>_bar to lists to make one graph at the end
     avg_e_bar_list_polar.append(avg_e1_bar) #Polar
@@ -573,28 +571,29 @@ for i in range(100):
     plt.legend(loc='upper right', fontsize = 13)
 
     plt.show()
-    save_figure(fig, 'More Systems 250 - <e> Histograms', f'<e> Lin Hist System {i}')
+    save_figure(fig, 'More Systems 500 - <e> Histograms', f'<e> Lin Hist System {i}')
     
-    # logbins = np.logspace(-2,1.5,50)
-    # #Graph histogram of <e> for curve fits
-    # fig = plt.figure(figsize=(5, 4))
-    # # plt.title('Average Systematic Error Across Parameters')
-    # plt.xlabel('<e> (%)', fontsize = 16)
-    # plt.ylabel('Counts', fontsize = 16)
-    # plt.yticks(fontsize=14)
-    # plt.xticks(fontsize=14)
-    # plt.hist(avg_e2_array, bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    # plt.hist(avg_e1_array, bins = logbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    # plt.hist(avg_e3_array, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
-    # plt.legend(loc='upper right', fontsize = 13)
+    logbins = np.logspace(-2,1.5,50)
+    #Graph histogram of <e> for curve fits
+    fig = plt.figure(figsize=(5, 4))
+    # plt.title('Average Systematic Error Across Parameters')
+    plt.xlabel('<e> (%)', fontsize = 16)
+    plt.ylabel('Counts', fontsize = 16)
+    plt.xscale('log')
+    plt.yticks(fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.hist(avg_e2_array, bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
+    plt.hist(avg_e1_array, bins = logbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
+    plt.hist(avg_e3_array, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
+    plt.legend(loc='upper right', fontsize = 13)
 
-    # plt.show()
-    # save_figure(fig, 'More Systems 500 - <e> Histograms', f'<e> Log Hist System {i}')
+    plt.show()
+    save_figure(fig, 'More Systems 500 - <e> Histograms', f'<e> Log Hist System {i}')
     
     loop_end_time = time.time()
     loop_time = loop_end_time - loop_start_time
     
-    print(f"Iteration {i + 1} completed. Loop time: {loop_time}")
+    print(f"Iteration {i + 1} completed. Loop time: {loop_time} secs ")
     
 
 #Graph histogram of <e>_bar for both curve fits
@@ -604,7 +603,6 @@ linearbins = np.linspace(0,15,50)
 fig = plt.figure(figsize=(5, 4))
 plt.xlabel('<e> Bar (%)', fontsize = 16)
 plt.ylabel('Counts', fontsize = 16)
-plt.xlim(0.02, 15)
 plt.yticks(fontsize=14)
 plt.xticks(fontsize=14)
 plt.hist(avg_e_bar_list_cartesian, bins = linearbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
@@ -612,7 +610,7 @@ plt.hist(avg_e_bar_list_polar, bins = linearbins, alpha=0.5, color='blue', label
 plt.hist(avg_e_bar_list_NetMAP, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
 plt.legend(loc='upper right', fontsize = 13)
 plt.show()
-save_figure(fig, 'More Systems 250 - <e> Histograms', '<e> Bar Lin Hist' )
+save_figure(fig, 'More Systems 500 - <e> Histograms', '<e> Bar Lin Hist' )
 
 
 logbins = np.logspace(-2,1.5,50)
@@ -621,7 +619,6 @@ fig = plt.figure(figsize=(5, 4))
 plt.xlabel('<e> Bar (%)', fontsize = 16)
 plt.ylabel('Counts', fontsize = 16)
 plt.xscale('log')
-plt.xlim(0.02, 15)
 plt.yticks(fontsize=14)
 plt.xticks(fontsize=14)
 plt.hist(avg_e_bar_list_cartesian,  bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
@@ -629,10 +626,10 @@ plt.hist(avg_e_bar_list_polar, bins = logbins, alpha=0.4, color='blue', label='P
 plt.hist(avg_e_bar_list_NetMAP, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
 plt.legend(loc='upper right', fontsize = 13)
 plt.show()
-save_figure(fig, 'More Systems 250 - <e> Histograms', '<e> Bar Log Hist' )
+save_figure(fig, 'More Systems 500 - <e> Histograms', '<e> Bar Log Hist' )
 
 
 # End time
 end_time = time.time()
-print("Time Elapsed:", end_time - start_time)
+print("Time Elapsed:", end_time - start_time, " secs", (end_time - start_time)/3600, " hrs")
 

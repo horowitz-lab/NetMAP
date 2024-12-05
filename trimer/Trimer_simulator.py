@@ -46,6 +46,7 @@ wd = sp.symbols(r'\omega_d', real = True)
 unknownsmatrix = sp.Matrix([[-wd**2*m1 + 1j*wd*b1 + k1 + k2, -k2, 0], 
                             [-k2, -wd**2*m2 + 1j*wd*b2 + k2 + k3, -k3],
                             [0, -k3, -wd**2*m3 + 1j*wd*b3 + k3 + k4]])
+
 ''' Lydia - I'm pretty sure he had a mistake in the unknowns matrix. There were some k4's
 showing up where they weren't supposed to be (-k4 where the zeros are now and one +k4
 in the first entry) '''
