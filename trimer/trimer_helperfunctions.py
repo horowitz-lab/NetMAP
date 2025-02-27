@@ -46,23 +46,13 @@ def make_real_iff_real(vh):
     return (np.array(vhr))
 
 """ Store parameters extracted from SVD """
-def store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER):
-    if MONOMER:
-        params = [M1,  B1,  K1,  FD]
-    else:
-        params = [M1, M2, B1, B2, K1, K2, K12, FD]
+def store_params(M1, M2, M3, B1, B2, B3, K1, K2, K3, K4, FD):
+    params = [M1, M2, M3, B1, B2, B3, K1, K2, K3, K4, FD]
     return params
 
-def read_params(vect, MONOMER):
-    if MONOMER:
-        [M1, B1, K1, FD] = vect
-        K12 = 0
-        M2 = 0
-        B2 = 0
-        K2= 0
-    else:
-        [M1, M2, B1, B2, K1, K2, K12, FD] = vect
-    return [M1, M2, B1, B2, K1, K2, K12, FD]
+def read_params(vect):
+    [M1, M2, M3, B1, B2, B3, K1, K2, K3, K4, FD] = vect
+    return [M1, M2, M3, B1, B2, B3, K1, K2, K3, K4, FD]
 
 def savefigure(savename):
     try:

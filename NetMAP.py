@@ -2,9 +2,10 @@
 """
 Created on Tue Aug  9 16:50:38 2022
 
+NetMAP: Create script-Z matrix and find its kernel, or null-space.
+
 @author: vhorowit
 """
-
 
 import numpy as np
 import math
@@ -12,15 +13,23 @@ from resonatorphysics import res_freq_weak_coupling
 from helperfunctions import read_params
 from resonatorfrequencypicker import res_freq_numeric
 
-"""Zmatrix2resonators(df) will return a matrix for svd for any number of frequency measurements, 
+"""Zmatrix2resonators(df,...) will return a matrix for svd for any number of frequency measurements, 
 listed in each row of the dataframe measurementdf 
 If forceboth is true then both masses receive a force.
-parameternames = ['m1', 'm2', 'b1', 'b2', 'k1', 'k2','c12', 'Driving Force']
+parameternames = ['m1', 'm2', 'b1', 'b2', 'k1', 'k2','k12', 'Driving Force']
 """
+
 def Zmatrix2resonators(measurementdf, forceboth,
                        frequencycolumn = 'drive', 
                        complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex):
-    Zmatrix = []
+
+    ## Are both masses being pushed? or just the first?
+    if forceboth:
+        ff = -1
+    else:
+        ff = 0
+        
+    Zmatrix = []   # this would likely be more efficient as a numpy array.
     for rowindex in measurementdf.index:
         w = measurementdf[frequencycolumn][rowindex]
         #print(w)
@@ -29,15 +38,12 @@ def Zmatrix2resonators(measurementdf, forceboth,
         # Matrix columns: m1, m2, b1, b2, k1, k2, k12, F1
         Zmatrix.append([-w**2*np.real(ZZ1), 0, -w*np.imag(ZZ1), 0, np.real(ZZ1), 0, np.real(ZZ1)-np.real(ZZ2), -1])
         Zmatrix.append([-w**2*np.imag(ZZ1), 0, w*np.real(ZZ1), 0, np.imag(ZZ1), 0, np.imag(ZZ1)-np.imag(ZZ2), 0])
-        if forceboth:
-            Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), -1])
-        else:
-            Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), 0])
+        Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), ff])
         Zmatrix.append([0, -w**2*np.imag(ZZ2), 0, w*np.real(ZZ2), 0, np.imag(ZZ2), np.imag(ZZ2)-np.imag(ZZ1), 0])
     #display(Zmatrix)
     return np.array(Zmatrix, dtype=dtype)
 
-"""ZmatrixMONOMER(df) will return a matrix for svd for any number of frequency measurements, 
+"""ZmatrixMONOMER(df,...) will return a matrix for svd for any number of frequency measurements, 
 listed in each row of the dataframe measurementdf 
 parameternames = ['m1', 'b1', 'k1', 'Driving Force']
 """
@@ -55,7 +61,7 @@ def ZmatrixMONOMER(measurementdf,
     #display(Zmatrix)
     return np.array(Zmatrix, dtype=dtype)
 
-def Zmat(measurementdf, MONOMER, forceboth,
+def Zmat(measurementdf, MONOMER, forceboth, 
          frequencycolumn = 'drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex, 
          ):
     if MONOMER:
@@ -71,7 +77,7 @@ def Zmat(measurementdf, MONOMER, forceboth,
 
 """ 1d nullspace normalization """
 def normalize_parameters_1d_by_force(unnormalizedparameters, F_set):
-    # parameters vector: 'm1', 'm2', 'b1', 'b2', 'k1', 'k2','c12', 'Driving Force'
+    # parameters vector: 'm1', 'm2', 'b1', 'b2', 'k1', 'k2','k12', 'Driving Force'
     c = F_set / unnormalizedparameters[-1]
     parameters = [c*unnormalizedparameters[k] for k in range(len(unnormalizedparameters)) ]
     return parameters
@@ -351,3 +357,68 @@ def normalize_parameters_assuming_3d(vh, vals_set, MONOMER, known1 = None, known
         print('Parameters 3D: ')
         print(parameters)
     return parameters, coefa, coefb, coefc
+
+
+
+'''Below, I (Lydia) am practicing using the code for monomer and dimer.
+I used the simulation to find complex amplitudes from specific frequencies. 
+'''
+
+#MONOMER
+#parameters used: m=4, b=0.01, k=16 f=1
+#what is measurementdf
+#created my own dataframe, but you can import a file for this 
+
+import pandas as pd
+datamono = {
+    'drive' : [2, 2.0025],
+    'R1AmpCom': [4.014494396865636+ (1j*-49.678113600020566), -19.98251374031844 + (1j*-9.997497505306109)],
+    'R2AmpCom': [0,0]
+} 
+measurementdfmono = pd.DataFrame(datamono)
+
+#Calculate Zmatrix
+#Doesn't matter which kind of system you have, this function will know (monomer or dimer)
+monozmatrix = Zmat(measurementdfmono, True, False,
+          frequencycolumn = 'drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex)
+
+#perform SVD and extract the unnormalized parameters 
+#U - left singular vectors
+#S - singular values
+#V - right singular vectors
+#Vh - transpose of right singular vectors
+U_m, S_m, Vh_m = np.linalg.svd(monozmatrix)
+V_m = Vh_m.conj().T
+
+#need to figure out how to get the smallest value from S and match it to a column of V
+#but I just did it manually for now by looking at S
+notnormparam_mono = V_m[:,-1]
+
+#Now, let's normalize them so we can get the real values!
+
+#setting force equal to force we used in simulation (in this case 1N)
+final_mono = normalize_parameters_1d_by_force(notnormparam_mono, 1)
+
+#[m_1, b_1, k_1, Force]
+#and it checks out!!
+
+#DIMER
+#parameters: [k_1, k_2, k_12, b_1, b_2, F, m_1, m_2]
+#          : [1, 10, 1, 0.1, 0.1, 10, 1, 10]
+
+datadi = {
+    'drive' : [1.9975, 2.0025],
+    'R1AmpCom': [-5.06108785444674 + 1j*-0.5176227871244886, -5.010047982899977 + 1j*-0.508414957225015],
+    'R2AmpCom': [0.17499161387621584 + 1j*0.019120282594415245, 0.17203785361315663 + 1j*0.018655133040042425]
+} 
+measurementdfdi = pd.DataFrame(datadi)
+dizmatrix = Zmat(measurementdfdi, False, False, frequencycolumn='drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex,)
+U_d, S_d, Vh_d = np.linalg.svd(dizmatrix)
+V_d = Vh_d.conj().T
+notnormparam_di = V_d[:,-1]
+final_di = normalize_parameters_1d_by_force(notnormparam_di,10)
+#print(final_di)
+#['m1', 'm2', 'b1', 'b2', 'k1', 'k2','k12', 'Driving Force']
+#checks out!!
+
+

@@ -7,9 +7,12 @@ Created on Tue Aug  9 16:08:13 2022
 
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 def syserr(x_found,x_set, absval = True):
-    se = 100*(x_found-x_set)/x_set
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        se = 100*(x_found-x_set)/x_set
     if absval:
         return abs(se)
     else:
@@ -42,6 +45,10 @@ def combinedsyserr(syserrs, notdof): # notdof = not degrees of freedom, meaning 
    
     return avg, rms, max(abssyserrs), Lavg
 
+"""
+This definition of R^2 can come out negative.
+Negative means that a flat line would fit the data better than the curve.
+"""
 def rsqrd(model, data, plot=False, x=None, newfigure = True):
     SSres = sum((data - model)**2)
     SStot = sum((data - np.mean(data))**2)

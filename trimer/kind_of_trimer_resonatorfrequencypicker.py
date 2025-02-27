@@ -6,12 +6,11 @@ Created on Tue Aug  9 16:07:55 2022
 """
 
 import numpy as np
-import resonatorphysics
-from resonatorphysics import res_freq_weak_coupling, calcnarrowerW
-from helperfunctions import read_params
+import trimer_resonatorphysics
+from trimer_resonatorphysics import res_freq_weak_coupling, calcnarrowerW
+from trimer_helperfunctions import read_params
 import matplotlib.pyplot as plt
-from resonatorsimulator import \
-    curve1, theta1, curve2, theta2#, realamp1, imamp1, realamp2, imamp2
+from Trimer_simulator import curve1, theta1, curve2, theta2
 from scipy.signal import find_peaks
 
 # default settings
@@ -68,10 +67,10 @@ def find_freq_from_angle(drive, phase, angleswanted = [-np.pi/4], returnindex = 
     
 """ n is the number of frequencies is the drive; we'll have more for more frequencies. 
  Can you improve this by calling create_drive_arrays afterward? """
-def makemorefrequencies(vals_set, minfreq, maxfreq,MONOMER,forceboth,
+def makemorefrequencies(vals_set, minfreq, maxfreq, MONOMER, forceall,
                         res1 = None, res2 = None, 
                         includefreqs = None, n=n, staywithinlims = False):
-    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     
     if res1 is None:
         res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
@@ -88,7 +87,7 @@ def makemorefrequencies(vals_set, minfreq, maxfreq,MONOMER,forceboth,
         morefrequencies = np.append(morefrequencies, np.array(includefreqs))
     
     try:
-        W1 = resonatorphysics.approx_width(k = k1_set, m = m1_set, b=b1_set)
+        W1 = trimer_resonatorphysics.approx_width(k = k1_set, m = m1_set, b=b1_set)
     except ZeroDivisionError:
         print('k1_set:', k1_set)
         print('m1_set:', m1_set)
@@ -97,7 +96,7 @@ def makemorefrequencies(vals_set, minfreq, maxfreq,MONOMER,forceboth,
     morefrequencies = np.append(morefrequencies, np.linspace(res1-W1, res1+W1, num = 7*n))
     morefrequencies = np.append(morefrequencies, np.linspace(res1-2*W1, res1+2*W1, num = 10*n)) 
     if not MONOMER:
-        W2 = resonatorphysics.approx_width(k = k2_set, m = m2_set, b=b2_set)
+        W2 = trimer_resonatorphysics.approx_width(k = k2_set, m = m2_set, b=b2_set)
         morefrequencies = np.append(morefrequencies, np.linspace(res2-W2, res2+W2, num = 7*n))
         morefrequencies = np.append(morefrequencies, np.linspace(res2-2*W2, res2+2*W2, num = 10*n))
     morefrequencies = list(np.sort(np.unique(morefrequencies)))
@@ -125,7 +124,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
     if verbose:
         print('Running create_drive_arrays()')
         
-    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     
     if morefrequencies is None:
         if minfreq is None:
@@ -147,7 +146,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
                         includefreqs = None, n=n, staywithinlims = staywithinlims)
         morefrequencies = np.sort(np.unique(np.append(morefrequencies, evenmore)))
        
-    Q1 = resonatorphysics.approx_Q(k1_set, m1_set, b1_set)
+    Q1 = trimer_resonatorphysics.approx_Q(k1_set, m1_set, b1_set)
 
     # set the fraction of points that are spread evenly in frequency (versus evenly in phase)
     if MONOMER:
@@ -158,7 +157,7 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
         else:
             fracevenfreq = .5 # such a broad peak that we might as well spread evenly in frequency
     else:
-        Q2 = resonatorphysics.approx_Q(k2_set, m2_set, b2_set)
+        Q2 = trimer_resonatorphysics.approx_Q(k2_set, m2_set, b2_set)
         if Q1 >=30 and Q2 >= 30:
             fracevenfreq = .2
         else:
@@ -179,9 +178,9 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
             print('Removing frequency', morefrequencies[0])
         morefrequencies = morefrequencies[1:]
     
-    phaseR1 = theta1(morefrequencies, k1_set, k2_set, k12_set, 
-                                        b1_set, b2_set, F_set, m1_set, m2_set, 
-                                         0, MONOMER, forceboth=forceboth)
+    phaseR1 = theta1(morefrequencies, k1_set, k2_set, k3_set, k4_set,
+                                        b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, 
+                                         0, forceboth=forceboth)
     
     anglelist = np.linspace(min(phaseR1), max(phaseR1), m) ## most of the points are evenly spaced in phase
     #anglelist = np.append(anglelist, -np.pi/3)
@@ -197,8 +196,8 @@ def create_drive_arrays(vals_set, MONOMER, forceboth, n=n,
         print('anglelist/pi:', anglelist/np.pi, 'corresponds to frequency list:', freqlist, '. But still adding to chosendrive.')
     
     if not MONOMER:
-        phaseR2 = theta2(morefrequencies, k1_set, k2_set, k12_set, 
-                                             b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
+        phaseR2 = theta2(morefrequencies, k1_set, k2_set, k3_set, k4_set,
+                                            b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, 0, forceboth=forceboth)
         
         del anglelist
         anglelist = np.linspace(min(phaseR2), max(phaseR2), m) 
@@ -284,11 +283,11 @@ def find_special_freq(drive, amp, phase, anglewanted = np.radians(225)):
 ## Returns list of peak frequencies. 
 ## If numtoreturn is None, then any number of frequencies could be returned.
 ## You can also set numtoreturn to 1 or 2 to return that number of frequencies.
-def res_freq_numeric(vals_set, MONOMER, forceboth,
+def res_freq_numeric(vals_set, MONOMER, forceall,
                      mode = 'all',
                      minfreq=.1, maxfreq=5, morefrequencies=None, includefreqs = [],
                      unique = True, veryunique = True, numtoreturn = None, 
-                     verboseplot = False, plottitle = None, verbose=verbose, iterations = 1,
+                     verboseplot = True, plottitle = None, verbose=verbose, iterations = 1,
                      use_R2_only = False,
                      returnoptions = False):
     
@@ -296,8 +295,9 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         print('\nRunning res_freq_numeric() with mode ' + mode)
         if plottitle is not None:
             print(plottitle)
-    m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set = read_params(vals_set, MONOMER)
+    k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set = read_params(vals_set)
     
+    # Never Monomer in this case
     if MONOMER and numtoreturn != 2:   # 2 is a tricky case... just use the rest of the algorithm    
         if numtoreturn is not None and numtoreturn != 1:
             print('Cannot return ' + str(numtoreturn) + ' res freqs for Monomer.')
@@ -322,7 +322,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         
     if morefrequencies is None:
         morefrequencies = makemorefrequencies(vals_set=vals_set, minfreq=minfreq, maxfreq=maxfreq,
-                                                  forceboth=forceboth, includefreqs = approx_res_freqs,
+                                                  forceall=forceall, includefreqs = approx_res_freqs,
                                                   MONOMER=MONOMER, n=n)
     else:
         morefrequencies = np.append(morefrequencies, approx_res_freqs)
@@ -331,6 +331,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
     # init
     indexlist = []
     
+    # Never Monomer in this case
     if MONOMER:
         freqlist = [res_freq_weak_coupling(k1_set, m1_set, b1_set)]
         resfreqs_from_amp = freqlist
@@ -379,20 +380,20 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                 if False:
                     print('Removing frequency', morefrequencies[0])
                 morefrequencies = morefrequencies[1:]
-            R1_amp_noiseless = curve1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                      0, MONOMER, forceboth=forceboth)
-            R1_phase_noiseless = theta1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                        0, MONOMER, forceboth=forceboth)
+            R1_amp_noiseless = curve1(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                      0, forceall)
+            R1_phase_noiseless = theta1(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                        0, forceall)
             R1_phase_noiseless = np.unwrap(R1_phase_noiseless)
             if debug:
                 plt.figure()
                 plt.plot(morefrequencies, R1_amp_noiseless, label = 'R1_amp')
                 plt.plot(morefrequencies, R1_phase_noiseless, label = 'R1_phase')
             if not MONOMER:
-                R2_amp_noiseless = curve2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                          0, forceboth=forceboth)
-                R2_phase_noiseless = theta2(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                            0, forceboth=forceboth)
+                R2_amp_noiseless = curve2(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                          0, forceall)
+                R2_phase_noiseless = theta2(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                            0, forceall)
                 R2_phase_noiseless = np.unwrap(R2_phase_noiseless)
                 if debug:
                     plt.plot(morefrequencies, R2_amp_noiseless, label = 'R2_amp')
@@ -502,11 +503,12 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         R1_flist = []
     
     if verboseplot:
+        #Never Monomer in this case
         if MONOMER: # still need to calculate the curves
-            R1_amp_noiseless = curve1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                      0, MONOMER, forceboth=forceboth)
-            R1_phase_noiseless = theta1(morefrequencies, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                        0, MONOMER, forceboth=forceboth)
+            R1_amp_noiseless = curve1(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                      0, forceall)
+            R1_phase_noiseless = theta1(morefrequencies, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                        0, forceall)
             R1_phase_noiseless = np.unwrap(R1_phase_noiseless)
             indexlistampR1 = [np.argmin(abs(w  - morefrequencies )) for w in resfreqs_from_amp]
         print('Plotting!')
@@ -525,11 +527,11 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
         plt.plot(morefrequencies,R1_phase_noiseless, color='gray' )
         if not MONOMER:
             plt.plot(morefrequencies,R2_phase_noiseless, color = 'lightblue')
-        plt.plot(R1_flist, theta1(np.array(R1_flist), k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, MONOMER, forceboth=forceboth), '.')
+        plt.plot(R1_flist, theta1(np.array(R1_flist), k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall), '.')
         if not MONOMER:
-            plt.plot(R2_flist, theta2(np.array(R2_flist), k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                      0, forceboth=forceboth), '.')
+            plt.plot(R2_flist, theta2(np.array(R2_flist), k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                      0, forceall), '.')
 
     if mode == 'maxamp' or mode == 'amp' or mode == 'amplitude':
         freqlist = resfreqs_from_amp
@@ -574,7 +576,7 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                     # if the 10th element of indexlist is indexlist[10]=200, then tempfreqlist[10] = morefrequencies[200]
             except:
                 print('indexlist:', indexlist)
-            A2 = curve2(tempfreqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 0, forceboth=forceboth)
+            A2 = curve2(tempfreqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set, 0, forceall)
                 # and then A2[10] is the amplitude of R2 at the frequency morefrequencies[200]
                 # and then the number 10 is the sort of number we will add to a removeindex list
             for i in range(len(indexlist)-1):
@@ -625,8 +627,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
             for i in range(iterations):
                 f2, ind2 = find_freq_from_angle(drive = morefrequencies, 
                                          phase = theta1(morefrequencies, 
-                                                        k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                                        0, MONOMER, forceboth=forceboth),
+                                                        k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                                        0, forceall),
                                          angleswanted = [goodphase], returnindex = True)
                 ind2 = ind2[0]
                 try:
@@ -639,8 +641,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
             freqlist.append(f2)
             if verboseplot:
                 plt.sca(phaseax)
-                plt.plot(f2, theta1(f2, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, MONOMER, forceboth=forceboth), '.')
+                plt.plot(f2, theta1(f2, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall), '.')
                 print('Appending: ', f2)
             for i in range(numtoreturn - len(freqlist)):  
                 # This is currently unlikely to be true, but I'm future-proofing 
@@ -648,18 +650,18 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                 freqlist.append(np.nan)  # increase list to requested length with nan
             if verboseplot:
                 plt.sca(ampax)
-                plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, MONOMER, forceboth=forceboth), 'x')
+                plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall), 'x')
             if verbose:
                 print ('option 5')
             if returnoptions:
                 return freqlist, 5
             return freqlist
         
-        R1_amp_noiseless = curve1(freqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, MONOMER, forceboth=forceboth)
-        R2_amp_noiseless = curve2(freqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, forceboth=forceboth)
+        R1_amp_noiseless = curve1(freqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall)
+        R2_amp_noiseless = curve2(freqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall)
         
         topR1index = np.argmax(R1_amp_noiseless)
         
@@ -681,8 +683,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
             freqlist = list([freqlist[topR1index], freqlist[topR2index]])
             if verboseplot:
                 plt.sca(ampax)
-                plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                  0, MONOMER, forceboth=forceboth), 'x')
+                plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                  0, forceall), 'x')
             if verbose:
                 print('option 7')
             if returnoptions:
@@ -699,8 +701,8 @@ def res_freq_numeric(vals_set, MONOMER, forceboth,
                 freqlist = list([f1, f2]) # overwrite freqlist
                 if verboseplot:
                     plt.sca(ampax)
-                    plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k12_set, b1_set, b2_set, F_set, m1_set, m2_set, 
-                                      0, MONOMER, forceboth=forceboth), 'x')
+                    plt.plot(freqlist, curve1(freqlist, k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set,
+                                      0, forceall), 'x')
                 if verbose:
                     print('option 8')
                 if returnoptions:
@@ -770,7 +772,7 @@ def allmeasfreq_two_res(res1, res2, max_num_p, freqdiff):
 
 
 def best_choice_freq_set(vals_set, MONOMER, forceboth, reslist, num_p = 10):
-    [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, MONOMER)
+    [k1_set, k2_set, k3_set, k4_set, b1_set, b2_set, b3_set, F_set, m1_set, m2_set, m3_set] = read_params(vals_set)
     narrowerW = calcnarrowerW(vals_set, MONOMER)
     freqdiff = round(narrowerW/6,4)
     if MONOMER:
@@ -779,3 +781,11 @@ def best_choice_freq_set(vals_set, MONOMER, forceboth, reslist, num_p = 10):
         measurementfreqs = allmeasfreq_two_res(reslist[0], reslist[1], num_p, freqdiff)
         
     return measurementfreqs[:num_p]
+
+
+
+
+
+
+
+

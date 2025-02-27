@@ -2,7 +2,9 @@
 """
 Created on Tue Aug  9 16:08:21 2022
 
-Simulated spectra + SVD recovery
+Validating NetMAP:
+
+Simulated spectra + NetMAP recovery
 
 @author: vhorowit
 """
@@ -12,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from helperfunctions import \
     read_params, store_params, make_real_iff_real, flatten
-from resonatorSVDanalysis import Zmat, \
+from NetMAP import Zmat, \
     normalize_parameters_1d_by_force, normalize_parameters_assuming_3d, \
     normalize_parameters_to_m1_F_set_assuming_2d
 from resonatorstats import syserr, combinedsyserr
@@ -40,25 +42,28 @@ def describeresonator(vals_set, MONOMER, forceboth, noiselevel = None):
             print('Applying oscillating force to both masses.')
         else:
             print('Applying oscillating force to m1.')
-    print('Approximate Q1: ' + "{:.2f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
-          ' width: ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)))
+    print('Q1 ~ ' + "{:.0f}".format(approx_Q(k = k1_set, m = m1_set, b=b1_set)) + 
+          ' and peak width ~ ' + "{:.2f}".format(approx_width(k = k1_set, m = m1_set, b=b1_set)) + ' rad/s')
     if not MONOMER:
-        print('Approximate Q2: ' + "{:.2f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
-              ' width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
+        print(' Q2 ~ ' + "{:.0f}".format(approx_Q(k = k2_set, m = m2_set, b=b2_set)) +
+              ' and second peak width: ' + "{:.2f}".format(approx_width(k = k2_set, m = m2_set, b=b2_set)))
     print('Q ~ sqrt(m*k)/b')
-    print('Set values:')
+    print('We set the input values to:')
     if MONOMER:
-        print('m: ' + str(m1_set) + ', b: ' + str(b1_set) + ', k: ' + str(k1_set) + ', F: ' + str(F_set))
+        print('m = ' + str(m1_set) + ' kg, b = ' + str(b1_set) + ' N s/m, k = ' + str(k1_set) + ' N/m, f = ' + str(F_set), ' N')
         res1 = res_freq_weak_coupling(k1_set, m1_set, b1_set)
-        print('res freq: ', res1)
+        print('res freq ~ ', res1, 'rad/s')
     else:
         if forceboth:
-            forcestr = ', F1=F2: '
+            forcestr = ', f1=f2: '
         else:
-            forcestr = ', F1: '
-
-        print('m1: ' + str(m1_set) + ', b1: ' + str(b1_set) + ', k1: ' + str(k1_set) + forcestr + str(F_set))
-        print('m2: ' + str(m2_set) + ', b2: ' + str(b2_set) + ', k2: ' + str(k2_set) + ', k12: ' + str(k12_set))
+            forcestr = ', f1 = '
+            
+        print('m_1= ' + str(m1_set) + 'kg, b_1 = ' + str(b1_set) 
+              + 'N s/m, k_1 = ' + str(k1_set) + forcestr + str(F_set))
+        print('m_2= ' + str(m2_set) + 'kg, b_2 = ' + str(b2_set) 
+              + 'N s/m, k_2 = ' + str(k2_set) + ', k_{12} = ' + str(k12_set))
+   
     if noiselevel is not None and use_complexnoise:
         print('noiselevel:', noiselevel)
         print('stdev sigma:', complexamplitudenoisefactor*noiselevel)
@@ -168,12 +173,18 @@ def assert_results_length(results, columns):
         
        
 # unscaled_vector = vh[-1] has elements: m1, b1, k1, f1
-def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, absval = False ):
+def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, vals_set, freqs = None, absval = False ):
     [m1_set, m2_set, b1_set, b2_set, k1_set, k2_set, k12_set, F_set] = read_params(vals_set, True)
     m_err = syserr(M1,m1_set, absval)
     b_err = syserr(B1,b1_set, absval)
     k_err = syserr(K1,k1_set, absval)
     sqrtkoverm_err = syserr(np.sqrt(K1/M1),np.sqrt(k1_set/m1_set), absval)
+    
+    if freqs is not None:
+        print("Using", len(freqs), "frequencies for SVD analysis, namely",
+            freqs,
+            "rad/s." )
+        
     
     print("The Z matrix is ", make_real_iff_real(Zmatrix), \
         ". Its smallest singular value, s_1=", smallest_s,  \
@@ -197,9 +208,9 @@ def describe_monomer_results(Zmatrix, smallest_s, unscaled_vector, M1, B1, K1, v
         "% of the correct values for m, b, and k.", \
         "We also see that the recovered value √(k ̂/m ̂ )=",
         np.sqrt(K1/M1), "rad/s is more accurate than the individually recovered values for mass and spring stiffness;",
-        "this is generally true."
-        "The percent error for √(k ̂/m ̂ ) is",
-        sqrtkoverm_err, "%."
+        "this is generally true. ", 
+        "The percent error for √(k ̂/m ̂ ) compared to √(k_set/m_set ) is",
+        sqrtkoverm_err, "%. This high accuracy likely arises because we choose frequency ω_a at the peak amplitude."
         )
 
 
@@ -210,7 +221,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
                          noiseless_spectra = None, noisy_spectra = None, freqnoise = False, overlay=False,
                          context = None, saving = False, demo = False,
                          resonatorsystem = None,  show_set = None,
-                         figsizeoverride1 = None, figsizeoverride2 = None,):
+                         figsizeoverride1 = None, figsizeoverride2 = None, return_1D_plot_info= False):
 
     
     if verbose:
@@ -252,6 +263,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
     
     first = True
     results = []
+    plot_info_1D = []
 
     for i in range(repeats): # repeat the same measurement with different gaussian noise
         theseresults = []
@@ -335,7 +347,11 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         Zmatrix = Zmat(df, frequencycolumn = 'drive', 
                        complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', 
                        MONOMER=MONOMER, forceboth=forceboth, dtype=complex)
-        u, s, vh = np.linalg.svd(Zmatrix, full_matrices = True)
+        try:
+            u, s, vh = np.linalg.svd(Zmatrix, full_matrices = True)
+        except:
+            print('Could not solve with noiselevel', noiselevel)
+            continue
         vh = make_real_iff_real(vh)
         
         theseresults.append(approx_Q(m = m1_set, k = k1_set, b = b1_set))
@@ -375,15 +391,19 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         if verbose and first:
             print("1D:")
             if MONOMER:
-                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set)
+                describe_monomer_results(Zmatrix, s[-1], vh[-1], M1, B1, K1, vals_set, freqs = drive[p])
             plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
                              MONOMER=MONOMER, forceboth=forceboth, labelcounts = labelcounts, overlay = overlay,
                              context = context, saving = saving, labelname = '1D', demo=demo,
                              resonatorsystem = resonatorsystem, show_set = show_set,
                              figsizeoverride1 = figsizeoverride1, figsizeoverride2 = figsizeoverride2) 
             plt.show()
+            plot_info_1D = [drive,R1_amp,R1_phase,R2_amp,R2_phase, df,  K1, K2, K12, B1, B2, FD, M1, M2, vals_set, 
+                             MONOMER, forceboth, labelcounts, overlay,
+                             context, saving, '1D', demo,
+                             resonatorsystem, show_set,
+                             figsizeoverride1, figsizeoverride2]
             
-
         el = store_params(M1, M2, B1, B2, K1, K2, K12, FD, MONOMER)
                             
         theseresults.append(any(x<0 for x in el))
@@ -632,4 +652,7 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
     resultsdf = pd.DataFrame(
             data=results, 
             columns = flatten(theseresults_cols))
-    return resultsdf
+    if return_1D_plot_info:
+        return resultsdf, plot_info_1D
+    else:
+        return resultsdf

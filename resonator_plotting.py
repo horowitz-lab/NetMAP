@@ -71,8 +71,9 @@ def set_format():
             'size'   : 7}
     mpl.rc('font', **font)
     plt.rcParams.update({'font.size': 7}) ## Nature Physics wants font size 5 to 7.
-    
-    
+    #plt.rcParams.update({
+    #    "pdf.use14corefonts": True # source: https://github.com/matplotlib/matplotlib/issues/21893
+    #}) # findfont: Generic family 'sans-serif' not found because none of the following families were found: Arial
     
     #plt.rcParams["length"] = 3
     plt.rcParams['axes.linewidth'] = 0.7
@@ -89,11 +90,31 @@ def set_format():
      
     plt.rcParams['ytick.minor.visible'] = True
     plt.rcParams['xtick.minor.visible'] = True
+    plt.minorticks_on()
     plt.rcParams['axes.spines.top'] = True
     plt.rcParams['axes.spines.right'] = True
     # source: https://physicalmodelingwithpython.blogspot.com/2015/06/making-plots-for-publication.html
     plt.rcParams['pdf.fonttype'] = 42 # Don't outline text for NPhys
     plt.rcParams['svg.fonttype'] = 'none'
+    
+    plt.rcParams['axes.titlepad'] = -5 
+    
+    plt.rcParams['pdf.fonttype']=42 
+        # source: Nature https://drive.google.com/drive/folders/15m_c_ZfP2X4C9G7bOtQBdSlcLmJkUA7D
+    plt.rcParams['ps.fonttype'] = 42
+        # source: https://jonathansoma.com/lede/data-studio/matplotlib/exporting-from-matplotlib-to-open-in-adobe-illustrator/
+    
+def text_color_legend(**kwargs):
+    l = plt.legend(**kwargs)
+    # set text color in legend
+    for text in l.get_texts():
+        if '1D' in str(text):
+            text.set_color(co1)
+        elif '2D' in str(text):
+            text.set_color(co2)
+        elif '3D' in str(text):
+            text.set_color(co3)
+    return l
 
 """ Plot amplitude or phase versus frequency with set values, simulated data, and SVD results.
     Demo: if true, plot without tick marks """
@@ -204,6 +225,9 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
     set_format()
     assert len(complexZ) == len(parameter)
     plt.sca(ax)
+    plt.axvline(0,  color = 'k', linestyle='solid',  linewidth = .5)
+    plt.axhline(0, color = 'k', linestyle='solid',  linewidth = .5)
+    # colorful circles
     sc = ax.scatter(np.real(complexZ), np.imag(complexZ), s=s, c = parameter,
                     cmap = cmap, label = 'simulated data' ) # s is marker size
     cbar = plt.colorbar(sc)
@@ -213,11 +237,6 @@ def plotcomplex(complexZ, parameter, title = 'Complex Amplitude', cbar_label='Fr
     ax.set_ylabel('$\mathrm{Im}(Z)$ (m)')
     ax.axis('equal');
     plt.title(title)
-    plt.gcf().canvas.draw() # draw so I can get xlim and ylim.
-    ymin, ymax = ax.get_ylim()
-    xmin, xmax = ax.get_xlim()
-    plt.vlines(0, ymin=ymin, ymax = ymax, colors = 'k', linestyle='solid', alpha = .5)
-    plt.hlines(0, xmin=xmin, xmax = xmax, colors = 'k', linestyle='solid', alpha = .5)
     #ax.plot([0,1],[0,0], lw=10,transform=ax.xaxis.get_transform() )#,transform=ax.xaxis.get_transform() ) #transform=ax.transAxes
     
     # label markers that are closest to the desired frequencies
@@ -297,10 +316,10 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
             figsize = (figwidth*.6, figratio * figwidth*.8 )
         else:
             figsize = (figwidth, figratio * figwidth )
-        s = 3
+        s = 25 # increased from 3, 2022-12-29
         bigcircle = 30
         amplabel = '$A\;$(m)'
-        phaselabel = '$\delta\;(\pi)$'
+        phaselabel = '$\phi\;(\pi)$'
         titleR1 = ''
         titleR2 = ''
     else:
@@ -311,7 +330,7 @@ def plot_SVD_results(drive,R1_amp,R1_phase,R2_amp,R2_phase, measurementdf,  K1, 
         s=50
         bigcircle = 150
         amplabel = 'Amplitude $A$ (m)\n'
-        phaselabel = 'Phase $\delta$ ($\pi$)'
+        phaselabel = 'Phase $\phi$ ($\pi$)'
         titleR1= 'Simulated R1 Spectrum'
         titleR2 = 'Simulated R2 Spectrum'
     if demo: # overwrite all these
