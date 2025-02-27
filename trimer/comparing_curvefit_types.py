@@ -25,7 +25,7 @@ import time
 ''' Functions contained:
     complex_noise - creates noise, e
     syserr - Calculates systematic error
-    generate_random_system - Randomly generates parameters for system. All parameter values btw 0.1 and 10
+    generate_random_system - Randomly generates parameters for system. All parameter values btw 0.1 and 10 #*** but not all?
     plot_guess - Used for the Case Study. Plots just the data and the guessed parameters curve. No curve fitting.
     automate_guess - Randomly generates guess parameters within a certain percent of the true parameters
     save_figure - Saves figures to a folder of your naming choice. Also allows you to name the figure whatever.
@@ -52,13 +52,13 @@ def syserr(x_found,x_set, absval = True):
     else:
         return se
 
-#Randomly generates parameters of a system. All parameters between 0.1 and 10
+#Randomly generates parameters of a system. All parameters between 0.1 and 10 #*** But not all parameters are? ~Viva
 def generate_random_system():
     system_params = []
     for i in range(11):
         if i==7: #Doing this because we must keep force the same throughout
             system_params.append(1)
-        elif i==4 or i==5 or i==6:
+        elif i==4 or i==5 or i==6:               #*** This is hard to read and follow. It makes me think we should use a dict instead. ~Viva
             param = random.uniform(0.01,1)
             round_param = round(param, 3)
             system_params.append(round_param)
@@ -251,7 +251,11 @@ def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_al
     
     #Getting the complex amplitudes (data) with a function from Trimer_simulator
     #Still part of the simulation
-    Z1, Z2, Z3 = calculate_spectra(frequencies, params_correct[0], params_correct[1], params_correct[2], params_correct[3], params_correct[4], params_correct[5], params_correct[6], params_correct[7], params_correct[8], params_correct[9], params_correct[10], e, force_all)
+    Z1, Z2, Z3 = calculate_spectra(frequencies, params_correct[0], 
+                                   params_correct[1], params_correct[2], params_correct[3], params_correct[4], 
+                                   params_correct[5], params_correct[6], params_correct[7], params_correct[8], 
+                                   params_correct[9], params_correct[10], 
+                                   e, force_all)
         
     #Create the Zmatrix:
     #This is where we begin NetMAP
@@ -264,22 +268,22 @@ def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_al
     final_tri = normalize_parameters_1d_by_force(notnormparam_tri, 1)
     # parameters vector: 'm1', 'm2', 'm3', 'b1', 'b2', 'b3', 'k1', 'k2', 'k3', 'k4', 'Driving Force'
     
-    #Put everything into a np array
-    #Order added: k1, k2, k3, k4, b1, b2, b3, F,  m1, m2, m3
+    #Put everything into a np array                 #*** This is extremely hard to read and follow. 
+    #Order added: k1, k2, k3, k4, b1, b2, b3, F,  m1, m2, m3     # 11 elements
     data_array = np.zeros(45)
-    data_array[:11] += np.array(params_correct)
+    data_array[:11] += np.array(params_correct)  #*** Why += instead of just =   ? Is there something I'm missing? ~Viva
     data_array[11:22] += np.array(params_guess)
     #Adding the recovered parameters and fixing the order
-    data_array[22:26] += np.array(final_tri[6:10])
+    data_array[22:26] += np.array(final_tri[6:10])    
     data_array[26:29] += np.array(final_tri[3:6])
     data_array[29] += np.array(final_tri[-1])
     data_array[30:33] += np.array(final_tri[:3])
     #adding systematic error calculations
-    syserr_result = syserr(data_array[22:33], data_array[:11])
-    data_array[33:44] += np.array(syserr_result)
+    syserr_result = syserr(data_array[22:33], data_array[:11])   # that seems nicely efficient!
+    data_array[33:44] += np.array(syserr_result)                 
     data_array[-1] += np.sum(data_array[33:44]/10) #dividing by 10 because we aren't counting the error in Force because it is 0
     
-    return data_array
+    return data_array 
 
 #Runs a set number of trials for one system, graphs curvefit result,
 # puts data and averages into spreadsheet, returns avg_e arrays and <e>_bar for all types of curves
@@ -327,20 +331,20 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
         
         
         #For labeling the excel sheet
-        param_names = ['k1_true', 'k2_true', 'k3_true', 'k4_true',
-                       'b1_true', 'b2_true', 'b3_true',
-                       'F_true', 'm1_true', 'm2_true', 'm3_true',
-                       'k1_guess', 'k2_guess', 'k3_guess', 'k4_guess',
-                       'b1_guess', 'b2_guess', 'b3_guess',
-                       'F_guess', 'm1_guess', 'm2_guess', 'm3_guess',
-                       'k1_recovered', 'k2_recovered', 'k3_recovered', 'k4_recovered', 
-                       'b1_recovered', 'b2_recovered', 'b3_recovered',
-                       'F_recovered', 'm1_recovered', 'm2_recovered', 'm3_recovered', 
-                       'e_k1', 'e_k2', 'e_k3', 'e_k4',
-                       'e_b1', 'e_b2', 'e_b3', 'e_F',
-                       'e_m1', 'e_m2', 'e_m3',
-                       'Amp1_rsqrd', 'Amp2_rsqrd', 'Amp3_rsqrd',
-                       'Phase1_rsqrd', 'Phase2_rsqrd', 'Phase3_rsqrd', '<e>']
+        param_names = ['k1_true', 'k2_true', 'k3_true', 'k4_true',      #0,1,2,3
+                       'b1_true', 'b2_true', 'b3_true',                  #4,5,6
+                       'F_true', 'm1_true', 'm2_true', 'm3_true',        #7,8,9,10
+                       'k1_guess', 'k2_guess', 'k3_guess', 'k4_guess',    #11,12,13,14
+                       'b1_guess', 'b2_guess', 'b3_guess',                  #15,16,17
+                       'F_guess', 'm1_guess', 'm2_guess', 'm3_guess',        #18,19,20,21
+                       'k1_recovered', 'k2_recovered', 'k3_recovered', 'k4_recovered', #22,23,24,25
+                       'b1_recovered', 'b2_recovered', 'b3_recovered',          #26,27,28
+                       'F_recovered', 'm1_recovered', 'm2_recovered', 'm3_recovered', #29,30,31,32
+                       'e_k1', 'e_k2', 'e_k3', 'e_k4',                       #33, 34, 35, 36
+                       'e_b1', 'e_b2', 'e_b3', 'e_F',                     #37, 38, 39, 40
+                       'e_m1', 'e_m2', 'e_m3',                            #41, 42, 43
+                       'Amp1_rsqrd', 'Amp2_rsqrd', 'Amp3_rsqrd',             #44, 45, 46
+                       'Phase1_rsqrd', 'Phase2_rsqrd', 'Phase3_rsqrd', '<e>']  #47, 48, 49, 50   So there are 51 columns
         
         #Turn the final data arrays into a dataframe so they can be written to excel
         dataframe1 = pd.DataFrame(all_data1, columns=param_names)
