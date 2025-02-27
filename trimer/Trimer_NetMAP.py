@@ -11,7 +11,12 @@ from Trimer_simulator import calculate_spectra
 ''' THIS IS THE NETMAP PART '''
 
 def Zmatrix(freq, complexamp1, complexamp2, complexamp3, force_all):
-    Zmatrix = []
+    if force_all:
+            ff = -1
+    else:
+            ff = 0
+            
+    Zmatrix = []    #*** Could do an np array. 6 rows per frequency.
     for rowindex in range(len(freq)):
         w = freq[rowindex]
         Z1 = complexamp1[rowindex]
@@ -23,22 +28,14 @@ def Zmatrix(freq, complexamp1, complexamp2, complexamp3, force_all):
         Zmatrix.append([-w**2*np.imag(Z1), 0, 0, w*np.real(Z1), 0, 0, np.imag(Z1), 
                           np.imag(Z1) - np.imag(Z2), 0, 0, 0])
 
-        if force_all:
-            Zmatrix.append([0, -w**2*np.real(Z2), 0, 0, -w*np.imag(Z2), 0, 0, 
-                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0, -1])
-        else:
-            Zmatrix.append([0, -w**2*np.real(Z2), 0, 0, -w*np.imag(Z2), 0, 0, 
-                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0, 0])
-            
+        Zmatrix.append([0, -w**2*np.real(Z2), 0, 0, -w*np.imag(Z2), 0, 0, 
+                            np.real(Z2)-np.real(Z1), np.real(Z2) - np.real(Z3), 0, ff])
+
         Zmatrix.append([0, -w**2*np.imag(Z2), 0, 0, w*np.real(Z2), 0, 0, 
                         np.imag(Z2)-np.imag(Z1), np.imag(Z2) - np.imag(Z3), 0, 0])
-        
-        if force_all:
-            Zmatrix.append([0, 0, -w**2*np.real(Z3), 0, 0, -w*np.imag(Z3), 0, 0, 
-                            np.real(Z3)-np.real(Z2), np.real(Z3), -1])     
-        else:
-            Zmatrix.append([0, 0, -w**2*np.real(Z3), 0, 0, -w*np.imag(Z3), 0, 0, 
-                            np.real(Z3)-np.real(Z2), np.real(Z3), 0])
+
+        Zmatrix.append([0, 0, -w**2*np.real(Z3), 0, 0, -w*np.imag(Z3), 0, 0, 
+                            np.real(Z3)-np.real(Z2), np.real(Z3), ff])     
         
         Zmatrix.append([0, 0, -w**2*np.imag(Z3), 0, 0, w*np.real(Z3), 0, 0, 
                         np.imag(Z3)-np.imag(Z2), np.imag(Z3), 0])
