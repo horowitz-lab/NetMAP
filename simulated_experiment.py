@@ -277,8 +277,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             theseresults_cols.append(['m1_set',  'b1_set',  'k1_set', 'F_set'])
         else:
             theseresults_cols.append(['m1_set', 'm2_set', 'b1_set', 'b2_set', 'k1_set', 'k2_set', 'k12_set', 'F_set'])
-        theseresults.append([noiselevel, noiselevel * complexamplitudenoisefactor])
-        theseresults_cols.append(['noiselevel', 'stdev'])
+        theseresults.extend([noiselevel, noiselevel * complexamplitudenoisefactor])
+        theseresults_cols.extend(['noiselevel', 'stdev'])
         
         """ if freqnoise:
             #measurementfreqs = [w+random for w in reslist] # to do: describe random
@@ -298,15 +298,15 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         
         if len(p) < 40:
             for i in range(len(p)):
-                theseresults.append([drive[p[i]], 
+                theseresults.extend([drive[p[i]], 
                                      R1_phase_noiseless[p[i]],
                                     R1_amp_noiseless[p[i]]])
-                theseresults_cols.append(['Freq' + str(i+1), 
+                theseresults_cols.extend(['Freq' + str(i+1), 
                                           'R1_phase_noiseless' + str(i+1),
                                           'R1_amp_noiseless' + str(i+1)])
                 if not MONOMER:
-                    theseresults.append([R2_phase_noiseless[p[i]], R2_amp_noiseless[p[i]]])
-                    theseresults_cols.append(['R2_phase_noiseless' + str(i+1),'R2_amp_noiseless' + str(i+1)])                
+                    theseresults.extend([R2_phase_noiseless[p[i]], R2_amp_noiseless[p[i]]])
+                    theseresults_cols.extend(['R2_phase_noiseless' + str(i+1),'R2_amp_noiseless' + str(i+1)])                
                 theseresults.append(SNR_R1_list[i])
                 theseresults_cols.append('SNR_R1_f' + str(i+1))
                 if not MONOMER:
@@ -331,8 +331,8 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         # 'arclength_R1' is the arclength separation 
         # between the first two frequency points on the R1 complex spectrum plot
         if len(p) < 3:
-            theseresults.append([arclength_R1,modifiedangle_R1])
-            theseresults_cols.append(['arclength_R1', 'modifiedangle_R1'])
+            theseresults.extend([arclength_R1,modifiedangle_R1])
+            theseresults_cols.extend(['arclength_R1', 'modifiedangle_R1'])
             
         theseresults.append(drive[p])
         theseresults_cols.append('frequencies')
@@ -383,11 +383,11 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         M1, M2, B1, B2, K1, K2, K12, FD = allparameters
         
         if MONOMER:
-            theseresults.append([M1, B1,  K1, FD])
-            theseresults_cols.append(['M1_1D', 'B1_1D','K1_1D', 'FD_1D'])            
+            theseresults.extend([M1, B1,  K1, FD])
+            theseresults_cols.extend(['M1_1D', 'B1_1D','K1_1D', 'FD_1D'])            
         else:
-            theseresults.append([M1, M2, B1, B2, K1, K2, K12, FD])
-            theseresults_cols.append(['M1_1D', 'M2_1D', 'B1_1D', 'B2_1D', 'K1_1D', 'K2_1D', 'K12_1D', 'FD_1D'])
+            theseresults.extend([M1, M2, B1, B2, K1, K2, K12, FD])
+            theseresults_cols.extend(['M1_1D', 'M2_1D', 'B1_1D', 'B2_1D', 'K1_1D', 'K2_1D', 'K12_1D', 'FD_1D'])
         if verbose and first:
             print("1D:")
             if MONOMER:
@@ -439,17 +439,17 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
         avgsyserr, rmssyserr, maxsyserr, Lavgsyserr = combinedsyserr(syserrs,1) # subtract 1 degrees of freedom for 1D nullspace
 
         if MONOMER:
-            theseresults.append([K1syserr,  B1syserr,  FDsyserr, M1syserr])
-            theseresults_cols.append(['K1syserr%_1D', 'B1syserr%_1D','FDsyserr%_1D', 'M1syserr%_1D'])
+            theseresults.extend([K1syserr,  B1syserr,  FDsyserr, M1syserr])
+            theseresults_cols.extend(['K1syserr%_1D', 'B1syserr%_1D','FDsyserr%_1D', 'M1syserr%_1D'])
         else:
-            theseresults.append([K1syserr,K2syserr, K12syserr, B1syserr, B2syserr, FDsyserr, M1syserr, M2syserr])
-            theseresults_cols.append(['K1syserr%_1D','K2syserr%_1D', 'K12syserr%_1D', 
+            theseresults.extend([K1syserr,K2syserr, K12syserr, B1syserr, B2syserr, FDsyserr, M1syserr, M2syserr])
+            theseresults_cols.extend(['K1syserr%_1D','K2syserr%_1D', 'K12syserr%_1D', 
                                       'B1syserr%_1D', 'B2syserr%_1D', 'FDsyserr%_1D', 
                                       'M1syserr%_1D', 'M2syserr%_1D'])
-        theseresults.append([avgsyserr, rmssyserr, maxsyserr, Lavgsyserr])
-        theseresults_cols.append(['avgsyserr%_1D', 'rmssyserr%_1D', 'maxsyserr%_1D', 'Lavgsyserr%_1D'])
-        theseresults.append([np.log10(avgsyserr), np.log10(rmssyserr), np.log10(maxsyserr), np.log10(Lavgsyserr)])
-        theseresults_cols.append(['log avgsyserr%_1D', 'log rmssyserr%_1D', 'log maxsyserr%_1D', 'log Lavgsyserr%_1D'])
+        theseresults.extend([avgsyserr, rmssyserr, maxsyserr, Lavgsyserr])
+        theseresults_cols.extend(['avgsyserr%_1D', 'rmssyserr%_1D', 'maxsyserr%_1D', 'Lavgsyserr%_1D'])
+        theseresults.extend([np.log10(avgsyserr), np.log10(rmssyserr), np.log10(maxsyserr), np.log10(Lavgsyserr)])
+        theseresults_cols.extend(['log avgsyserr%_1D', 'log rmssyserr%_1D', 'log maxsyserr%_1D', 'log Lavgsyserr%_1D'])
 
         ### Normalize parameters in 2D nullspace 
         """ # Problem: res1 formula only for weak coupling.
@@ -592,20 +592,20 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
             B2syserr_3D = syserr(B2_3D,b2_set)
             M2syserr_3D = syserr(M2_3D,m2_set)
         if MONOMER:
-            theseresults.append([K1syserr_3D,B1syserr_3D,FDsyserr_3D,M1syserr_3D])
-            theseresults_cols.append(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D'])           
+            theseresults.extend([K1syserr_3D,B1syserr_3D,FDsyserr_3D,M1syserr_3D])
+            theseresults_cols.extend(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D'])           
         else:
-            theseresults.append([K1syserr_3D,B1syserr_3D,FDsyserr_3D,M1syserr_3D,
+            theseresults.extend([K1syserr_3D,B1syserr_3D,FDsyserr_3D,M1syserr_3D,
                                  K2syserr_3D,K12syserr_3D,B2syserr_3D,M2syserr_3D])
-            theseresults_cols.append(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D',
+            theseresults_cols.extend(['K1syserr%_3D','B1syserr%_3D','FDsyserr%_3D','M1syserr%_3D',
                                       'K2syserr%_3D','K12syserr%_3D','B2syserr%_3D','M2syserr%_3D'])
 
         avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D = \
             combinedsyserr(syserrs_3D,3) # subtract 3 degrees of freedom for 3D nullspace
-        theseresults.append([avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D])
-        theseresults_cols.append(['avgsyserr%_3D', 'rmssyserr%_3D', 'maxsyserr%_3D', 'Lavgsyserr%_3D'])
-        theseresults.append([np.log10(avgsyserr_3D), np.log10(rmssyserr_3D), np.log10(maxsyserr_3D), np.log10(Lavgsyserr_3D)])
-        theseresults_cols.append(['log avgsyserr%_3D', 'log rmssyserr%_3D', 'log maxsyserr%_3D', 'log Lavgsyserr%_3D'])
+        theseresults.extend([avgsyserr_3D, rmssyserr_3D, maxsyserr_3D, Lavgsyserr_3D])
+        theseresults_cols.extend(['avgsyserr%_3D', 'rmssyserr%_3D', 'maxsyserr%_3D', 'Lavgsyserr%_3D'])
+        theseresults.extend([np.log10(avgsyserr_3D), np.log10(rmssyserr_3D), np.log10(maxsyserr_3D), np.log10(Lavgsyserr_3D)])
+        theseresults_cols.extend(['log avgsyserr%_3D', 'log rmssyserr%_3D', 'log maxsyserr%_3D', 'log Lavgsyserr%_3D'])
         
         theseresults.append(avgsyserr-avgsyserr_3D)
         theseresults_cols.append('avgsyserr%_1D-avgsyserr%_3D')
@@ -628,30 +628,31 @@ def simulated_experiment(measurementfreqs,  vals_set, noiselevel, MONOMER, force
     
         
         if MONOMER: # same for every row
-            theseresults.append([maxSNR_R1, minSNR_R1,meanSNR_R1])
-            theseresults_cols.append(['maxSNR_R1', 'minSNR_R1','meanSNR_R1'])
-            theseresults.append(list(np.log10([maxSNR_R1, minSNR_R1,meanSNR_R1])))
-            theseresults_cols.append(
+            theseresults.extend([maxSNR_R1, minSNR_R1,meanSNR_R1])
+            theseresults_cols.extend(['maxSNR_R1', 'minSNR_R1','meanSNR_R1'])
+            theseresults.extend(list(np.log10([maxSNR_R1, minSNR_R1,meanSNR_R1])))
+            theseresults_cols.extend(
                 ['log ' + s for s in ['maxSNR_R1', 'minSNR_R1','meanSNR_R1']])
         else:
-            theseresults.append([maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2, meanSNR_R1,meanSNR_R2])
-            theseresults_cols.append(['maxSNR_R1','maxSNR_R2',  'minSNR_R1','minSNR_R2','meanSNR_R1','meanSNR_R2'])
+            theseresults.extend([maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2, meanSNR_R1,meanSNR_R2])
+            theseresults_cols.extend(['maxSNR_R1','maxSNR_R2',  'minSNR_R1','minSNR_R2','meanSNR_R1','meanSNR_R2'])
             
-            theseresults.append(list(np.log10([maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2, meanSNR_R1,meanSNR_R2])))
-            theseresults_cols.append(
+            theseresults.extend(list(np.log10([maxSNR_R1,maxSNR_R2, minSNR_R1,minSNR_R2, meanSNR_R1,meanSNR_R2])))
+            theseresults_cols.extend(
                 ['log ' + s for s in ['maxSNR_R1','maxSNR_R2',  'minSNR_R1','minSNR_R2','meanSNR_R1','meanSNR_R2']])
             
         #theseresults.append([len(p), drive[p]]) # same for every row
         #theseresults_cols.append([ 'num frequency points','frequencies'])
 
-        results.append(flatten(theseresults))
+        theseresults = flatten(theseresults)
+        results.append(theseresults)
         assert_results_length(results=theseresults,columns = theseresults_cols)
-
-
-    assert (len(flatten(theseresults)) == len(flatten(theseresults_cols)))
+    
+    theseresults_cols = flatten(theseresults_cols)
+    assert (len(theseresults) == len(theseresults_cols))
     resultsdf = pd.DataFrame(
             data=results, 
-            columns = flatten(theseresults_cols))
+            columns = theseresults_cols)
     if return_1D_plot_info:
         return resultsdf, plot_info_1D
     else:
