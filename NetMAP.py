@@ -41,7 +41,7 @@ def Zmatrix2resonators(measurementdf, forceboth,
         Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), ff])
         Zmatrix.append([0, -w**2*np.imag(ZZ2), 0, w*np.real(ZZ2), 0, np.imag(ZZ2), np.imag(ZZ2)-np.imag(ZZ1), 0])
     #display(Zmatrix)
-    return np.array(Zmatrix, dtype=dtype)
+    return np.matrix(Zmatrix, dtype=dtype)
 
 """ZmatrixMONOMER(df,...) will return a matrix for svd for any number of frequency measurements, 
 listed in each row of the dataframe measurementdf 
@@ -59,7 +59,7 @@ def ZmatrixMONOMER(measurementdf,
         Zmatrix.append([-w**2*np.real(ZZ1), -w*np.imag(ZZ1), np.real(ZZ1), -1])
         Zmatrix.append([-w**2*np.imag(ZZ1),  w*np.real(ZZ1), np.imag(ZZ1),  0])
     #display(Zmatrix)
-    return np.array(Zmatrix, dtype=dtype)
+    return np.matrix(Zmatrix, dtype=dtype)
 
 def Zmat(measurementdf, MONOMER, forceboth, 
          frequencycolumn = 'drive', complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex, 
