@@ -21,14 +21,18 @@ from Trimer_simulator import calculate_spectra, curve1, theta1, curve2, theta2, 
 from Trimer_NetMAP import Zmatrix, unnormalizedparameters, normalize_parameters_1d_by_force
 import warnings
 import time
+import timeit
+import statistics
 
 ''' Functions contained:
     complex_noise - creates noise, e
     syserr - Calculates systematic error
-    generate_random_system - Randomly generates parameters for system. All parameter values btw 0.1 and 10
+    generate_random_system - Randomly generates parameters for system. Parameter values btw 0.1 and 10 for all but the coefficients of friction which is between 0.1 and 1.  
     plot_guess - Used for the Case Study. Plots just the data and the guessed parameters curve. No curve fitting.
     automate_guess - Randomly generates guess parameters within a certain percent of the true parameters
     save_figure - Saves figures to a folder of your naming choice. Also allows you to name the figure whatever.
+    timeit_function - Uses the timeit package to time how long a function takes to run. 
+                    - Runs it multiple times (number of your choosing) and returns the average time and std dev for more accurate results.
     get_parameters_NetMAP - Recovers parameters for a system given the guessed parameters
     run_trials - Runs a set number of trials for one system, graphs curvefit result,
                  puts data and averages into spreadsheet, returns <e>_bar for both types of curves
@@ -41,7 +45,10 @@ import time
 def complex_noise(n, noiselevel):
     global complexamplitudenoisefactor
     complexamplitudenoisefactor = 0.0005
-    return noiselevel* complexamplitudenoisefactor * np.random.randn(n,)
+    return noiselevel* complexamplitudenoisefactor * np.random.randn(n,) 
+# np.random.radn returns a number from a gaussian distribution with variance 1 and mean 0
+# noiselevel* complexamplitudenoisefactor is standard deviation
+
 
 def syserr(x_found,x_set, absval = True):
     with warnings.catch_warnings():
@@ -52,7 +59,7 @@ def syserr(x_found,x_set, absval = True):
     else:
         return se
 
-#Randomly generates parameters of a system. All parameters between 0.1 and 10
+#Randomly generates parameters of a system. k1, k2, k3, k4, b1, b2, b3, F,  m1, m2, m3
 def generate_random_system():
     system_params = []
     for i in range(11):
@@ -247,6 +254,20 @@ def save_figure(figure, folder_name, file_name):
     figure.savefig(file_path, bbox_inches = 'tight')
     plt.close(figure)
 
+# runs > 1 if you want to run one function several times to get the average time
+def timeit_function(func, args=None, kwargs=None, runs=7):
+    args = args or ()
+    kwargs = kwargs or {}
+
+    times = []
+    for _ in range(runs):
+        t = timeit.timeit(lambda: func(*args, **kwargs), number=1)
+        times.append(t)
+
+    mean_time = statistics.mean(times)
+    std_dev = statistics.stdev(times) if runs > 1 else 0.0
+    return mean_time, std_dev, times
+
 def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_all):
     
     #Getting the complex amplitudes (data) with a function from Trimer_simulator
@@ -266,7 +287,7 @@ def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_al
     
     #Put everything into a np array
     #Order added: k1, k2, k3, k4, b1, b2, b3, F,  m1, m2, m3
-    data_array = np.zeros(45)
+    data_array = np.zeros(46) #44 elements are generated in this code, but I leave the last entry empty because I want to time how long it takes the function to run in other code, so I'm giving the array space to add the time if necessary
     data_array[:11] += np.array(params_correct)
     data_array[11:22] += np.array(params_guess)
     #Adding the recovered parameters and fixing the order
@@ -276,14 +297,14 @@ def get_parameters_NetMAP(frequencies, params_guess, params_correct, e, force_al
     data_array[30:33] += np.array(final_tri[:3])
     #adding systematic error calculations
     syserr_result = syserr(data_array[22:33], data_array[:11])
-    data_array[33:44] += np.array(syserr_result)
-    data_array[-1] += np.sum(data_array[33:44]/10) #dividing by 10 because we aren't counting the error in Force because it is 0
+    data_array[33:44] += np.array(syserr_result) #individual errors for each parameter
+    data_array[-2] += np.sum(data_array[33:44]/10) #this is average error <e>... dividing by 10 (not 11) because we aren't counting the error in Force because the error is 0
     
     return data_array
 
 #Runs a set number of trials for one system, graphs curvefit result,
 # puts data and averages into spreadsheet, returns avg_e arrays and <e>_bar for all types of curves
-def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, num_trials, excel_file_name, graph_folder_name):
+def run_trials(true_params, guessed_params, freqs_NetMAP, freqs_curvefit, length_noise_NetMAP, length_noise_curvefit, num_trials, excel_file_name, graph_folder_name):
 
     #Needed for calculating e_bar and for graphing - also these are things that will be returned
     avg_e1_array = np.zeros(num_trials) #Polar
@@ -291,76 +312,123 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
     avg_e3_array = np.zeros(num_trials) #NetMAP
     
     #Needed to add all the data to a spreadsheet at the end
-    all_data1 = np.empty((0, 51))  #Polar
-    all_data2 = np.empty((0, 51))  #Cartesian
-    all_data3 = np.empty((0, 45))  #NetMAP
+    all_data1 = np.empty((0, 52))  #Polar
+    all_data2 = np.empty((0, 52))  #Cartesian
+    all_data3 = np.empty((0, 46))  #NetMAP
     
-    with pd.ExcelWriter(excel_file_name, engine='xlsxwriter') as writer:
-        for i in range(num_trials):
-            
-            #Create noise
-            e = complex_noise(300, 2)
-            
-            ##For NetMAP
-            #create error
-            e_NetMAP = complex_noise(length_noise_NetMAP,2)
+    #FOR ONLY when I'm running 1 trial per system:
+    # with pd.ExcelWriter(excel_file_name, engine='xlsxwriter') as writer:
+    
+    #Creating arrays to store the time it takes each curvefit/NetMAP function to run - will average them at the end
+    times_polar = np.empty(num_trials)
+    times_cartesian = np.empty(num_trials)
+    times_NetMAP = np.empty(num_trials)
+    
+    #For more than 1 trial per system: 
+    for i in range(num_trials):
         
-            #Get the data!
-            array1 = multiple_fit_amp_phase(guessed_params, true_params, e, False, True, False, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
-            array2 = multiple_fit_X_Y(guessed_params, true_params, e, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
-            array3 = get_parameters_NetMAP(freqs_NetMAP, guessed_params, true_params, e_NetMAP, False) #NetMAP
-            
-            #Find <e> (average across parameters) for each trial and add to arrays
-            avg_e1_array[i] += array1[-1]
-            avg_e2_array[i] += array2[-1]
-            avg_e3_array[i] += array3[-1]
-            
-            #Stack to the larger array
-            all_data1 = np.vstack((all_data1, array1))
-            all_data2 = np.vstack((all_data2, array2))
-            all_data3 = np.vstack((all_data3, array3))
-            
-            
-        avg_e1_bar = math.exp(sum(np.log(avg_e1_array))/num_trials)
-        avg_e2_bar = math.exp(sum(np.log(avg_e2_array))/num_trials)
-        avg_e3_bar = math.exp(sum(np.log(avg_e3_array))/num_trials)
+        #Create noise  - noise level 2
+        e = complex_noise(length_noise_curvefit, 2)
         
+        ##For NetMAP
+        #create noise - noise level 2
+        e_NetMAP = complex_noise(length_noise_NetMAP,2)
         
-        #For labeling the excel sheet
-        param_names = ['k1_true', 'k2_true', 'k3_true', 'k4_true',
-                       'b1_true', 'b2_true', 'b3_true',
-                       'F_true', 'm1_true', 'm2_true', 'm3_true',
-                       'k1_guess', 'k2_guess', 'k3_guess', 'k4_guess',
-                       'b1_guess', 'b2_guess', 'b3_guess',
-                       'F_guess', 'm1_guess', 'm2_guess', 'm3_guess',
-                       'k1_recovered', 'k2_recovered', 'k3_recovered', 'k4_recovered', 
-                       'b1_recovered', 'b2_recovered', 'b3_recovered',
-                       'F_recovered', 'm1_recovered', 'm2_recovered', 'm3_recovered', 
-                       'e_k1', 'e_k2', 'e_k3', 'e_k4',
-                       'e_b1', 'e_b2', 'e_b3', 'e_F',
-                       'e_m1', 'e_m2', 'e_m3',
-                       'Amp1_rsqrd', 'Amp2_rsqrd', 'Amp3_rsqrd',
-                       'Phase1_rsqrd', 'Phase2_rsqrd', 'Phase3_rsqrd', '<e>']
+        #Get the data!
+        array1 = multiple_fit_amp_phase(guessed_params, true_params, e, freqs_curvefit, False, True, False, graph_folder_name, f'Polar_fig_{i}') #Polar, Fixed force
+        array2 = multiple_fit_X_Y(guessed_params, true_params, e, freqs_curvefit, False, True, graph_folder_name, f'Cartesian_fig_{i}') #Cartesian, Fixed force
+        array3 = get_parameters_NetMAP(freqs_NetMAP, guessed_params, true_params, e_NetMAP, False) #NetMAP
         
-        #Turn the final data arrays into a dataframe so they can be written to excel
-        dataframe1 = pd.DataFrame(all_data1, columns=param_names)
-        dataframe2 = pd.DataFrame(all_data2, columns=param_names)
-        dataframe3 = pd.DataFrame(all_data3, columns=param_names[:44]+[param_names[-1]])
+        #Time how long it takes to get the data and add the time to the larger array:
+        #NOTE THAT - if you are outputting graphs within the curve fitting functions, the run time will be longer than it takes to get the actual data
+        #that is, only use the timeit functions below when show_curvefit_graphs = False
+        t_polar = timeit.timeit(lambda: multiple_fit_amp_phase(guessed_params, true_params, e, freqs_curvefit, False, True, False, graph_folder_name, f'Polar_fig_{i}'), number=1)
+        times_polar[i] = t_polar
+        t_cartesian = timeit.timeit(lambda: multiple_fit_X_Y(guessed_params, true_params, e, freqs_curvefit, False, True, graph_folder_name, f'Cartesian_fig_{i}'), number=1)
+        times_cartesian[i] = t_cartesian
+        t_NetMAP = timeit.timeit(lambda: get_parameters_NetMAP(freqs_NetMAP, guessed_params, true_params, e_NetMAP, False), number=1)
+        times_NetMAP[i] = t_NetMAP
         
-        #Add <e>_bar values to data frame
-        dataframe1.at[0,'<e>_bar'] = avg_e1_bar
-        dataframe2.at[0,'<e>_bar'] = avg_e2_bar
-        dataframe3.at[0,'<e>_bar'] = avg_e3_bar
+        #add each individual time to the array for each method so it can be stored with the data for each trial
+        #array1, array2, array3 to be stacked into the larger all_data arrays
+        array1[-1] = t_polar
+        array2[-1] = t_cartesian
+        array3[-1] = t_NetMAP
         
-        dataframe1.to_excel(writer, sheet_name='Amp & Phase', index=False)
-        dataframe2.to_excel(writer, sheet_name='X & Y', index=False)
-        dataframe3.to_excel(writer, sheet_name='NetMAP', index=False)
+        #Pull out <e> (average across parameters) for each trial and add to arrays for e_bar calculation later
+        #it is the second the last entry in the array (times is the last)
+        avg_e1_array[i] += array1[-2]
+        avg_e2_array[i] += array2[-2]
+        avg_e3_array[i] += array3[-2]
         
-        # return avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar
-        return avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar
+        #Stack each trial's data to the larger array
+        all_data1 = np.vstack((all_data1, array1))
+        all_data2 = np.vstack((all_data2, array2))
+        all_data3 = np.vstack((all_data3, array3))
+        
+    #Calculate average time it took for each method to recover parameters, along with standard deviation
+    mean_time_polar = statistics.mean(times_polar)
+    std_dev_polar = statistics.stdev(times_polar)
+    mean_time_cartesian = statistics.mean(times_cartesian)
+    std_dev_cartesian = statistics.stdev(times_cartesian)
+    mean_time_NetMAP = statistics.mean(times_NetMAP)
+    std_dev_NetMAP = statistics.stdev(times_NetMAP)
+    
+    #Calculate average error across parameters    
+    avg_e1_bar = math.exp(sum(np.log(avg_e1_array))/num_trials)
+    avg_e2_bar = math.exp(sum(np.log(avg_e2_array))/num_trials)
+    avg_e3_bar = math.exp(sum(np.log(avg_e3_array))/num_trials)
+    
+    
+    #For labeling the excel sheet
+    param_names = ['k1_true', 'k2_true', 'k3_true', 'k4_true',
+                   'b1_true', 'b2_true', 'b3_true',
+                   'F_true', 'm1_true', 'm2_true', 'm3_true',
+                   'k1_guess', 'k2_guess', 'k3_guess', 'k4_guess',
+                   'b1_guess', 'b2_guess', 'b3_guess',
+                   'F_guess', 'm1_guess', 'm2_guess', 'm3_guess',
+                   'k1_recovered', 'k2_recovered', 'k3_recovered', 'k4_recovered', 
+                   'b1_recovered', 'b2_recovered', 'b3_recovered',
+                   'F_recovered', 'm1_recovered', 'm2_recovered', 'm3_recovered', 
+                   'e_k1', 'e_k2', 'e_k3', 'e_k4',
+                   'e_b1', 'e_b2', 'e_b3', 'e_F',
+                   'e_m1', 'e_m2', 'e_m3',
+                   'Amp1_rsqrd', 'Amp2_rsqrd', 'Amp3_rsqrd',
+                   'Phase1_rsqrd', 'Phase2_rsqrd', 'Phase3_rsqrd', '<e>', 'trial time']
+    
+    #Turn the final data arrays into a dataframe so they can be written to excel
+    dataframe_polar = pd.DataFrame(all_data1, columns=param_names)
+    dataframe_cart = pd.DataFrame(all_data2, columns=param_names)
+    dataframe_net = pd.DataFrame(all_data3, columns=param_names[:44] + param_names[-2:]) #cutting out the 6 r-squared columns because those values can only be found for the curvefits
+    
+    #Add <e>_bar values to data frame (one value for the whole system)
+    dataframe_polar.at[0,'<e>_bar'] = avg_e1_bar
+    dataframe_cart.at[0,'<e>_bar'] = avg_e2_bar
+    dataframe_net.at[0,'<e>_bar'] = avg_e3_bar
+    
+    #Add the mean time and std dev to the data frame (one value each for the whole system)
+    dataframe_polar.at[0,'mean trial time'] = mean_time_polar
+    dataframe_polar.at[0,'std dev trial time'] = std_dev_polar
+    dataframe_cart.at[0,'mean trial time'] = mean_time_cartesian
+    dataframe_cart.at[0,'std dev trial time'] = std_dev_cartesian
+    dataframe_net.at[0,'mean trial time'] = mean_time_NetMAP
+    dataframe_net.at[0,'std dev trial time'] = std_dev_NetMAP
+    
+    
+    #FOR ONLY when I'm running 1 trial per system:
+    # dataframe_polar.to_excel(writer, sheet_name='Amp & Phase', index=False)
+    # dataframe_cart.to_excel(writer, sheet_name='X & Y', index=False)
+    # dataframe_net.to_excel(writer, sheet_name='NetMAP', index=False)
+    
+    # return avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar
+    
+    #For more than 1 trial per system: 
+    return avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net
 
 
-''' Begin work here. Case Study. '''
+''' Begin work here. Case Study. 
+Randomly generate a system, then graph the data (no noise) and make a guess of parameters based on visual accuracy of the curve.
+Use this guess to curvefit to the data. NetMAP does not require this initial guess to function.'''
 
 # #Make parameters/initial guesses - [k1, k2, k3, k4, b1, b2, b3, F, m1, m2, m3]
 # #Note that right now we only scale/fix by F, so make sure to keep F correct in guesses
@@ -410,8 +478,10 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
 # #Curve fit with the guess made above and get average lists
 # #Will not do anything with <e>_bar for a single case study
 # freqs_NetMAP = np.linspace(0.001, 4, 10)
-# length_noise = 10
-# avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 10, 'Case_Study.xlsx', 'Case Study Plots')
+# freqs_curvefit = np.linspace(0.001, 4, 10)
+# length_noise_NetMAP = 10
+# length_noise_curvefit = 10
+# avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, freqs_curvefit, length_noise_NetMAP, length_noise_curvefit 10, 'Case_Study.xlsx', 'Case Study Plots')
 
 # #Graph histogram of <e> for curve fits
 
@@ -425,7 +495,9 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
 
 # plt.show()
 
-''' Begin work here. Automated guesses. '''
+''' Begin work here. Automated guesses. Multiple systems.
+Instead of manually guessing the intial parameters, guess is generated to be within a certain percentage of the true parameters.
+Error across trials and across parameters is calculated. Error across parameters is graphed (e_bar) at the end to visualize error for all the systems on one graph.'''
 
 # avg_e1_bar_list = [] 
 # avg_e2_bar_list = []
@@ -475,7 +547,9 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
 # plt.show()
 # fig.savefig('<e>_bar_Histogram.png')  
 
-''' Begin work here. Checking Worst System. '''
+''' Begin work here. Checking Worst System - System 0 from 15 Systems - 10 Freqs NetMAP.
+Running the system with no noise to understand why recovered error was so bad. 
+'''
 
 ## System 0 from 15 Systems - 10 Freqs NetMAP
 ## Expecting there to be no error in recovery for everything
@@ -500,136 +574,315 @@ def run_trials(true_params, guessed_params, freqs_NetMAP, length_noise_NetMAP, n
 # plt.savefig('<e>_Histogram_Sys0_no_error.png')
 
 '''Begin work here. Redoing Case Study - 10 Freqs Better Params with 1000 trials instead of 50 '''
+'''Additionally, I am going to use the same frequencies for all three methods of parameter recovery: 
+   300 or 10 evenly spaced frequencies from 0.001 to 4.'''
+''' Note that all information saves to the same folder that this code is located in.'''
 
+# #Recover the system information from a file on my computer
 # file_path = '/Users/Student/Desktop/Summer Research 2024/Curve Fit vs NetMAP/Case Study - 10 Freqs NetMAP & Better Parameters/Case_Study_10_Freqs_Better_Parameters.xlsx'   
 # array_amp_phase = pd.read_excel(file_path, sheet_name = 'Amp & Phase').to_numpy()
 # array_X_Y = pd.read_excel(file_path, sheet_name = 'X & Y').to_numpy()
 
+# #These are the true and the guessed parameters for the system
+# #Guessed parameters were the same ones guesssed by hand the first time we ran this case study
 # true_params = np.concatenate((array_amp_phase[1,:7], [array_amp_phase[1,10]], array_amp_phase[1,7:10]))
 # guessed_params = np.concatenate((array_amp_phase[1,11:18], [array_amp_phase[1,21]], array_amp_phase[1,18:21]))
 
-# freq = np.linspace(0.001, 4, 300)
+# #Create the frequencies that both NetMAP and the Curvefitting functions require
+# #Note that if the number of frequencies are not the same, the noise must be adjusted
+# # freq_curvefit = np.linspace(0.001, 4, 300)
+# freq_curvefit = np.linspace(0.001, 4, 10)
 # freqs_NetMAP = np.linspace(0.001, 4, 10)
-# length_noise = 10
+# length_noise_curvefit = 10
+# length_noise_NetMAP = 10
 
-# run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 1000, 'Case_Study_1000_Trials.xlsx', 'Case Study 1000 Trials Plots')
+# #Run the trials (1000 in this case) 
+# #Currently saves saves all plots to a folder called "Case Study 1000 Trials Same Frequencies Plots" 
+# #(the excel name is not used here - it is only required when doing multiple systems with one trial per system)
+# #returns average error across trials (e_bar) and parameters (e), and dataframes for all three methods that include all the information 
+# #there is only one e_bar for each when doing a case study, so it will not be used
+# #NOTE: error is different every time, to simulate a real experiment
+# avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net = run_trials(true_params, guessed_params, freqs_NetMAP, freq_curvefit, length_noise_NetMAP, length_noise_curvefit, 1000, 'Second_Case_Study_1000_Trials_10_Frequencies.xlsx', 'Second Case Study 1000 Trials 10 Frequencies Plots')
+
+# #Save the new data to a new excel spreadsheet:
+# with pd.ExcelWriter('Second_Case_Study_1000_Trials_10_Frequencies.xlsx', engine='xlsxwriter') as writer:
+#     dataframe_polar.to_excel(writer, sheet_name='Amp & Phase', index=False)
+#     dataframe_cart.to_excel(writer, sheet_name='X & Y', index=False)
+#     dataframe_net.to_excel(writer, sheet_name='NetMAP', index=False)
+
+# #Graph lin and log histograms of <e> for both curve fits:
+
+# #Compute max of data and set the bin limits so all data is seen/included on graph
+# data_max = max(avg_e1_array + avg_e2_array + avg_e3_array)
+# if data_max > 39: 
+#     linearbins = np.linspace(0, data_max + 2,50)
+# else:
+#     linearbins = np.linspace(0, 40, 50)
+
+# #Graph linear plots
+# fig = plt.figure(figsize=(5, 4))
+# plt.xlabel('<e> Bar (%)', fontsize = 16)
+# plt.ylabel('Counts', fontsize = 16)
+# plt.yticks(fontsize=14)
+# plt.xticks(fontsize=14)
+# plt.hist(avg_e1_array, bins = linearbins, alpha=0.5, color='blue', label='Polar', edgecolor='blue')
+# plt.hist(avg_e2_array, bins = linearbins, alpha=0.5, color='green', label='Cartesian', edgecolor='green')
+# plt.hist(avg_e3_array, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+# plt.legend(loc='best', fontsize = 13)
+
+# plt.show()
+# save_figure(fig, 'Second Case Study 1000 Trials 10 Frequencies', 'Linear <e> Histogram')
+
+# # Set the bin limits so all data is seen/included on graph
+# if data_max > 100: 
+#     logbins = np.logspace(-2, math.log10(data_max)+0.25, 50)
+# else:
+#     logbins = np.logspace(-2, 1.8, 50)
+
+# #Graph log!
+# fig = plt.figure(figsize=(5, 4))
+# plt.xlabel('<e> Bar (%)', fontsize = 16)
+# plt.ylabel('Counts', fontsize = 16)
+# plt.xscale('log')
+# plt.yticks(fontsize=14)
+# plt.xticks(fontsize=14)
+# plt.hist(avg_e1_array, bins = logbins, alpha=0.5, color='blue', label='Polar', edgecolor='blue')
+# plt.hist(avg_e2_array,  bins = logbins, alpha=0.5, color='green', label='Cartesian', edgecolor='green')
+# plt.hist(avg_e3_array, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+# plt.legend(loc='best', fontsize = 13)
+
+# plt.show()
+# save_figure(fig, 'Second Case Study 1000 Trials 10 Frequencies', 'Logarithmic <e> Histogram')
+
+
+'''Begin work here. Case Study - 10 Freqs Better Params with 1000 trials
+    GOAL: graph runtime versus number of frequencies given to each method.
+    Create a for loop that varies frequencies from 2 to 300. (2 because that is the minimum required by NetMAP. 300 because that produces a very nice graph for curvefitting (and is what I have been using as a standard up until now.'''
+
+#Recover the system information from a file on my computer
+file_path = '/Users/Student/Desktop/Summer Research 2024/Curve Fit vs NetMAP/Case Study - 10 Freqs NetMAP & Better Parameters/Case_Study_10_Freqs_Better_Parameters.xlsx'   
+array_amp_phase = pd.read_excel(file_path, sheet_name = 'Amp & Phase').to_numpy()
+
+#These are the true and the guessed parameters for the system
+#Guessed parameters were the same ones guesssed by hand the first time we ran this case study
+true_params = np.concatenate((array_amp_phase[1,:7], [array_amp_phase[1,10]], array_amp_phase[1,7:10]))
+guessed_params = np.concatenate((array_amp_phase[1,11:18], [array_amp_phase[1,21]], array_amp_phase[1,18:21]))
+
+#create array to store the run times for the given number of frequencies
+#there will be a total of 98 different times since we start with 2 frequencies and end with 100 
+run_times_polar = np.zeros(98)
+run_times_cartesian = np.zeros(98)
+run_times_NetMAP = np.zeros(98)
+
+#used for graphing (below for loop) 
+num_freq = np.arange(2,101,1) #arange does not include the "stop" number, so the array goes from 2 to 100
+
+#loop to change which frequency is used to recover parameters
+for i in range(0,99): #range does not include the "stop" number, so the index actually goes up to 98
+    #Create the frequencies that both NetMAP and the Curvefitting functions require
+    #Frequencies are values between 0.001 and 4, evenly spaced depending on how many frequencies we use
+    #Note that the number of frequencies must match the length of the noise
+    #minimum 2 frequencies required - max of 300 because that how high I was going before (gives a very good curve for curvefit)
+    freq_curvefit = np.linspace(0.001, 4, i+2)
+    freqs_NetMAP = np.linspace(0.001, 4, i+2)
+    length_noise_curvefit = i+2
+    length_noise_NetMAP = i+2
+
+    #Run the trials (1000 in this case) 
+    #Currently saves saves all plots to a folder called "Case Study 1000 Trials Varying Frequencies Plots" 
+    #(the excel name is not used here - it is only required when doing multiple systems with one trial per system)
+    #returns average error across trials (e_bar) and parameters (e), and dataframes for all three methods that include all the information 
+    #there is only one e_bar for each when doing a case study, so those arrays will not be used in any graphing moving forward
+    #NOTE: error is different every time, to simulate a real experiment
+    avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net = run_trials(true_params, guessed_params, freqs_NetMAP, freq_curvefit, length_noise_NetMAP, length_noise_curvefit, 50, f'Second_Case_Study_50_Trials_{i+2}_Frequencies.xlsx', f'Second Case Study 50 Trials {i+2} Frequencies Plots')
+
+    #Save the new data to a new excel spreadsheet:
+    with pd.ExcelWriter(f'Case_Study_50_Trials_{i+2}_Frequencies.xlsx', engine='xlsxwriter') as writer:
+        dataframe_polar.to_excel(writer, sheet_name='Amp & Phase', index=False)
+        dataframe_cart.to_excel(writer, sheet_name='X & Y', index=False)
+        dataframe_net.to_excel(writer, sheet_name='NetMAP', index=False)
+        
+    #The run times are stored in the dataframes, so we extract the mean here and add it to the run_times arrays so we can graph it later
+    run_times_polar[i] = dataframe_polar.at[0,'mean trial time']
+    run_times_cartesian[i] = dataframe_cart.at[0,'mean trial time']
+    run_times_NetMAP[i] = dataframe_net .at[0,'mean trial time']
+    
+    print(f"Frequency {i+2} Complete")
+
+#Plot number of frequencies versus run time: 
+fig = plt.figure(figsize=(5, 4))
+plt.xlabel('Number of Frequencies', fontsize = 16)
+plt.ylabel('Mean Time to Run (s)', fontsize = 16)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14)
+plt.plot(num_freq, run_times_polar, 'o-', color='blue', label='Polar')
+plt.plot(num_freq, run_times_cartesian, 'o-', color='green', label='Cartesian')
+plt.plot(num_freq, run_times_NetMAP, 'o-', color='red', label='NetMAP')
+plt.legend(loc='best', fontsize = 13)
+
+plt.show()
 
 '''Begin work here. Redoing 15 systems data. Still using 10 Freqs and Better Params.
-   I want to do many more systems and 500 trials per system. Seeing how many systems it can do in 3 hours.'''
+   I want to run parameter recovery for many more systems but only 1 trial per system. 
+   Seeing how many systems it can do in 2 hours or 2000 systems.'''
 
 
-## 1. Make sure I save the error used for each trial. NOT DONE
-## 2. Set a runtime limit of 2-3 hours perhaps. NOT DONE
+## 1. What am I doing for error? 
+    ## 300 frequencies (n=300 -- so 300 different noises for each frequency used) and noise level 2
+    ## 10 evenly spaced frequencies for NetMAP (n=10) and noise level 2. 
+## 2. Set a runtime limit of 2-3 hours. DONE
 ## 3. Don't graph all the curvefits. DONE
-## 4. Guesses are automated to within 20% of generated parameters, 10 evenly spaced frequencies for NetMAP, noise level 2 and n=300. 
+## 4. Guesses are automated to within 20% of generated parameters, 10 evenly spaced frequencies for NetMAP 
 
-# Set the time limit in seconds
-time_limit = 10800  # 3 hours
 
-# Record the start time
-start_time = time.time()
+# # Set the time limit in seconds
+# time_limit = 14400  # 4 hours
 
-avg_e_bar_list_polar = [] 
-avg_e_bar_list_cartesian = []
-avg_e_bar_list_NetMAP = []
+# # Record the start time
+# start_time = time.time()
 
-for i in range(1):
+# # Compile a list of all the e bars so we can graph at the end
+# avg_e_bar_list_polar = [] 
+# avg_e_bar_list_cartesian = []
+# avg_e_bar_list_NetMAP = []
+
+# # Initialize an array so I can put each system into one spreadsheet since I'm only doing one trial per system
+# all_data1 = pd.DataFrame()  #Polar
+# all_data2 = pd.DataFrame()  #Cartesian
+# all_data3 = pd.DataFrame()  #NetMAP
+
+# for i in range(2000):
     
-    # Check if the time limit has been exceeded
-    elapsed_time = time.time() - start_time
-    if elapsed_time > time_limit:
-        print("Time limit exceeded. Exiting loop.")
-        break
+#     # Check if the time limit has been exceeded
+#     elapsed_time = time.time() - start_time
+#     if elapsed_time > time_limit:
+#         print("Time limit exceeded. Exiting loop.")
+#         break
     
-    loop_start_time = time.time()
+#     loop_start_time = time.time()
     
-    #Generate system and guess parameters
-    true_params = generate_random_system()
-    guessed_params = automate_guess(true_params, 20)
+#     #Generate system and guess parameters
+#     true_params = generate_random_system()
+#     guessed_params = automate_guess(true_params, 20)
     
-    #Curve fit with the guess made above
-    freqs_NetMAP = np.linspace(0.001, 4, 10)
-    length_noise = 10
-    avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 10, f'System_{i}_500.xlsx', f'Sys {i} - Rand Auto Guess Plots')
+#     #Curve fit with the guess made above
+#     freqs_NetMAP = np.linspace(0.001, 4, 10)
+#     length_noise = 10
+#     avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net = run_trials(true_params, guessed_params, freqs_NetMAP, length_noise, 1, f'System_{i+1}_1.xlsx', f'Sys {i+1} - Rand Auto Guess Plots')
     
-    #Add <e>_bar to lists to make one graph at the end
-    avg_e_bar_list_polar.append(avg_e1_bar) #Polar
-    avg_e_bar_list_cartesian.append(avg_e2_bar) #Cartesian
-    avg_e_bar_list_NetMAP.append(avg_e3_bar) #NetMAP
-    
-    linearbins = np.linspace(0,15,50)
-    #Graph histogram of <e> for curve fits
-    fig = plt.figure(figsize=(5, 4))
-    # plt.title('Average Systematic Error Across Parameters')
-    plt.xlabel('<e> (%)', fontsize = 16)
-    plt.ylabel('Counts', fontsize = 16)
-    plt.yticks(fontsize=14)
-    plt.xticks(fontsize=14)
-    plt.hist(avg_e2_array, bins = linearbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    plt.hist(avg_e1_array, bins = linearbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    plt.hist(avg_e3_array, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
-    plt.legend(loc='upper right', fontsize = 13)
+#     #Add each system data to one big dataframe so I can store everything in the same spreadsheet
 
-    plt.show()
-    save_figure(fig, 'More Systems 500 - <e> Histograms', f'<e> Lin Hist System {i}')
+#     all_data1 = pd.concat([all_data1, dataframe_polar], ignore_index=True)
+#     all_data2 = pd.concat([all_data2, dataframe_cart], ignore_index=True)
+#     all_data3 = pd.concat([all_data3, dataframe_net], ignore_index=True)
     
-    logbins = np.logspace(-2,1.5,50)
-    #Graph histogram of <e> for curve fits
-    fig = plt.figure(figsize=(5, 4))
-    # plt.title('Average Systematic Error Across Parameters')
-    plt.xlabel('<e> (%)', fontsize = 16)
-    plt.ylabel('Counts', fontsize = 16)
-    plt.xscale('log')
-    plt.yticks(fontsize=14)
-    plt.xticks(fontsize=14)
-    plt.hist(avg_e2_array, bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='black')
-    plt.hist(avg_e1_array, bins = logbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='black')
-    plt.hist(avg_e3_array, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='black')
-    plt.legend(loc='upper right', fontsize = 13)
-
-    plt.show()
-    save_figure(fig, 'More Systems 500 - <e> Histograms', f'<e> Log Hist System {i}')
+#     #Add <e>_bar to lists to make one graph at the end
+#     avg_e_bar_list_polar.append(avg_e1_bar) #Polar
+#     avg_e_bar_list_cartesian.append(avg_e2_bar) #Cartesian
+#     avg_e_bar_list_NetMAP.append(avg_e3_bar) #NetMAP
     
-    loop_end_time = time.time()
-    loop_time = loop_end_time - loop_start_time
+#     ## FOR NOW - don't need this either
     
-    print(f"Iteration {i + 1} completed. Loop time: {loop_time} secs ")
+#     # # Compute max of data and set the bin limits so all data is included on graph
+#     # data_max1 = max(avg_e2_array + avg_e1_array + avg_e3_array)
+#     # if data_max1 > 39:
+#     #     linearbins = np.linspace(0, data_max1 + 2,50)
+#     # else: 
+#     #     linearbins = np.linspace(0, 40, 50)
+
+#     # #Graph histogram of <e> for curve fits - linear
+#     # fig = plt.figure(figsize=(5, 4))
+#     # # plt.title('Average Systematic Error Across Parameters')
+#     # plt.xlabel('<e> (%)', fontsize = 16)
+#     # plt.ylabel('Counts', fontsize = 16)
+#     # plt.yticks(fontsize=14)
+#     # plt.xticks(fontsize=14)
+#     # plt.hist(avg_e2_array, bins = linearbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
+#     # plt.hist(avg_e1_array, bins = linearbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='blue')
+#     # plt.hist(avg_e3_array, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+#     # plt.legend(loc='best', fontsize = 13)
+
+#     # # plt.show()
+#     # save_figure(fig, 'More Systems 1 Trial - <e> Histograms', f'<e> Lin Hist System {i+1}')
+   
+#     # # Set the bin limits so all data is included on graph
+#     # if data_max > 100: 
+#     #     logbins = np.logspace(-2, math.log10(data_max), 50)
+#     # else:
+#     #     logbins = np.logspace(-2, 1.8, 50)
+#     # #Graph histogram of <e> for curve fits - log
+#     # fig = plt.figure(figsize=(5, 4))
+#     # # plt.title('Average Systematic Error Across Parameters')
+#     # plt.xlabel('<e> (%)', fontsize = 16)
+#     # plt.ylabel('Counts', fontsize = 16)
+#     # plt.xscale('log')
+#     # plt.yticks(fontsize=14)
+#     # plt.xticks(fontsize=14)
+#     # plt.hist(avg_e2_array, bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
+#     # plt.hist(avg_e1_array, bins = logbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='blue')
+#     # plt.hist(avg_e3_array, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+#     # plt.legend(loc='best', fontsize = 13)
+
+#     # # plt.show()
+#     # save_figure(fig, 'More Systems 1 Trial - <e> Histograms', f'<e> Log Hist System {i+1}')
     
-
-#Graph histogram of <e>_bar for both curve fits
-
-linearbins = np.linspace(0,15,50)
-#Graph!
-fig = plt.figure(figsize=(5, 4))
-plt.xlabel('<e> Bar (%)', fontsize = 16)
-plt.ylabel('Counts', fontsize = 16)
-plt.yticks(fontsize=14)
-plt.xticks(fontsize=14)
-plt.hist(avg_e_bar_list_cartesian, bins = linearbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
-plt.hist(avg_e_bar_list_polar, bins = linearbins, alpha=0.5, color='blue', label='Polar (Amp & Phase)', edgecolor='blue')
-plt.hist(avg_e_bar_list_NetMAP, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
-plt.legend(loc='upper right', fontsize = 13)
-plt.show()
-save_figure(fig, 'More Systems 500 - <e> Histograms', '<e> Bar Lin Hist' )
-
-
-logbins = np.logspace(-2,1.5,50)
-#Graph!
-fig = plt.figure(figsize=(5, 4))
-plt.xlabel('<e> Bar (%)', fontsize = 16)
-plt.ylabel('Counts', fontsize = 16)
-plt.xscale('log')
-plt.yticks(fontsize=14)
-plt.xticks(fontsize=14)
-plt.hist(avg_e_bar_list_cartesian,  bins = logbins, alpha=0.5, color='green', label='Cartesian (X & Y)', edgecolor='green')
-plt.hist(avg_e_bar_list_polar, bins = logbins, alpha=0.4, color='blue', label='Polar (Amp & Phase)', edgecolor='blue')
-plt.hist(avg_e_bar_list_NetMAP, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
-plt.legend(loc='upper right', fontsize = 13)
-plt.show()
-save_figure(fig, 'More Systems 500 - <e> Histograms', '<e> Bar Log Hist' )
+#     loop_end_time = time.time()
+#     loop_time = loop_end_time - loop_start_time
+    
+#     print(f"Iteration {i + 1} completed. Loop time: {loop_time} secs ")
+    
+# #Write the data for each system (which is now in one big dataframe) to excel
+# with pd.ExcelWriter('All_Systems_1_Trial_2.xlsx') as writer:
+#     all_data1.to_excel(writer, sheet_name='Polar', index=False)
+#     all_data2.to_excel(writer, sheet_name='Cartesian', index=False)
+#     all_data3.to_excel(writer, sheet_name='NetMAP', index=False)
 
 
-# End time
-end_time = time.time()
-print("Time Elapsed:", end_time - start_time, " secs", (end_time - start_time)/3600, " hrs")
+# #Graph histogram of <e>_bar for both curve fits
+
+# # Compute max of data and set the bin limits so all data is included on graph
+# data_max = max(avg_e_bar_list_cartesian + avg_e_bar_list_polar + avg_e_bar_list_NetMAP)
+# if data_max > 39: 
+#     linearbins = np.linspace(0, data_max + 2,50)
+# else:
+#     linearbins = np.linspace(0, 40, 50)
+
+# #Graph linear!
+# fig = plt.figure(figsize=(5, 4))
+# plt.xlabel('<e> Bar (%)', fontsize = 16)
+# plt.ylabel('Counts', fontsize = 16)
+# plt.yticks(fontsize=14)
+# plt.xticks(fontsize=14)
+# plt.hist(avg_e_bar_list_cartesian, bins = linearbins, alpha=0.5, color='green', label='Cartesian', edgecolor='green')
+# plt.hist(avg_e_bar_list_polar, bins = linearbins, alpha=0.5, color='blue', label='Polar', edgecolor='blue')
+# plt.hist(avg_e_bar_list_NetMAP, bins = linearbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+# plt.legend(loc='best', fontsize = 13)
+
+# plt.show()
+# save_figure(fig, 'More Systems 1 Trial - <e> Histograms', '<e> Bar Lin Hist 2' )
+
+# # Set the bin limits so all data is included on graph
+# if data_max > 100: 
+#     logbins = np.logspace(-2, math.log10(data_max)+0.25, 50)
+# else:
+#     logbins = np.logspace(-2, 1.8, 50)
+
+# #Graph log!
+# fig = plt.figure(figsize=(5, 4))
+# plt.xlabel('<e> Bar (%)', fontsize = 16)
+# plt.ylabel('Counts', fontsize = 16)
+# plt.xscale('log')
+# plt.yticks(fontsize=14)
+# plt.xticks(fontsize=14)
+# plt.hist(avg_e_bar_list_cartesian,  bins = logbins, alpha=0.5, color='green', label='Cartesian', edgecolor='green')
+# plt.hist(avg_e_bar_list_polar, bins = logbins, alpha=0.5, color='blue', label='Polar', edgecolor='blue')
+# plt.hist(avg_e_bar_list_NetMAP, bins = logbins, alpha=0.5, color='red', label='NetMAP', edgecolor='red')
+# plt.legend(loc='best', fontsize = 13)
+
+# plt.show()
+# save_figure(fig, 'More Systems 1 Trial - <e> Histograms', '<e> Bar Log Hist 2' )
+
+# # End time
+# end_time = time.time()
+# print(f"Time Elapsed: {end_time - start_time} secs -- {(end_time - start_time)/3600} hrs")
 

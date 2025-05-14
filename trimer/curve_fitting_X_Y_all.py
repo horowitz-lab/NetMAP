@@ -96,17 +96,16 @@ def save_figure(figure, folder_name, file_name):
 #
 #Returns a dataframe containing guessed parameters, recovered parameters,
 #and systematic error
-def multiple_fit_X_Y(params_guess, params_correct, e, force_all, fix_F, graph_folder_name, graph_name, show_curvefit_graphs = False):
+def multiple_fit_X_Y(params_guess, params_correct, e, freq, force_all, fix_F, graph_folder_name, graph_name, show_curvefit_graphs = False):
     
     ##Put params_guess and params_correct into np array
     #Order added: k1, k2, k3, k4, b1, b2, b3, F,  m1, m2, m3
-    data_array = np.zeros(51)
+    data_array = np.zeros(52) #50 elements are generated in this code, but I leave the last entry empty because I want to time how long it takes the function to run in other code, so I'm giving the array space to add the time if necessary 
     data_array[:11] += np.array(params_correct)
     data_array[11:22] += np.array(params_guess)
      
     
     ##Create data - functions from simulator code
-    freq = np.linspace(0.001, 4, 300)
     
     X1 = realamp1(freq, data_array[0], data_array[1], data_array[2], data_array[3], data_array[4], data_array[5], data_array[6], data_array[7], data_array[8], data_array[9], data_array[10], e, force_all)
     Y1 = imamp1(freq, data_array[0], data_array[1], data_array[2], data_array[3], data_array[4], data_array[5], data_array[6], data_array[7], data_array[8], data_array[9], data_array[10], e, force_all)
