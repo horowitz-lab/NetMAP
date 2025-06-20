@@ -15,3 +15,4 @@ myheatmap.py~
 main.py
 *.svg
 *.png
+.DS_Store
