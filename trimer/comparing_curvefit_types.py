@@ -659,68 +659,142 @@ Running the system with no noise to understand why recovered error was so bad.
     GOAL: graph runtime versus number of frequencies given to each method.
     Create a for loop that varies frequencies from 2 to 300. (2 because that is the minimum required by NetMAP. 300 because that produces a very nice graph for curvefitting (and is what I have been using as a standard up until now.'''
 
-#Recover the system information from a file on my computer
-file_path = '/Users/Student/Desktop/Summer Research 2024/Curve Fit vs NetMAP/Case Study - 10 Freqs NetMAP & Better Parameters/Case_Study_10_Freqs_Better_Parameters.xlsx'   
-array_amp_phase = pd.read_excel(file_path, sheet_name = 'Amp & Phase').to_numpy()
+# #Recover the system information from a file on my computer
+# file_path = '/Users/Student/Desktop/Summer Research 2024/Curve Fit vs NetMAP/Case Study - 10 Freqs NetMAP & Better Parameters/Case_Study_10_Freqs_Better_Parameters.xlsx'   
+# array_amp_phase = pd.read_excel(file_path, sheet_name = 'Amp & Phase').to_numpy()
 
-#These are the true and the guessed parameters for the system
-#Guessed parameters were the same ones guesssed by hand the first time we ran this case study
-true_params = np.concatenate((array_amp_phase[1,:7], [array_amp_phase[1,10]], array_amp_phase[1,7:10]))
-guessed_params = np.concatenate((array_amp_phase[1,11:18], [array_amp_phase[1,21]], array_amp_phase[1,18:21]))
+# #These are the true and the guessed parameters for the system
+# #Guessed parameters were the same ones guesssed by hand the first time we ran this case study
+# true_params = np.concatenate((array_amp_phase[1,:7], [array_amp_phase[1,10]], array_amp_phase[1,7:10]))
+# guessed_params = np.concatenate((array_amp_phase[1,11:18], [array_amp_phase[1,21]], array_amp_phase[1,18:21]))
 
-#create array to store the run times for the given number of frequencies
-#there will be a total of 98 different times since we start with 2 frequencies and end with 100 
-run_times_polar = np.zeros(98)
-run_times_cartesian = np.zeros(98)
-run_times_NetMAP = np.zeros(98)
+# #create array to store the run times for the given number of frequencies
+# #there will be a total of 98 different times since we start with 2 frequencies and end with 100 
+# run_times_polar = np.zeros(99)
+# run_times_cartesian = np.zeros(99)
+# run_times_NetMAP = np.zeros(99)
 
-#used for graphing (below for loop) 
-num_freq = np.arange(2,101,1) #arange does not include the "stop" number, so the array goes from 2 to 100
+# #used for graphing (below for loop) 
+# num_freq = np.arange(2,101,1) #arange does not include the "stop" number, so the array goes from 2 to 100
 
-#loop to change which frequency is used to recover parameters
-for i in range(0,99): #range does not include the "stop" number, so the index actually goes up to 98
-    #Create the frequencies that both NetMAP and the Curvefitting functions require
-    #Frequencies are values between 0.001 and 4, evenly spaced depending on how many frequencies we use
-    #Note that the number of frequencies must match the length of the noise
-    #minimum 2 frequencies required - max of 300 because that how high I was going before (gives a very good curve for curvefit)
-    freq_curvefit = np.linspace(0.001, 4, i+2)
-    freqs_NetMAP = np.linspace(0.001, 4, i+2)
-    length_noise_curvefit = i+2
-    length_noise_NetMAP = i+2
+# #loop to change which frequency is used to recover parameters
+# for i in range(0,99): #range does not include the "stop" number, so the index actually goes up to 98
+#     #Create the frequencies that both NetMAP and the Curvefitting functions require
+#     #Frequencies are values between 0.001 and 4, evenly spaced depending on how many frequencies we use
+#     #Note that the number of frequencies must match the length of the noise
+#     #minimum 2 frequencies required - max of 300 because that how high I was going before (gives a very good curve for curvefit)
+#     freq_curvefit = np.linspace(0.001, 4, i+2)
+#     freqs_NetMAP = np.linspace(0.001, 4, i+2)
+#     length_noise_curvefit = i+2
+#     length_noise_NetMAP = i+2
 
-    #Run the trials (1000 in this case) 
-    #Currently saves saves all plots to a folder called "Case Study 1000 Trials Varying Frequencies Plots" 
-    #(the excel name is not used here - it is only required when doing multiple systems with one trial per system)
-    #returns average error across trials (e_bar) and parameters (e), and dataframes for all three methods that include all the information 
-    #there is only one e_bar for each when doing a case study, so those arrays will not be used in any graphing moving forward
-    #NOTE: error is different every time, to simulate a real experiment
-    avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net = run_trials(true_params, guessed_params, freqs_NetMAP, freq_curvefit, length_noise_NetMAP, length_noise_curvefit, 50, f'Second_Case_Study_50_Trials_{i+2}_Frequencies.xlsx', f'Second Case Study 50 Trials {i+2} Frequencies Plots')
+#     #Run the trials (1000 in this case) 
+#     #Currently saves saves all plots to a folder called "Case Study 1000 Trials Varying Frequencies Plots" 
+#     #(the excel name is not used here - it is only required when doing multiple systems with one trial per system)
+#     #returns average error across trials (e_bar) and parameters (e), and dataframes for all three methods that include all the information 
+#     #there is only one e_bar for each when doing a case study, so those arrays will not be used in any graphing moving forward
+#     #NOTE: error is different every time, to simulate a real experiment
+#     avg_e1_array, avg_e2_array, avg_e3_array, avg_e1_bar, avg_e2_bar, avg_e3_bar, dataframe_polar, dataframe_cart, dataframe_net = run_trials(true_params, guessed_params, freqs_NetMAP, freq_curvefit, length_noise_NetMAP, length_noise_curvefit, 50, f'Second_Case_Study_50_Trials_{i+2}_Frequencies.xlsx', f'Second Case Study 50 Trials {i+2} Frequencies Plots')
 
-    #Save the new data to a new excel spreadsheet:
-    with pd.ExcelWriter(f'Case_Study_50_Trials_{i+2}_Frequencies.xlsx', engine='xlsxwriter') as writer:
-        dataframe_polar.to_excel(writer, sheet_name='Amp & Phase', index=False)
-        dataframe_cart.to_excel(writer, sheet_name='X & Y', index=False)
-        dataframe_net.to_excel(writer, sheet_name='NetMAP', index=False)
+#     #Save the new data to a new excel spreadsheet:
+#     with pd.ExcelWriter(f'Case_Study_50_Trials_{i+2}_Frequencies.xlsx', engine='xlsxwriter') as writer:
+#         dataframe_polar.to_excel(writer, sheet_name='Amp & Phase', index=False)
+#         dataframe_cart.to_excel(writer, sheet_name='X & Y', index=False)
+#         dataframe_net.to_excel(writer, sheet_name='NetMAP', index=False)
         
-    #The run times are stored in the dataframes, so we extract the mean here and add it to the run_times arrays so we can graph it later
-    run_times_polar[i] = dataframe_polar.at[0,'mean trial time']
-    run_times_cartesian[i] = dataframe_cart.at[0,'mean trial time']
-    run_times_NetMAP[i] = dataframe_net .at[0,'mean trial time']
+#     #The run times are stored in the dataframes, so we extract the mean here and add it to the run_times arrays so we can graph it later
+#     run_times_polar[i] = dataframe_polar.at[0,'mean trial time']
+#     run_times_cartesian[i] = dataframe_cart.at[0,'mean trial time']
+#     run_times_NetMAP[i] = dataframe_net .at[0,'mean trial time']
     
-    print(f"Frequency {i+2} Complete")
+#     print(f"Frequency {i+2} Complete")
 
+''' Graphing the above didn't work, so I'm doing it again below '''
+
+run_times_polar = np.zeros(99)
+run_times_cartesian = np.zeros(99)
+run_times_NetMAP = np.zeros(99)
+std_dev_time_polar = np.zeros(99)
+std_dev_time_cartesian = np.zeros(99)
+std_dev_time_NetMAP = np.zeros(99)
+num_freq = np.arange(2,101,1)
+
+for i in range(99):
+    file_path = f'/Users/Student/Desktop/Summer Research 2024/Curve Fit vs NetMAP/Case Study -  Number of Frequencies vs Average Run Time/50 Trials/Case_Study_50_Trials_{i+2}_Frequencies.xlsx'   
+    polar = pd.read_excel(file_path, sheet_name = 'Amp & Phase').to_numpy()
+    cartesian = pd.read_excel(file_path, sheet_name = 'X & Y').to_numpy()
+    NetMAP = pd.read_excel(file_path, sheet_name = 'NetMAP').to_numpy()
+    
+    run_times_polar[i] = polar[0,53]
+    run_times_cartesian[i] = cartesian[0,53]
+    run_times_NetMAP[i] = NetMAP[0,47]
+    std_dev_time_polar[i] = polar[0,54]
+    std_dev_time_cartesian[i] = cartesian[0,54]
+    std_dev_time_NetMAP[i] = NetMAP[0,48]
+
+    
 #Plot number of frequencies versus run time: 
 fig = plt.figure(figsize=(5, 4))
 plt.xlabel('Number of Frequencies', fontsize = 16)
 plt.ylabel('Mean Time to Run (s)', fontsize = 16)
 plt.yticks(fontsize=14)
 plt.xticks(fontsize=14)
-plt.plot(num_freq, run_times_polar, 'o-', color='blue', label='Polar')
-plt.plot(num_freq, run_times_cartesian, 'o-', color='green', label='Cartesian')
-plt.plot(num_freq, run_times_NetMAP, 'o-', color='red', label='NetMAP')
+plt.yscale('log')
+plt.plot(num_freq, run_times_polar, 'o', color='blue', label='Polar')
+plt.plot(num_freq, run_times_cartesian, 'o', color='green', label='Cartesian')
+plt.plot(num_freq, run_times_NetMAP, 'o', color='red', label='NetMAP')
 plt.legend(loc='best', fontsize = 13)
-
 plt.show()
+
+
+fig = plt.figure(figsize=(5, 4))
+plt.xlabel('Number of Frequencies', fontsize = 16)
+plt.ylabel('Mean Time to Run (s)', fontsize = 16)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yscale('log')
+plt.plot(num_freq, run_times_polar, 'o', color='blue', label='Polar')
+plt.legend(loc='best', fontsize = 13)
+plt.show()
+
+fig = plt.figure(figsize=(5, 4))
+plt.xlabel('Number of Frequencies', fontsize = 16)
+plt.ylabel('Mean Time to Run (s)', fontsize = 16)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yscale('log')
+plt.plot(num_freq, run_times_cartesian, 'o', color='green', label='Cartesian')
+plt.legend(loc='best', fontsize = 13)
+plt.show()
+
+fig = plt.figure(figsize=(5, 4))
+plt.xlabel('Number of Frequencies', fontsize = 16)
+plt.ylabel('Mean Time to Run (s)', fontsize = 16)
+plt.yticks(fontsize=14)
+plt.xticks(fontsize=14)
+plt.plot(num_freq, run_times_NetMAP, 'o', color='red', label='NetMAP')
+plt.legend(loc='best', fontsize = 13)
+plt.show()
+
+
+# polar_outliers = run_times_polar[run_times_polar > 20]
+# cartesian_outliers = run_times_cartesian[run_times_cartesian > 20]
+# polar_outlier_indices = np.nonzero(run_times_polar > 20)
+# cartesian_outlier_indices = np.nonzero(run_times_cartesian > 20)
+
+# no_outliers_polar_times = np.empty
+# no_outliers_cartesian_times = np.empty
+# new_freq_polar = np.empty
+
+# for i in range(len(run_times_polar)):
+#     if run_times_polar[i] not in polar_outliers:
+#         no_outliers_polar_times[i] = run_times_polar[i]
+#     if run_times_cartesian[i] not in cartesian_outliers:
+#         no_outliers_cartesian_times[i] = run_times_cartesian[i]
+#     if i not in polar_outlier_indices:
+        
+    
+        
 
 '''Begin work here. Redoing 15 systems data. Still using 10 Freqs and Better Params.
    I want to run parameter recovery for many more systems but only 1 trial per system. 
