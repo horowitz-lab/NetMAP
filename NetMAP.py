@@ -22,7 +22,14 @@ parameternames = ['m1', 'm2', 'b1', 'b2', 'k1', 'k2','k12', 'Driving Force']
 def Zmatrix2resonators(measurementdf, forceboth,
                        frequencycolumn = 'drive', 
                        complexamplitude1 = 'R1AmpCom', complexamplitude2 = 'R2AmpCom', dtype=complex):
-    Zmatrix = []
+
+    ## Are both masses being pushed? or just the first?
+    if forceboth:
+        ff = -1
+    else:
+        ff = 0
+        
+    Zmatrix = []   # this would likely be more efficient as a numpy array.
     for rowindex in measurementdf.index:
         w = measurementdf[frequencycolumn][rowindex]
         #print(w)
@@ -31,10 +38,7 @@ def Zmatrix2resonators(measurementdf, forceboth,
         # Matrix columns: m1, m2, b1, b2, k1, k2, k12, F1
         Zmatrix.append([-w**2*np.real(ZZ1), 0, -w*np.imag(ZZ1), 0, np.real(ZZ1), 0, np.real(ZZ1)-np.real(ZZ2), -1])
         Zmatrix.append([-w**2*np.imag(ZZ1), 0, w*np.real(ZZ1), 0, np.imag(ZZ1), 0, np.imag(ZZ1)-np.imag(ZZ2), 0])
-        if forceboth:
-            Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), -1])
-        else:
-            Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), 0])
+        Zmatrix.append([0, -w**2*np.real(ZZ2), 0, -w*np.imag(ZZ2), 0, np.real(ZZ2), np.real(ZZ2)-np.real(ZZ1), ff])
         Zmatrix.append([0, -w**2*np.imag(ZZ2), 0, w*np.real(ZZ2), 0, np.imag(ZZ2), np.imag(ZZ2)-np.imag(ZZ1), 0])
     #display(Zmatrix)
     return np.array(Zmatrix, dtype=dtype)
