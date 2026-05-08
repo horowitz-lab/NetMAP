@@ -72,7 +72,7 @@ z_matrix = Zmat(df, MONOMER=False, forceboth=True)
 # Z * p = 0  -> The nullspace contains the parameter ratios
 u, s, vh = np.linalg.svd(z_matrix)
 parameters = vh[-1, :] # The last row of vh is the solution
-
+```
 
 ## Function Documentation: `res_freq_numeric()`
 
