@@ -4,7 +4,7 @@ The related publication is: https://www.nature.com/articles/s41598-023-50089-1. 
 
 [The following documentation was written with AI.]
 
-NetMAP is an algebraic framework designed for the rapid characterization of mechanical resonator networks (monomers, dimers, and higher-order systems). It allows researchers to extract physical parameters—such as mass ($m$), damping ($b$), and stiffness ($k$)—directly from experimental frequency response data (spectra) using linear algebra rather than iterative non-linear fitting.
+NetMAP is an algebraic framework, developed in the Aleman lab, designed for the rapid characterization of mechanical resonator networks (monomers, dimers, and higher-order systems). It allows researchers to extract physical parameters—such as mass ($m$), damping ($b$), and stiffness ($k$)—directly from experimental frequency response data (spectra) using linear algebra rather than iterative non-linear fitting.
 
 ## Overview
 Characterizing nanomechanical or micromechanical resonators often requires fitting complex models to frequency sweeps. NetMAP simplifies this by transforming the differential equations of motion into a linear system $Z\vec{p} = 0$, where $Z$ is a "Z-matrix" constructed from measured complex amplitudes and $\vec{p}$ is a vector of the unknown physical parameters.
