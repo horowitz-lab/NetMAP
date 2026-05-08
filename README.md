@@ -1,6 +1,6 @@
 The related publication is: https://www.nature.com/articles/s41598-023-50089-1. Please cite it if you use this code!
 
-# NetMAP
+# Network Mapping and Analysis of Parameters (NetMAP)
 
 [This Readme documentation was written with AI.]
 
@@ -110,7 +110,7 @@ This notebook serves as the primary demonstration and validation tool for the Ne
 ---
 
 ## 1. Purpose
-The goal of this notebook is to demonstrate that the **NetMAP (Network Mechanical Analysis Program)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using synthetic data, the "recovered" values can be compared against known "ground truth" inputs to calculate systematic error.
+The goal of this notebook is to demonstrate that the **NetMAP (Network Mapping and Analysis of Parameters)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using synthetic data, the "recovered" values can be compared against known "ground truth" inputs to calculate systematic error.
 
 ## 2. Theoretical Background
 The notebook relies on transforming the coupled equations of motion into a linear system $Z\vec{p} = 0$:
