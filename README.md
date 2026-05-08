@@ -62,7 +62,7 @@ The function primarily populates the `results` and `theseresults_cols` lists. Th
 ---
 
 ### Usage Note
-This function is essential for determining the **robustness** of NetMAP. By sweeping the `noiselevel` or varying the `measurementfreqs
+This function is essential for determining the **robustness** of NetMAP. By sweeping the `noiselevel` or varying the `measurementfreqs` (e.g., placing them on or off resonance), researchers can determine the optimal experimental conditions required to recover physical constants with high accuracy. See our publication in Scientific Reports.
 
 
 ## NetMAP Z-Matrix Documentation
