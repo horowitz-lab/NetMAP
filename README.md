@@ -2,7 +2,7 @@ The related publication is: https://www.nature.com/articles/s41598-023-50089-1. 
 
 # NetMAP
 
-[The following documentation was written with AI.]
+[This Readme documentation was written with AI.]
 
 NetMAP is an algebraic framework, developed in the Aleman lab, designed for the rapid characterization of mechanical resonator networks (monomers, dimers, and higher-order systems). It allows researchers to extract physical parameters—such as mass ($m$), damping ($b$), and stiffness ($k$)—directly from experimental frequency response data (spectra) using linear algebra rather than iterative non-linear fitting.
 
@@ -41,7 +41,6 @@ This codebase is used for validating algebraic approaches to characterizing reso
 
 ## Function Documentation: `simulated_experiment()`
 
-[The following documentation was written with AI.]
 
 The `simulated_experiment()` function is a comprehensive validation tool for the NetMAP framework. It performs "end-to-end" testing by generating synthetic resonance data (with controlled noise), applying the NetMAP Singular Value Decomposition (SVD) recovery process, and statistically comparing the recovered physical parameters against the original "ground truth" values. This was the essential tool for the validation in the paper https://www.nature.com/articles/s41598-023-50089-1.
 
@@ -104,9 +103,69 @@ The function primarily populates the `results` and `theseresults_cols` lists. Th
 This function is essential for determining the **robustness** of NetMAP. By sweeping the `noiselevel` or varying the `measurementfreqs` (e.g., placing them on or off resonance), researchers can determine the optimal experimental conditions required to recover physical constants with high accuracy. See our publication in Scientific Reports.
 
 
+# Notebook Documentation: Algebraic Approach Simulated Two Coupled Resonators
+
+This notebook serves as the primary demonstration and validation tool for the NetMAP framework. It implements a complete "simulated experiment" workflow for a **dimer system**—two mechanical resonators coupled together—to prove that physical parameters can be recovered algebraically from noisy frequency response data.
+
+---
+
+## 1. Purpose
+The goal of this notebook is to demonstrate that the **NetMAP (Network Mechanical Analysis Program)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using synthetic data, the "recovered" values can be compared against known "ground truth" inputs to calculate systematic error.
+
+## 2. Theoretical Background
+The notebook relies on transforming the coupled equations of motion into a linear system $Z\vec{p} = 0$:
+1. $m_1 \ddot{x}_1 + b_1 \dot{x}_1 + k_1 x_1 + k_{12}(x_1 - x_2) = F_1 \cos(\omega t)$
+2. $m_2 \ddot{x}_2 + b_2 \dot{x}_2 + k_2 x_2 + k_{12}(x_2 - x_1) = F_2 \cos(\omega t)$
+
+By measuring the complex amplitude response at specific frequencies, the notebook populates a **Z-matrix** and uses **Singular Value Decomposition (SVD)** to find the parameter vector $\vec{p}$ in the matrix nullspace.
+
+---
+
+## 3. Workflow & Key Sections
+
+### A. Initialization and Parameter Setting
+The notebook defines the "True" physical parameters for the two resonators.
+* **Physical Constants:** Sets $m_1, m_2, b_1, b_2, k_1, k_2, k_{12}$ and the driving force $F$.
+* **System Characteristics:** Calculates expected Quality Factors ($Q$) and resonance frequencies to ensure the simulation represents a physically realistic system.
+
+### B. Generating Synthetic "Experimental" Data
+Using the `calculate_spectra()` function, the notebook generates the frequency response for both resonators.
+* **Noise Injection:** Gaussian noise is added to the complex amplitudes to simulate experimental measurement error.
+* **Frequency Selection:** The notebook identifies the resonance peaks to ensure that "measurement" points are selected from the most informative parts of the spectrum (highest Signal-to-Noise ratio).
+
+### C. Construction of the Z-Matrix
+The code calls `Zmat()` to build the algebraic representation.
+* **Dimensionality:** For each frequency point, four rows are added to the matrix (the real and imaginary components for both Resonator 1 and Resonator 2).
+* **Nullspace Mapping:** The columns are mapped to $[m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_1]$.
+
+### D. Parameter Recovery via SVD
+The core mathematical step of NetMAP:
+* **SVD Execution:** Performs `np.linalg.svd(Zmatrix)`.
+* **Vector Extraction:** Selects the right-singular vector associated with the smallest singular value (the solution closest to the nullspace).
+* **Normalization:** Since SVD returns relative ratios, the notebook scales the vector using a known reference (usually the driving force $F$ or mass $m_1$) to return values in absolute physical units.
+
+### E. Validation and Visualization
+The final cells evaluate the success of the recovery:
+* **Systematic Error Analysis:** Calculates the percent difference between the input "ground truth" and the SVD-recovered values.
+* **Graphical Verification:** Uses `plot_SVD_results()` to overlay the recovered model's predicted spectrum onto the noisy data points.
+
+---
+
+## 4. Key Parameters for Users
+Users can modify the following to test the framework's limits:
+* `noiselevel`: Adjusts the magnitude of complex amplitude noise.
+* `k12_set`: Modifies the coupling strength (testing weak vs. strong coupling).
+* `measurementfreqs`: Changes the number and location of data points used to build the $Z$ matrix.
+
+## 5. Dependencies
+* `NetMAP.py`: Core logic for matrix construction.
+* `resonatorsimulator.py`: Logic for generating synthetic spectra.
+* `resonatorfrequencypicker.py`: Automated peak detection.
+* `resonator_plotting.py`:
+
+
 ## NetMAP Z-Matrix Documentation
 
-[The following documentation is written with AI.]
 
 In the NetMAP framework, the **Z-Matrix** is the linear algebraic representation of the system's equations of motion. These functions construct the matrix used for **Singular Value Decomposition (SVD)** or linear least-squares fitting to extract physical parameters (mass, damping, stiffness) from experimental frequency response data.
 
@@ -179,7 +238,6 @@ parameters = vh[-1, :] # The last row of vh is the solution
 
 ## Function Documentation: `res_freq_numeric()`
 
-[The following documentation was written with AI.]
 
 The `res_freq_numeric()` function identifies resonance peak frequencies for physical systems (monomers or dimers) using numerical methods. It combines analytical weak-coupling approximations with iterative peak-finding on amplitude and phase curves.
 
