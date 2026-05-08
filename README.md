@@ -1,5 +1,44 @@
 The related publication is: https://www.nature.com/articles/s41598-023-50089-1. Please cite it if you use this code!
 
+# NetMAP (Network Mechanical Analysis Program)
+
+[The following documentation was written with AI.]
+
+NetMAP is an algebraic framework designed for the rapid characterization of mechanical resonator networks (monomers, dimers, and higher-order systems). It allows researchers to extract physical parameters—such as mass ($m$), damping ($b$), and stiffness ($k$)—directly from experimental frequency response data (spectra) using linear algebra rather than iterative non-linear fitting.
+
+## Overview
+Characterizing nanomechanical or micromechanical resonators often requires fitting complex models to frequency sweeps. NetMAP simplifies this by transforming the differential equations of motion into a linear system $Z\vec{p} = 0$, where $Z$ is a "Z-matrix" constructed from measured complex amplitudes and $\vec{p}$ is a vector of the unknown physical parameters.
+
+By applying **Singular Value Decomposition (SVD)** to the Z-matrix, the system's physical constants can be recovered from the nullspace, even in the presence of experimental noise.
+
+## Key Features
+* **Algebraic Parameter Recovery:** No need for "guesses" or iterative fitting; parameters are recovered through direct matrix decomposition.
+* **Support for Dimer/Coupled Systems:** Specifically designed to handle coupled resonators (e.g., graphene drums or cantilever arrays) where traditional peak-fitting fails due to overlapping modes.
+* **Noise Robustness:** Evaluates recovery accuracy across 1D, 2D, and 3D nullspace assumptions to find the most stable physical solution.
+* **Synthetic Validation:** Includes a `simulated_experiment` suite to validate the framework against "ground truth" models with controlled noise injection.
+
+## Core Components
+* `Zmat()`: The primary engine for constructing the Z-matrix from Pandas DataFrames containing frequency, amplitude, and phase data.
+* **Monomer & Dimer Logic:** Dedicated matrix construction for single oscillators or two-resonator coupled systems.
+* **Normalization Tools:** Functions to scale relative SVD results into absolute physical units (kg, N/m, N s/m) based on a known reference (like a known driving force or mass).
+
+## Scientific Context
+This codebase is used for validating algebraic approaches to characterizing resonator networks, as described in:
+> *Horowitz et al., "Validating an algebraic approach to characterizing resonator networks," Scientific Reports 14, 1325 (2024).*
+
+## Getting Started
+### Dependencies
+* `numpy`
+* `pandas`
+* `matplotlib`
+* `scipy`
+
+### Basic Workflow
+1. Load your frequency sweep data into a DataFrame.
+2. Pass the data to `Zmat()` to generate the Z-matrix.
+3. Perform SVD (`np.linalg.svd`) to identify the parameter ratios.
+4. Normalize the result using `normalize_parameters_1d_by_force` (or similar) to extract final $m, b, k$ values.
+
 ## Function Documentation: `simulated_experiment()`
 
 [The following documentation was written with AI.]
