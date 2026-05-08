@@ -1,5 +1,69 @@
 The related publication is: https://www.nature.com/articles/s41598-023-50089-1. Please cite it if you use this code!
 
+## Function Documentation: `simulated_experiment()`
+
+[The following documentation was written with AI.]
+
+The `simulated_experiment()` function is a comprehensive validation tool for the NetMAP framework. It performs "end-to-end" testing by generating synthetic resonance data (with controlled noise), applying the NetMAP Singular Value Decomposition (SVD) recovery process, and statistically comparing the recovered physical parameters against the original "ground truth" values. This was the essential tool for the validation in the paper https://www.nature.com/articles/s41598-023-50089-1.
+
+---
+
+### Description
+This function simulates a physical measurement of a resonator (monomer or dimer), introduces noise, and attempts to solve the inverse problem—extracting mass ($m$), damping ($b$), and stiffness ($k$) from the resulting spectra. It evaluates the success of the recovery across different assumptions of the SVD nullspace (1D, 2D, and 3D).
+
+---
+
+### Parameters
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `measurementfreqs` | list/array | The specific frequencies ($\omega$) where "measurements" are taken. |
+| `vals_set` | list | The "ground truth" parameters: $[m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_{set}]$. |
+| `noiselevel` | float | Magnitude of Gaussian noise added to the complex amplitude. |
+| `MONOMER` | bool | `True` for a single resonator; `False` for a coupled dimer. |
+| `forceboth` | bool | If `True`, applies the driving force to both masses in a dimer. |
+| `repeats` | int | Number of simulation iterations (useful for Monte Carlo error analysis). |
+| `verbose` | bool | If `True`, prints detailed recovery statistics and SVD descriptions. |
+| `demo` | bool | If `True`, formats plots for presentation (removes axis ticks). |
+
+---
+
+### Logic Flow
+
+1.  **Spectrum Generation:** Calculates a noiseless baseline using `calculate_spectra()`. 
+2.  **Noise Injection:** Applies Gaussian noise to the complex amplitude response based on the `noiselevel`.
+3.  **Z-Matrix Construction:** Calls `Zmat()` (see below) to build the linear system of equations based on the "noisy" measurement points.
+4.  **SVD Recovery:** * Performs Singular Value Decomposition on the Z-matrix.
+    * Identifies the singular vector corresponding to the smallest singular value (the suspected solution).
+5.  **Normalization & Scaling:** Since SVD returns relative ratios, the function normalizes the vector using three different strategies:
+    * **1D:** Normalizes based on the known force ($F_{set}$).
+    * **2D:** Normalizes assuming two known parameters (e.g., $m_1$ and $F_{set}$).
+    * **3D:** Normalizes assuming three known parameters.
+6.  **Error Analysis:**
+    * Calculates the **Systematic Error** (`syserr`) for every individual parameter.
+    * Calculates $R^2$ values to determine how well the recovered model reconstructs the observed data.
+7.  **Visualization:** If `verbose` is enabled, it calls `plot_SVD_results()` to overlay the recovered model onto the noisy data points.
+
+---
+
+### Return Values
+The function primarily populates the `results` and `theseresults_cols` lists. These results include:
+* **Recovered Parameters:** Values for $M, B, K,$ and $F$ for all normalization dimensions (1D, 2D, 3D).
+* **Error Metrics:** Mean, RMS, and Max systematic errors for the recovery.
+* **Spectral Data:** Signal-to-Noise Ratios (SNR) at each measurement frequency.
+
+---
+
+### Supporting Helper Functions
+* **`describeresonator()`**: Utility to print a summary of the physical system's properties (Quality factor $Q$, peak width, etc.).
+* **`measurementdfcalc()`**: Organizes raw frequency/amplitude/phase data into a formatted DataFrame for matrix processing.
+* **`compile_rsqrd()`**: Calculates the goodness-of-fit for the recovered model in both polar and Cartesian coordinates.
+
+---
+
+### Usage Note
+This function is essential for determining the **robustness** of NetMAP. By sweeping the `noiselevel` or varying the `measurementfreqs
+
 
 ## NetMAP Z-Matrix Documentation
 
