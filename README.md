@@ -13,9 +13,9 @@ By applying **Singular Value Decomposition (SVD)** to the Z-matrix, the system's
 
 ## Key Features
 * **Algebraic Parameter Recovery:** No need for "guesses" or iterative fitting; parameters are recovered through direct matrix decomposition.
-* **Support for Dimer/Coupled Systems:** Specifically designed to handle coupled resonators (e.g., graphene drums or cantilever arrays) where traditional peak-fitting fails due to overlapping modes.
+* **Support for Coupled Systems:** Specifically designed to handle coupled resonators (e.g., graphene drums or cantilever arrays) where traditional peak-fitting fails due to overlapping modes.
 * **Noise Robustness:** Evaluates recovery accuracy across 1D, 2D, and 3D nullspace assumptions to find the most stable physical solution.
-* **Synthetic Validation:** Includes a `simulated_experiment` suite to validate the framework against "ground truth" models with controlled noise injection.
+* **Validation:** Includes a `simulated_experiment` suite to validate the framework against "ground truth" models with controlled noise injection.
 
 ## Core Components
 * `Zmat()`: The primary engine for constructing the Z-matrix from Pandas DataFrames containing frequency, amplitude, and phase data.
