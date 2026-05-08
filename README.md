@@ -130,15 +130,30 @@ To solve for unknown physical parameters using real-numbered matrices, we define
 * **Real Equation:** $-m_1\omega^2X_1 - b_1\omega Y_1 + k_1X_1 - f = 0$
 * **Imaginary Equation:** $-m_1\omega^2Y_1 + b_1\omega X_1 + k_1Y_1 = 0$
 
-*(Note: The term $-b_1\omega Y_1$ becomes real because $i \times i = -1$.)*
+$\textit{(Note: The term } -b_1\omega Y_1 \textit{ becomes real because } i \times i = -1\textit{.)}$
 
 #### 4. Construction of the Z-Matrix ($Zp = 0$)
 By collecting data at multiple frequencies ($\omega_1, \omega_2, ... \omega_n$), we stack these equations into a matrix format. This creates a homogeneous system where the data is in the **Z-matrix** and the unknown physical constants are in the vector **$p$**.
 
 
 
+
 For a monomer, the system looks like this:
-$$\begin{bmatrix} -\omega_1^2X_{11} & -\omega_1Y_{11} & X_{11} & -1 \\ -\omega_1^2Y_{11} & \omega_1X_{11} & Y_{11} & 0 \\ -\omega_2^2X_{12} & -\omega_2Y_{12} & X_{12} & -1 \\ -\omega_2^2Y_{12} & \omega_2X_{12} & Y_{12} & 0 \end{bmatrix} \begin{bmatrix} m_1 \\ b_1 \\ k_1 \\ f \end{bmatrix} = \vec{0}$$
+
+$$
+\begin{bmatrix} 
+-\omega_1^2X_{11} & -\omega_1Y_{11} & X_{11} & -1 \\
+-\omega_1^2Y_{11} & \omega_1X_{11} & Y_{11} & 0 \\
+-\omega_2^2X_{12} & -\omega_2Y_{12} & X_{12} & -1 \\
+-\omega_2^2Y_{12} & \omega_2X_{12} & Y_{12} & 0 
+\end{bmatrix} 
+\begin{bmatrix} 
+m_1 \\ 
+b_1 \\ 
+k_1 \\ 
+f 
+\end{bmatrix} = \vec{0}
+$$
 
 #### 5. SVD and Parameter Scaling
 * **Singular Value Decomposition (SVD):** We perform SVD on the Z-matrix. The right-singular vector associated with the smallest singular value represents the "best fit" for the parameter vector $p$.
@@ -155,9 +170,15 @@ This notebook serves as the primary demonstration and validation tool for the Ne
 The goal of this notebook is to demonstrate that the **NetMAP (Network Mapping and Analysis of Parameters)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using synthetic data, the "recovered" values can be compared against known "ground truth" inputs to calculate systematic error.
 
 ## 2. Theoretical Background
+
 The notebook relies on transforming the coupled equations of motion into a linear system $Z\vec{p} = 0$:
-1. $m_1 \ddot{x}_1 + b_1 \dot{x}_1 + k_1 x_1 + k_{12}(x_1 - x_2) = F_1 \cos(\omega t)$
-2. $m_2 \ddot{x}_2 + b_2 \dot{x}_2 + k_2 x_2 + k_{12}(x_2 - x_1) = F_2 \cos(\omega t)$
+
+$$
+\begin{aligned}
+& m_1 \ddot{x}_1 + b_1 \dot{x}_1 + k_1 x_1 + k_{12}(x_1 - x_2) = F_1 \cos(\omega t) \\
+& m_2 \ddot{x}_2 + b_2 \dot{x}_2 + k_2 x_2 + k_{12}(x_2 - x_1) = F_2 \cos(\omega t)
+\end{aligned}
+$$
 
 By measuring the complex amplitude response at specific frequencies, the notebook populates a **Z-matrix** and uses **Singular Value Decomposition (SVD)** to find the parameter vector $\vec{p}$ in the matrix nullspace.
 
