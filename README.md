@@ -1,6 +1,78 @@
 The related publication is: https://www.nature.com/articles/s41598-023-50089-1. Please cite it if you use this code!
 
 
+## NetMAP Z-Matrix Documentation
+
+[The following documentation is written with AI.]
+
+In the NetMAP framework, the **Z-Matrix** is the linear algebraic representation of the system's equations of motion. These functions construct the matrix used for **Singular Value Decomposition (SVD)** or linear least-squares fitting to extract physical parameters (mass, damping, stiffness) from experimental frequency response data.
+
+---
+
+### `Zmat()`
+**The primary entry point.** This wrapper function directs the data to either the Monomer or Dimer (2-resonator) matrix generator based on the system configuration.
+
+| Parameter | Description |
+| :--- | :--- |
+| `measurementdf` | Pandas DataFrame containing experimental sweeps. |
+| `MONOMER` | Boolean. If `True`, uses the single-oscillator model. |
+| `forceboth` | Boolean. Relevant for dimers; indicates if both masses are driven. |
+| `frequencycolumn` | Column name for the driving frequency ($\omega$). |
+| `complexamplitudeX` | Column names for the complex response ($\tilde{Z} = A e^{i\phi}$). |
+
+---
+
+### `Zmatrix2resonators()`
+Generates the Z-matrix for a **Dimer** system. For every frequency point provided, it generates **four rows** in the matrix (Real/Imaginary components for both Resonator 1 and Resonator 2).
+
+**Matrix Structure:**
+The columns correspond to the following physical parameters:
+$\vec{p} = [m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_1]$
+
+**Logic:**
+* **Driving Force:** If `forceboth` is `False`, only $m_1$ is driven ($F_1$ affects $R_1$). If `True`, a coupling factor `ff` is applied to the $R_2$ equations to account for the second drive.
+* **Coupling:** The $k_{12}$ column accounts for the relative displacement $(ZZ_1 - ZZ_2)$.
+
+**Mathematical Basis (per frequency $\omega$):**
+For each resonator, the equation $[-\omega^2 m + i\omega b + k]\tilde{Z} = F$ is split into real and imaginary parts to populate the matrix.
+
+---
+
+### `ZmatrixMONOMER()`
+Generates the Z-matrix for a **Monomer** system. For every frequency point, it generates **two rows** (Real and Imaginary).
+
+**Matrix Structure:**
+The columns correspond to:
+$\vec{p} = [m_1, b_1, k_1, F]$
+
+**Row Construction:**
+1.  **Real Row:** $[- \omega^2 \cdot \text{Re}(Z), -\omega \cdot \text{Im}(Z), \text{Re}(Z), -1]$
+2.  **Imaginary Row:** $[- \omega^2 \cdot \text{Im}(Z), \omega \cdot \text{Re}(Z), \text{Im}(Z), 0]$
+
+---
+
+### Summary of Parameter Mapping
+
+| System Type | Columns (Parameters) | Rows per Frequency Point |
+| :--- | :--- | :--- |
+| **Monomer** | $m, b, k, F$ | 2 |
+| **Dimer** | $m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_1$ | 4 |
+
+---
+
+### Usage Example
+
+```python
+import numpy as np
+
+# Assuming 'df' contains your resonance sweep data
+z_matrix = Zmat(df, MONOMER=False, forceboth=True)
+
+# Use SVD to solve for the physical parameters (p)
+# Z * p = 0  -> The nullspace contains the parameter ratios
+u, s, vh = np.linalg.svd(z_matrix)
+parameters = vh[-1, :] # The last row of vh is the solution
+
 
 ## Function Documentation: `res_freq_numeric()`
 
