@@ -104,6 +104,46 @@ The function primarily populates the `results` and `theseresults_cols` lists. Th
 ### Usage Note
 This function is essential for determining the **robustness** of NetMAP. By sweeping the `noiselevel` or varying the `measurementfreqs` (e.g., placing them on or off resonance), researchers can determine the optimal experimental conditions required to recover physical constants with high accuracy. See our publication in Scientific Reports.
 
+## Mathematical Framework of NetMAP
+
+NetMAP (Network Mapping and Analysis of Parameters) converts the physics of mechanical oscillators into a linear algebra problem. The process follows these specific mathematical steps:
+
+---
+
+#### 1. The Equations of Motion
+For any linear resonator system (monomer, dimer, or $N$-resonator network), the behavior is governed by the second-order differential equation:
+$$M\ddot{x} + B\dot{x} + Kx = F$$
+Where:
+* **M**: Mass matrix
+* **B**: Damping matrix
+* **K**: Stiffness (spring constant) matrix
+* **F**: Driving force vector
+
+#### 2. Transition to the Frequency Domain
+We assume a steady-state solution where the displacement of each resonator $j$ is $x_j = Z_j(\omega)e^{i\omega t}$. Substituting the derivatives ($\dot{x} = i\omega x$ and $\ddot{x} = -\omega^2 x$) into the equation of motion eliminates the time dependency:
+$$(-\omega^2M + i\omega B + K)Z(\omega) = f$$
+Here, **$Z(\omega)$** is the complex amplitude (representing both magnitude and phase shift) and **$f$** is the magnitude of the driving force.
+
+#### 3. Separation of Real and Imaginary Components
+To solve for unknown physical parameters using real-numbered matrices, we define the complex amplitude as $Z_j = X_j + iY_j$. For a single resonator (monomer), the equation $-m_1\omega^2Z_1 + b_1i\omega Z_1 + k_1Z_1 - f = 0$ is split:
+
+* **Real Equation:** $-m_1\omega^2X_1 - b_1\omega Y_1 + k_1X_1 - f = 0$
+* **Imaginary Equation:** $-m_1\omega^2Y_1 + b_1\omega X_1 + k_1Y_1 = 0$
+
+*(Note: The term $-b_1\omega Y_1$ becomes real because $i \times i = -1$.)*
+
+#### 4. Construction of the Z-Matrix ($Zp = 0$)
+By collecting data at multiple frequencies ($\omega_1, \omega_2, ... \omega_n$), we stack these equations into a matrix format. This creates a homogeneous system where the data is in the **Z-matrix** and the unknown physical constants are in the vector **$p$**.
+
+
+
+For a monomer, the system looks like this:
+$$\begin{bmatrix} -\omega_1^2X_{11} & -\omega_1Y_{11} & X_{11} & -1 \\ -\omega_1^2Y_{11} & \omega_1X_{11} & Y_{11} & 0 \\ -\omega_2^2X_{12} & -\omega_2Y_{12} & X_{12} & -1 \\ -\omega_2^2Y_{12} & \omega_2X_{12} & Y_{12} & 0 \end{bmatrix} \begin{bmatrix} m_1 \\ b_1 \\ k_1 \\ f \end{bmatrix} = \vec{0}$$
+
+#### 5. SVD and Parameter Scaling
+* **Singular Value Decomposition (SVD):** We perform SVD on the Z-matrix. The right-singular vector associated with the smallest singular value represents the "best fit" for the parameter vector $p$.
+* **Scaling:** SVD identifies the ratios between parameters (e.g., $k/m$ or $b/m$). To find absolute values, we multiply the entire vector by a scaling factor derived from one known reference value, such as the actual mass ($m_1$) or the known driving force ($f$).
+
 
 # Notebook Documentation: Algebraic Approach Simulated Two Coupled Resonators
 
