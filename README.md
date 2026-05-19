@@ -22,7 +22,7 @@ By applying **Singular Value Decomposition (SVD)** to the Z-matrix, the system's
 ## Core Components
 * `Zmat()`: The primary engine for constructing the Z-matrix from Pandas DataFrames containing frequency, amplitude, and phase data.
 * **Monomer & Dimer Logic:** Dedicated matrix construction for single oscillators or two-resonator coupled systems.
-* **Normalization Tools:** Functions to scale relative SVD results into absolute physical units (kg, N/m, N s/m) based on a known reference (like a known driving force or mass).
+* **Scaling Tools:** Functions to scale relative SVD results into absolute physical units (kg, N/m, N s/m) based on a known reference (like a known driving force or mass).
 
 ## Scientific Context
 This codebase is used for validating algebraic approaches to characterizing resonator networks, as described in:
@@ -39,7 +39,7 @@ This codebase is used for validating algebraic approaches to characterizing reso
 1. Load your frequency sweep data into a DataFrame.
 2. Pass the data to `Zmat()` to generate the Z-matrix.
 3. Perform SVD (`np.linalg.svd`) to identify the parameter ratios.
-4. Normalize the result using `normalize_parameters_1d_by_force` (or similar) to extract final $m, b, k$ values.
+4. Scale the result using `normalize_parameters_1d_by_force` (or similar) to extract final $m, b, k$ values.
 
 ## Mathematical Framework of NetMAP
 
@@ -130,10 +130,10 @@ This function simulates a physical measurement of a resonator (monomer or dimer)
 3.  **Z-Matrix Construction:** Calls `Zmat()` (see below) to build the linear system of equations based on the "noisy" measurement points.
 4.  **SVD Recovery:** * Performs Singular Value Decomposition on the Z-matrix.
     * Identifies the singular vector corresponding to the smallest singular value (the suspected solution).
-5.  **Normalization & Scaling:** Since SVD returns relative ratios, the function normalizes the vector using three different strategies:
-    * **1D:** Normalizes based on the known force ($F_{set}$).
-    * **2D:** Normalizes assuming two known parameters (e.g., $m_1$ and $F_{set}$).
-    * **3D:** Normalizes assuming three known parameters.
+5.  **Scaling:** Since SVD returns relative ratios, the function scales the vector using three different strategies:
+    * **1D:** Scales in a 1D nullspace based on the known force ($F_{set}$). (1D is recommended.)
+    * **2D:** Scales in a 2D nullspace assuming two known parameters (e.g., $m_1$ and $F_{set}$).
+    * **3D:** Scales in a 3D nullspace assuming three known parameters. Warning: The 3D nullspace can be extremely wrong in an unpredictable way.
 6.  **Error Analysis:**
     * Calculates the **Systematic Error** (`syserr`) for every individual parameter.
     * Calculates $R^2$ values to determine how well the recovered model reconstructs the observed data.
@@ -143,7 +143,7 @@ This function simulates a physical measurement of a resonator (monomer or dimer)
 
 ### Return Values
 The function primarily populates the `results` and `theseresults_cols` lists. These results include:
-* **Recovered Parameters:** Values for $M, B, K,$ and $F$ for all normalization dimensions (1D, 2D, 3D).
+* **Recovered Parameters:** Values for $M, B, K,$ and $F$ (for each nullity).
 * **Error Metrics:** Mean, RMS, and Max systematic errors for the recovery.
 * **Spectral Data:** Signal-to-Noise Ratios (SNR) at each measurement frequency.
 
@@ -169,7 +169,7 @@ This notebook serves as the primary demonstration and validation tool for the Ne
 ---
 
 ### 1. Purpose
-The goal of this notebook is to demonstrate that the **NetMAP (Network Mapping and Analysis of Parameters)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using synthetic data, the "recovered" values can be compared against known "ground truth" inputs to calculate systematic error.
+The goal of this notebook is to demonstrate that **NetMAP (Network Mapping and Analysis of Parameters)** can accurately identify physical constants (mass, damping, stiffness, and coupling) of a dimer system by solving a linear system of equations. By using simulated data, the recovered values can be compared against known inputs to calculate systematic error.
 
 ### 2. Theoretical Background
 
@@ -189,25 +189,25 @@ By measuring the complex amplitude response at specific frequencies, the noteboo
 ### 3. Workflow & Key Sections
 
 #### A. Initialization and Parameter Setting
-The notebook defines the "True" physical parameters for the two resonators.
+The notebook defines the input (true) physical parameters for the two resonators.
 * **Physical Constants:** Sets $m_1, m_2, b_1, b_2, k_1, k_2, k_{12}$ and the driving force $F$.
 * **System Characteristics:** Calculates expected Quality Factors ($Q$) and resonance frequencies to ensure the simulation represents a physically realistic system.
 
-#### B. Generating Synthetic "Experimental" Data
+#### B. Generating Synthetic Noisy "Experimental" Data
 Using the `calculate_spectra()` function, the notebook generates the frequency response for both resonators.
 * **Noise Injection:** Gaussian noise is added to the complex amplitudes to simulate experimental measurement error.
 * **Frequency Selection:** The notebook identifies the resonance peaks to ensure that "measurement" points are selected from the most informative parts of the spectrum (highest Signal-to-Noise ratio).
 
-#### C. Construction of the Z-Matrix
+#### C. NetMAP: Construction of the Z-Matrix
 The code calls `Zmat()` to build the algebraic representation.
 * **Dimensionality:** For each frequency point, four rows are added to the matrix (the real and imaginary components for both Resonator 1 and Resonator 2).
-* **Nullspace Mapping:** The columns are mapped to $[m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_1]$.
+* **Mapping:** The columns are mapped to $[m_1, m_2, b_1, b_2, k_1, k_2, k_{12}, F_1]$.
 
-#### D. Parameter Recovery via SVD
+#### D. NetMAP: Parameter Recovery via SVD
 The core mathematical step of NetMAP:
 * **SVD Execution:** Performs `np.linalg.svd(Zmatrix)`.
 * **Vector Extraction:** Selects the right-singular vector associated with the smallest singular value (the solution closest to the nullspace).
-* **Normalization:** Since SVD returns relative ratios, the notebook scales the vector using a known reference (usually the driving force $F$ or mass $m_1$) to return values in absolute physical units.
+* **Scaling:** Since SVD returns relative ratios, the notebook scales the vector using a known reference (usually the driving force $F$ or mass $m_1$) to return values in absolute physical units.
 
 #### E. Validation and Visualization
 The final cells evaluate the success of the recovery:
