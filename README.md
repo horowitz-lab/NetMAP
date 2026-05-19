@@ -54,7 +54,7 @@ Where:
 * **M**: Mass matrix
 * **B**: Damping matrix
 * **K**: Stiffness (spring constant) matrix
-* **F**: Driving force vector
+* **F**: Driving force vector, oscillating at applied frequency $\omega$.
 
 ### 2. Transition to the Frequency Domain
 We assume a steady-state solution where the displacement of each resonator $j$ is $x_j = Z_j(\omega)e^{i\omega t}$. Substituting the derivatives ($\dot{x} = i\omega x$ and $\ddot{x} = -\omega^2 x$) into the equation of motion eliminates the time dependency:
